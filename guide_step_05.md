@@ -7,7 +7,7 @@
 ## Việc cần làm
 
 - Tạo dữ liệu mapping (khuyến nghị bản đầu là JSON trong `data/`), ví dụ:
-  - `data/provinces_legacy_64.json`
+  - `data/provinces_legacy_63.json`
   - `data/provinces_current_34.json`
 - Hỗ trợ tham số `province_version`:
   - `legacy_64`
@@ -42,7 +42,7 @@ py .\run.py
 
 4) Chọn `province_version` và bấm **Parse**:
 
-- [ ] `legacy_64` → `data.province_name` phải ra tên theo file `data/provinces_legacy_64.json`
+- [ ] `legacy_64` → `data.province_name` phải ra tên theo file `data/provinces_legacy_63.json`
 - [ ] `current_34` → `data.province_name` phải ra tên theo file `data/provinces_current_34.json`
 
 Nếu `province_code` không tồn tại trong mapping thì:

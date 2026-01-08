@@ -12,7 +12,7 @@ _CACHE: dict[ProvinceVersion, dict[str, str]] = {}
 def _data_path(version: ProvinceVersion) -> Path:
     repo_root = Path(__file__).resolve().parents[1]
     if version == "legacy_64":
-        return repo_root / "data" / "provinces_legacy_64.json"
+        return repo_root / "data" / "provinces_legacy_63.json"
     return repo_root / "data" / "provinces_current_34.json"
 
 
