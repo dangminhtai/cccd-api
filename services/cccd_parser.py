@@ -12,6 +12,9 @@ def parse_cccd(cccd: str) -> dict:
         "province_name": None,
         "gender": None,
         "birth_year": None,
+        # Optional fields mentioned in requirement.md / examples
+        "century": None,
+        "age": None,
     }
 
 

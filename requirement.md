@@ -79,9 +79,10 @@ HTTP 200:
 - `data` (object | null)
   - `province_code` (string | null): mã tỉnh lấy từ CCCD (nếu parse được)
   - `province_name` (string | null)
-  - `gender` (string | null): khuyến nghị chuẩn hoá giá trị: `Nam` / `Nữ` (hoặc `male`/`female` — chọn 1 và dùng thống nhất)
+  - `gender` (string | null): chuẩn hoá giá trị: `Nam` / `Nữ` (chọn 1 chuẩn và dùng thống nhất)
   - `birth_year` (number | null)
-  - (tuỳ chọn) `age` (number | null): nếu muốn tiện cho client (có thể bỏ)
+  - `century` (string | null): thế kỷ (nếu dùng)
+  - `age` (number | null): tuổi (nếu dùng)
 - `message` (string | null): thông điệp ngắn gọn cho client (nếu cần)
 
 Ví dụ (minh hoạ):
@@ -94,6 +95,7 @@ Ví dụ (minh hoạ):
     "province_name": "Thành phố Hồ Chí Minh",
     "gender": "Nam",
     "birth_year": 1996,
+    "century": "20",
     "age": 29
   },
   "is_valid_format": true
