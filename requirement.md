@@ -77,6 +77,7 @@ HTTP 200:
 - `success` (boolean)
 - `is_valid_format` (boolean): CCCD có đúng định dạng cơ bản hay không
 - `is_plausible` (boolean): dữ liệu có “hợp lý” theo ngữ cảnh hiện tại hay không (ví dụ năm sinh không ở tương lai)
+- `province_version` (string): phiên bản mapping tỉnh/thành đã dùng để trả `province_name`
 - `data` (object | null)
   - `province_code` (string | null): mã tỉnh lấy từ CCCD (nếu parse được)
   - `province_name` (string | null)
@@ -102,6 +103,7 @@ Ví dụ (minh hoạ):
   },
   "is_valid_format": true,
   "is_plausible": true,
+  "province_version": "legacy_64",
   "warnings": []
 }
 ```

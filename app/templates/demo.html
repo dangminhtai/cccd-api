@@ -47,6 +47,7 @@
         <li>Nhập CCCD đúng 12 số → <span class="ok">HTTP 200</span>, <code>success=true</code>, <code>is_valid_format=true</code></li>
         <li>Nhập CCCD sai (ví dụ “123”) → <span class="bad">HTTP 400</span>, <code>success=false</code>, <code>is_valid_format=false</code></li>
         <li>Nhập CCCD đúng format nhưng năm sinh ở tương lai (ví dụ 2099) → <span class="ok">HTTP 200</span>, <code>is_plausible=false</code>, <code>warnings</code> có <code>birth_year_in_future</code></li>
+        <li>Nếu <code>province_code</code> không có trong mapping → <code>province_name=null</code> và <code>warnings</code> có <code>province_code_not_found</code></li>
       </ul>
     </div>
 

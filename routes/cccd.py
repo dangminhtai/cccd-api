@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from datetime import date
 
-from flask import Blueprint, jsonify, render_template, request
+from flask import Blueprint, current_app, jsonify, render_template, request
 
 from services.cccd_parser import parse_cccd
+from services.province_mapping import ProvinceVersion, map_province_name
 
 cccd_bp = Blueprint("cccd", __name__)
 
@@ -17,6 +18,7 @@ def demo():
 def cccd_parse():
     payload = request.get_json(silent=True) or {}
     cccd = payload.get("cccd")
+    province_version = payload.get("province_version")
 
     # Basic validate (align with requirement.md)
     if cccd is None:
@@ -64,6 +66,35 @@ def cccd_parse():
     warnings: list[str] = []
     is_plausible = True
 
+    # Resolve province_version
+    settings = current_app.config.get("SETTINGS")
+    default_version = getattr(settings, "default_province_version", "current_34")
+    version: ProvinceVersion
+    if province_version is None or province_version == "":
+        version = "legacy_64" if default_version == "legacy_64" else "current_34"
+    elif province_version in ("legacy_64", "current_34"):
+        version = province_version
+    else:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "is_valid_format": False,
+                    "data": None,
+                    "message": "province_version không hợp lệ (chỉ nhận legacy_64 hoặc current_34).",
+                }
+            ),
+            400,
+        )
+
+    # province mapping
+    province_code = data.get("province_code")
+    if isinstance(province_code, str):
+        province_name = map_province_name(province_code, version)
+        data["province_name"] = province_name
+        if province_name is None:
+            warnings.append("province_code_not_found")
+
     birth_year = data.get("birth_year")
     if isinstance(birth_year, int) and birth_year > date.today().year:
         warnings.append("birth_year_in_future")
@@ -76,6 +107,7 @@ def cccd_parse():
                 "data": data,
                 "is_valid_format": True,
                 "is_plausible": is_plausible,
+                "province_version": version,
                 "warnings": warnings,
             }
         ),

@@ -20,21 +20,47 @@
 
 ## Hoàn thành khi
 
-- [ ] Cùng một `province_code`, đổi `province_version` cho ra `province_name` đúng theo từng danh sách
-- [ ] Có test mapping cơ bản
+- [X] `data.province_name` được resolve từ `data.provinces_*.json` theo `province_version`
+- [X] Nếu `province_code` không có trong mapping → `province_name=null` và có warning
+- [X] Có test mapping cơ bản
 
 ## Tự test (Self-check)
 
-> Thực hiện được sau khi đã có mapping JSON và endpoint `POST /v1/cccd/parse`.
+Test bằng web local (không cần PowerShell):
 
-- [ ] Gọi cùng một CCCD giả lập nhưng đổi `province_version`:
+1) Chạy server:
 
-```powershell
-Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/v1/cccd/parse -ContentType "application/json" -Body "{\"cccd\":\"012345678901\",\"province_version\":\"legacy_64\"}"
-Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/v1/cccd/parse -ContentType "application/json" -Body "{\"cccd\":\"012345678901\",\"province_version\":\"current_34\"}"
+```bash
+py .\run.py
 ```
 
-- [ ] Kết quả đúng: `data.province_name` thay đổi theo `province_version` (nếu danh sách 2 bên khác nhau).
+2) Mở trình duyệt:
+
+- `http://127.0.0.1:8000/demo`
+
+3) Nhập CCCD giả lập có mã tỉnh rõ ràng (ví dụ `079203012345` → `province_code=079`)
+
+4) Chọn `province_version` và bấm **Parse**:
+
+- [ ] `legacy_64` → `data.province_name` phải ra tên theo file `data/provinces_legacy_64.json`
+- [ ] `current_34` → `data.province_name` phải ra tên theo file `data/provinces_current_34.json`
+
+Nếu `province_code` không tồn tại trong mapping thì:
+
+- OK khi thấy `data.province_name = null` và `warnings` có `"province_code_not_found"`.
+
+Ghi chú: hiện mapping đang là **starter subset** (001/048/079) để demo/triển khai trước; có thể mở rộng sau.
+
+---
+
+## Trạng thái
+
+- **DoD**: ✅ Done
+- **Đã verify**: ✅ Done (đã test `/demo` load 200 và unit tests pass)
+
+## Bước tiếp theo
+
+Chuyển sang `guide_step_06.md` (Bảo mật & an toàn dữ liệu).
 
 
 

@@ -18,6 +18,7 @@ class TestPlausibility(unittest.TestCase):
         self.assertTrue(body["is_valid_format"])
         self.assertFalse(body["is_plausible"])
         self.assertIn("birth_year_in_future", body["warnings"])
+        self.assertIn("province_version", body)
 
 
 if __name__ == "__main__":
