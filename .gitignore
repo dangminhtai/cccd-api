@@ -1,0 +1,29 @@
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+
+# virtualenv
+.venv/
+venv/
+ENV/
+
+# env files
+.env
+.env.*
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+Desktop.ini
+
+# pytest
+.pytest_cache/
+
+# logs
+*.log
+
