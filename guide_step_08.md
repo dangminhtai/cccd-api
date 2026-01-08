@@ -19,7 +19,7 @@
 
 ## Hoàn thành khi
 
-- [x] Chạy test pass hết (13 tests)
+- [x] Chạy test pass hết (18 tests)
 - [x] Khi đổi mapping/tên tỉnh, test giúp phát hiện sai lệch ngay
 
 ## Tự test (Self-check)
@@ -30,16 +30,17 @@
 python -m pytest tests/ -v
 ```
 
-Kỳ vọng: **13 passed**
+Kỳ vọng: **18 passed**
 
 ### Danh sách test hiện có
 
 | File | Test cases |
 |------|------------|
-| `test_validation.py` | missing_cccd, cccd_not_string, cccd_with_letters, wrong_length_short, wrong_length_long, cccd_valid, invalid_province_version |
-| `test_cccd_parser.py` | parse_gender_century, parse_cccd_basic |
-| `test_province_mapping.py` | province_name_resolved, province_code_not_found_warning, backward_compat_legacy_64_maps_to_legacy_63 |
-| `test_plausibility.py` | birth_year_in_future_flagged |
+| `test_validation.py` | missing_cccd, cccd_not_string, cccd_with_letters, wrong_length_short, wrong_length_long, cccd_extremely_long, cccd_valid, invalid_province_version (8) |
+| `test_api_key.py` | missing_api_key_401, wrong_api_key_401, correct_api_key_200, no_api_key_allows_access (4) |
+| `test_cccd_parser.py` | parse_gender_century, parse_cccd_basic (2) |
+| `test_province_mapping.py` | province_name_resolved, province_code_not_found_warning, backward_compat_legacy_64_maps_to_legacy_63 (3) |
+| `test_plausibility.py` | birth_year_in_future_flagged (1) |
 
 ### Test phát hiện sai lệch
 
@@ -55,11 +56,12 @@ Kỳ vọng: **13 passed**
 
 | Tiêu chí | Kết quả |
 |----------|---------|
-| Validation tests (7 cases) | ✅ |
+| Validation tests (8 cases) | ✅ |
+| API Key tests (4 cases) | ✅ |
 | Parser tests (2 cases) | ✅ |
 | Mapping tests (3 cases) | ✅ |
 | Plausibility tests (1 case) | ✅ |
-| Tổng: 13 tests pass | ✅ |
+| Tổng: **18 tests pass** | ✅ |
 
 
 
