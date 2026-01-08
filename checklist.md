@@ -97,7 +97,21 @@ git push
 
 ---
 
-## 10) Triển khai (deploy)
+## 10) Hệ thống API Key theo Tier (bán gói)
+
+> Xem chi tiết: `guide_step_10.md`
+
+- [ ] Thiết kế database lưu API key (JSON/SQLite/PostgreSQL)
+- [ ] Script tạo key hàng loạt theo tier (free/premium/ultra)
+- [ ] Rate limit động theo tier
+- [ ] Admin API quản lý key (list, deactivate)
+- [ ] Usage tracking để tính tiền
+
+---
+
+## 11) Triển khai (deploy)
+
+> Xem chi tiết: `guide_step_11.md`
 
 - [ ] Chọn môi trường deploy (VM/Docker/K8s…).
 - [ ] Thiết lập health check endpoint (ví dụ `GET /health`).
@@ -106,17 +120,11 @@ git push
 
 ---
 
-# BONUS (Tính năng nâng cao)
+# BONUS (Tính năng nâng cao - tuỳ chọn)
 
-## Bonus A) Hệ thống API Key theo Tier (bán gói)
+## Bonus A) Tích hợp thanh toán
 
-> Xem chi tiết: `guide_bonus_api_key_tiers.md`
-
-- [ ] Thiết kế database lưu API key (JSON/SQLite/PostgreSQL)
-- [ ] Script tạo key hàng loạt theo tier (free/premium/ultra)
-- [ ] Rate limit động theo tier
-- [ ] Admin API quản lý key (list, deactivate)
-- [ ] Usage tracking để tính tiền
-- [ ] (Production) Tích hợp Stripe/PayPal
+- [ ] Stripe/PayPal để tự động tạo key khi thanh toán
+- [ ] Dashboard cho khách hàng xem usage
 
 
