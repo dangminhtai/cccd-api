@@ -16,9 +16,9 @@ Tạo hệ thống bán API theo 3 gói: Free, Premium, Ultra với rate limit k
 
 ### A. Chuẩn bị MySQL
 
-- [ ] Đã cài MySQL trên máy
-- [ ] Đã tạo database `cccd_api`
-- [ ] Đã chạy script tạo bảng
+- [X] Đã cài MySQL trên máy
+- [X] Đã tạo database `cccd_api`
+- [X] Đã chạy script tạo bảng
 
 **Cách làm:**
 
@@ -33,8 +33,8 @@ Tạo hệ thống bán API theo 3 gói: Free, Premium, Ultra với rate limit k
 
 ### B. Cấu hình .env
 
-- [ ] Đã set `API_KEY_MODE=tiered`
-- [ ] Đã điền thông tin MySQL
+- [X] Đã set `API_KEY_MODE=tiered`
+- [X] Đã điền thông tin MySQL
 - [ ] Đã đặt `ADMIN_SECRET`
 
 **Cách làm:**
@@ -60,7 +60,7 @@ ADMIN_SECRET=change-this-to-random-string
 
 ### C. Cài thư viện MySQL
 
-- [ ] Đã cài PyMySQL
+- [X] Đã cài PyMySQL
 
 **Cách làm:**
 
@@ -72,7 +72,7 @@ pip install PyMySQL==1.1.0
 
 ### D. Restart server
 
-- [ ] Server đang chạy với mode tiered
+- [X] Server đang chạy với mode tiered
 
 **Cách làm:**
 
@@ -110,8 +110,8 @@ Tạo 1 key(s) tier 'free' cho test@example.com...
 
 ### F. Test API với key mới
 
-- [ ] Gọi API với key → 200 success
-- [ ] Gọi API không có key → 401
+- [X] Gọi API với key → 200 success
+- [X] Gọi API không có key → 401
 
 **Cách làm:**
 
@@ -124,15 +124,15 @@ Hoặc test bằng PowerShell:
 
 ```powershell
 # Thay YOUR_KEY bằng key vừa tạo
-Invoke-RestMethod -Uri "http://127.0.0.1:8000/v1/cccd/parse" -Method POST -ContentType "application/json" -Headers @{"X-API-Key"="YOUR_KEY"} -Body '{"cccd": "079203012345"}'
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/v1/cccd/parse" -Method POST -ContentType "application/json" -Headers @{"X-API-Key"="free_70f0e1c4350f756a97c785db25633ea2"} -Body '{"cccd": "079203012345"}'
 ```
 
 ---
 
 ### G. Tạo key hàng loạt (cho khách hàng)
 
-- [ ] Biết cách tạo nhiều key cùng lúc
-- [ ] Biết cách tạo key có thời hạn
+- [X] Biết cách tạo nhiều key cùng lúc
+- [X] Biết cách tạo key có thời hạn
 
 **Cách làm:**
 
@@ -148,27 +148,45 @@ python scripts/generate_keys.py --tier ultra --count 5 --email vip@company.com
 
 ### H. Sử dụng Admin API
 
-- [ ] Biết cách tạo key qua API
+- [X] Biết cách tạo key qua API
 - [ ] Biết cách xem thống kê
 - [ ] Biết cách vô hiệu hóa key
 
 **Tạo key qua API:**
 
 ```powershell
-Invoke-RestMethod -Uri "http://127.0.0.1:8000/admin/keys/create" -Method POST -ContentType "application/json" -Headers @{"X-Admin-Key"="your-admin-secret"} -Body '{"tier": "premium", "email": "customer@example.com", "days": 30}'
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/admin/keys/create" -Method POST -ContentType "application/json" -Headers @{"X-Admin-Key"="your-admin-secret"} -Body '{"tier": "premium", "email": "customer@example.com", "days": 30}' | ConvertTo-Json -Depth 3
 ```
 
 **Xem thống kê:**
 
 ```powershell
-Invoke-RestMethod -Uri "http://127.0.0.1:8000/admin/stats" -Headers @{"X-Admin-Key"="your-admin-secret"}
+# PowerShell tự format JSON thành table → dùng ConvertTo-Json để xem raw
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/admin/stats" -Headers @{"X-Admin-Key"="your-admin-secret"} | ConvertTo-Json -Depth 5
+```
+
+Output mẫu:
+```json
+{
+  "tiers": {
+    "free": {
+      "total": 5,
+      "active": 4
+    },
+    "premium": {
+      "total": 2,
+      "active": 2
+    }
+  },
+  "requests_today": 122
+}
 ```
 
 **Vô hiệu hóa key:**
 
 ```powershell
 # Thay free_abc123 bằng prefix của key cần vô hiệu
-Invoke-RestMethod -Uri "http://127.0.0.1:8000/admin/keys/free_abc123/deactivate" -Method POST -Headers @{"X-Admin-Key"="your-admin-secret"}
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/admin/keys/free_abc123/deactivate" -Method POST -Headers @{"X-Admin-Key"="your-admin-secret"} | ConvertTo-Json
 ```
 
 ---

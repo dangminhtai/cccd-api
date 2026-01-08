@@ -169,4 +169,16 @@
   - Cho buffer nhỏ (ví dụ 20 thay vì 12) để chấp nhận whitespace
   - Reject sớm = tiết kiệm CPU/memory
 
+---
+
+## 18) PowerShell tự format JSON thành table → nested object không hiển thị đúng
+
+- **Hiện tượng**: Gọi Admin API `/admin/stats` → PowerShell hiển thị `@{free=; premium=; ultra=}` thay vì JSON đẹp.
+- **Nguyên nhân**: PowerShell `Invoke-RestMethod` tự động format JSON thành table, nested object bị mất.
+- **Cách xử lý**: Thêm `| ConvertTo-Json -Depth 5` vào cuối lệnh để xem JSON raw.
+- **Cách tránh lần sau**: Khi viết hướng dẫn PowerShell cho API trả JSON phức tạp, luôn:
+  - Thêm `| ConvertTo-Json -Depth 5` vào ví dụ
+  - Giải thích tại sao cần (PowerShell tự format)
+  - Hoặc dùng `Invoke-WebRequest` + parse JSON thủ công
+
 
