@@ -50,6 +50,14 @@ class TestValidation(unittest.TestCase):
         self.assertFalse(body["success"])
         self.assertFalse(body["is_valid_format"])
 
+    def test_cccd_extremely_long_rejected_early(self):
+        """cccd cực dài (DoS attempt) -> 400 ngay, không xử lý"""
+        long_string = "0" * 1000000  # 1 million chars
+        resp = self.client.post("/v1/cccd/parse", json={"cccd": long_string})
+        self.assertEqual(resp.status_code, 400)
+        body = resp.get_json()
+        self.assertFalse(body["success"])
+
     def test_cccd_valid(self):
         """cccd hợp lệ 12 số -> 200"""
         resp = self.client.post("/v1/cccd/parse", json={"cccd": "079203012345"})

@@ -90,6 +90,23 @@ def cccd_parse():
             400,
         )
 
+    # Early length check to prevent DoS (reject before processing long strings)
+    if len(cccd) > 20:  # 12 digits + buffer for whitespace
+        current_app.logger.warning(
+            f"validation_failed | request_id={_get_request_id()} | reason=cccd_too_long | length={len(cccd)}"
+        )
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "is_valid_format": False,
+                    "data": None,
+                    "message": "CCCD không hợp lệ (cần là chuỗi số, độ dài 12).",
+                }
+            ),
+            400,
+        )
+
     cccd = cccd.strip()
     if (not cccd.isdigit()) or (len(cccd) != 12):
         current_app.logger.warning(

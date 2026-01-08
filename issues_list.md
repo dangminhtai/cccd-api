@@ -157,4 +157,16 @@
   - Dùng `inputmode="numeric"` cho mobile
   - Backend vẫn phải validate (defense in depth)
 
+---
+
+## 17) Backend xử lý string dài trước khi reject → DoS risk
+
+- **Hiện tượng**: Khi gọi API trực tiếp (curl/Postman), có thể gửi string cực dài (hàng triệu ký tự). Backend vẫn phải chạy `strip()` và `isdigit()` trên toàn bộ string trước khi reject.
+- **Nguyên nhân**: không có early length check trước khi xử lý.
+- **Cách xử lý**: thêm `if len(cccd) > 20: return 400` **ngay đầu**, trước khi `strip()`.
+- **Cách tránh lần sau**: với input có độ dài cố định, luôn:
+  - Check length **ngay đầu** (trước khi xử lý)
+  - Cho buffer nhỏ (ví dụ 20 thay vì 12) để chấp nhận whitespace
+  - Reject sớm = tiết kiệm CPU/memory
+
 
