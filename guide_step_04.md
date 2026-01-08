@@ -21,24 +21,44 @@ Từ `cccd` (chuỗi số) tách ra các thông tin cần trả về:
 
 ## Hoàn thành khi
 
-- [ ] Có thể parse đúng với một vài CCCD giả lập (đã thống nhất rule nội bộ)
-- [ ] Các hàm parse có unit test
+- [X] Có thể parse đúng với một vài CCCD giả lập (đã thống nhất rule nội bộ)
+- [X] Các hàm parse có unit test
 
 ## Tự test (Self-check)
 
-> Thực hiện được sau khi bạn đã implement endpoint `POST /v1/cccd/parse` và logic parse.
+Test bằng web local (không cần PowerShell):
 
-- [ ] Gọi API với 1 CCCD giả lập (không dùng CCCD thật):
+1) Chạy server:
 
-```powershell
-Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/v1/cccd/parse -ContentType "application/json" -Body "{\"cccd\":\"012345678901\"}"
+```bash
+py .\run.py
 ```
 
-- [ ] Kết quả đúng:
-  - HTTP 200
-  - `success=true`
-  - `data.birth_year` có giá trị
-  - `data.gender` có giá trị theo chuẩn đã chốt
+2) Mở trình duyệt:
+
+- `http://127.0.0.1:8000/demo`
+
+3) Nhập CCCD giả lập (ví dụ `079203012345`) rồi bấm **Parse**
+
+- OK khi thấy:
+  - `Status: 200`
+  - JSON có `success: true`
+  - JSON có `is_valid_format: true`
+  - `data.province_code` = `079`
+  - `data.gender` = `Nam` (với ví dụ trên)
+  - `data.century` = `20`
+  - `data.birth_year` = `2003`
+
+---
+
+## Trạng thái
+
+- **DoD**: ✅ Done
+- **Đã verify**: ✅ Done (CCCD giả lập `079203012345` trả `province_code/gender/century/birth_year` đúng)
+
+## Bước tiếp theo
+
+Chuyển sang `guide_step_05.md` (Mapping tỉnh/thành).
 
 
 
