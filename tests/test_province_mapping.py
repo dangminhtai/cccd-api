@@ -26,11 +26,12 @@ class TestProvinceMapping(unittest.TestCase):
         self.assertIsNone(body["data"]["province_name"])
         self.assertIn("province_code_not_found", body["warnings"])
 
-    def test_legacy_64_alias_accepted(self):
+    def test_backward_compat_legacy_64_maps_to_legacy_63(self):
+        """Alias legacy_64 được chấp nhận nhưng map về legacy_63 + warning"""
         resp = self.client.post("/v1/cccd/parse", json={"cccd": "079203012345", "province_version": "legacy_64"})
         self.assertEqual(resp.status_code, 200)
         body = resp.get_json()
-        # Canonicalized
+        # Canonicalized to legacy_63
         self.assertEqual(body["province_version"], "legacy_63")
         self.assertIn("province_version_alias_legacy_64", body["warnings"])
 

@@ -38,7 +38,7 @@ Kỳ vọng: **13 passed**
 |------|------------|
 | `test_validation.py` | missing_cccd, cccd_not_string, cccd_with_letters, wrong_length_short, wrong_length_long, cccd_valid, invalid_province_version |
 | `test_cccd_parser.py` | parse_gender_century, parse_cccd_basic |
-| `test_province_mapping.py` | province_name_resolved, province_code_not_found_warning, legacy_64_alias_accepted |
+| `test_province_mapping.py` | province_name_resolved, province_code_not_found_warning, backward_compat_legacy_64_maps_to_legacy_63 |
 | `test_plausibility.py` | birth_year_in_future_flagged |
 
 ### Test phát hiện sai lệch
