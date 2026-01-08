@@ -65,7 +65,10 @@
         statusEl.textContent = "loading...";
         out.textContent = "";
 
-        const payload = { cccd: cccdEl.value };
+        const rawCccd = (cccdEl.value || "").trim();
+        const payload = {};
+        // Allow testing "missing cccd" by leaving the field blank
+        if (rawCccd !== "") payload.cccd = rawCccd;
         if (pvEl.value) payload.province_version = pvEl.value;
 
         try {

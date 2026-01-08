@@ -26,21 +26,37 @@ Chặn lỗi “ngay từ cửa” để giảm sai dữ liệu và giảm tải
 
 ## Tự test (Self-check)
 
-> Thực hiện được sau khi bạn đã implement endpoint `POST /v1/cccd/parse`.
+Test bằng web local (không cần PowerShell):
 
-- [ ] Test thiếu `cccd` (PowerShell):
+1) Chạy server:
 
-```powershell
-Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/v1/cccd/parse -ContentType "application/json" -Body "{}"
+```bash
+py .\run.py
 ```
 
-- [ ] Test `cccd` có chữ:
+2) Mở trình duyệt:
 
-```powershell
-Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/v1/cccd/parse -ContentType "application/json" -Body "{\"cccd\":\"0123ABC\"}"
-```
+- `http://127.0.0.1:8000/demo`
 
-- [ ] Kết quả đúng: HTTP 400 và response có `success=false`, `is_valid_format=false`, `data=null`.
+3) Test các case sau và xem “OK” là gì:
+
+- [ ] **Thiếu cccd**: xoá trắng ô CCCD rồi bấm **Parse**
+  - OK khi thấy: `Status: 400` và JSON có `message: "Thiếu trường cccd."`
+- [ ] **Có chữ**: nhập `0123ABC` rồi bấm **Parse**
+  - OK khi thấy: `Status: 400`, `success: false`, `is_valid_format: false`
+- [ ] **Sai độ dài**: nhập `123` rồi bấm **Parse**
+  - OK khi thấy: `Status: 400`, `success: false`, `is_valid_format: false`
+
+---
+
+## Trạng thái
+
+- **DoD**: ✅ Done
+- **Đã verify**: ✅ Done (đã test case thiếu `cccd` trả 400 + message)
+
+## Bước tiếp theo
+
+Chuyển sang `guide_step_04.md` (Xử lý CCCD / parse).
 
 
 

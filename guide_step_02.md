@@ -27,18 +27,18 @@ Chốt “hình dạng” API để tất cả hệ thống gọi đều **nhấ
 
 ## Tự test (Self-check)
 
-- [ ] Mở `requirement.md` và xác nhận có đủ:
+- [X] Mở `requirement.md` và xác nhận có đủ:
   - endpoint `POST /v1/cccd/parse`
   - request fields: `cccd`, `province_version`
   - response fields: `success`, `is_valid_format`, `data`, `message`
-- [ ] Chọn 1 chuẩn `gender` và đảm bảo toàn bộ doc dùng đúng 1 chuẩn đó
-- [ ] (Tuỳ chọn) dùng grep để rà nhanh:
+- [X] Chọn 1 chuẩn `gender` và đảm bảo toàn bộ doc dùng đúng 1 chuẩn đó
+- [X] (Tuỳ chọn) dùng grep để rà nhanh:
 
 ```bash
 git grep "/v1/cccd/parse"
 ```
 
-Nếu đã implement endpoint, có thể test nhanh:
+Nếu đã implement endpoint, có thể test **bằng web** (không cần PowerShell):
 
 1) Chạy server:
 
@@ -46,33 +46,34 @@ Nếu đã implement endpoint, có thể test nhanh:
 py .\run.py
 ```
 
-2) Test input sai (kỳ vọng 400):
+2) Mở trình duyệt:
 
-```powershell
-try {
-  Invoke-WebRequest -Method Post -Uri http://127.0.0.1:8000/v1/cccd/parse -ContentType "application/json" -Body "{}" -ErrorAction Stop
-} catch {
-  $_.Exception.Response.StatusCode.value__
-  $_.ErrorDetails.Message
-}
-```
+- `http://127.0.0.1:8000/demo`
 
-3) Test input đúng (kỳ vọng 200):
+3) Test 2 trường hợp và xem “OK” là gì:
 
-```powershell
-Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/v1/cccd/parse -ContentType "application/json" -Body "{\"cccd\":\"012345678901\"}"
-```
+- **Case A (đúng)**: nhập CCCD **đủ 12 số** (ví dụ `012345678901`) rồi bấm **Parse**
+  - Kết quả OK khi thấy:
+    - `Status: 200`
+    - JSON có `success: true`
+    - JSON có `is_valid_format: true`
+- **Case B (sai)**: nhập CCCD sai (ví dụ `123`) rồi bấm **Parse**
+  - Kết quả OK khi thấy:
+    - `Status: 400`
+    - JSON có `success: false`
+    - JSON có `is_valid_format: false`
 
 ---
 
 ## Trạng thái
 
 - **DoD**: ✅ Done
-- **Đã verify**: ✅ Done (đã test 400 cho input sai và 200 cho input đúng)
+- **Đã verify**: ✅ Done (đã test trên `/demo` với case đúng và case sai)
 
 ## Bước tiếp theo
 
 Chuyển sang `guide_step_03.md` (Validate đầu vào).
+
 
 
 
