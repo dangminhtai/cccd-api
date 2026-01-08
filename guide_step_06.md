@@ -18,27 +18,34 @@ API xử lý dữ liệu nhạy cảm nên cần “an toàn ngay từ đầu”
 
 ## Hoàn thành khi
 
-- [ ] Gọi thiếu/ sai API key bị từ chối (401/403 theo quy ước)
+- [ ] Gọi thiếu/ sai API key bị từ chối (401 theo quy ước hiện tại)
 - [ ] Spam request bị 429
-- [ ] Log không có CCCD đầy đủ
+- [ ] Log không có CCCD đầy đủ (chỉ log dạng mask)
 
 ## Tự test (Self-check)
 
-> Thực hiện được sau khi bạn đã bật auth/rate limit cho endpoint `POST /v1/cccd/parse`.
+> Thực hiện được sau khi bật auth/rate limit cho `POST /v1/cccd/parse`. Nếu `API_KEY` để trống thì API không yêu cầu key.
 
-- [ ] Test thiếu API key (kỳ vọng 401/403):
+- [ ] Test thiếu API key (kỳ vọng 401 nếu đã cấu hình `API_KEY`):
 
 ```powershell
-Invoke-WebRequest -Method Post -Uri http://127.0.0.1:8000/v1/cccd/parse -ContentType "application/json" -Body "{\"cccd\":\"012345678901\"}" -SkipHttpErrorCheck
+try {
+  Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/v1/cccd/parse `
+    -ContentType "application/json" `
+    -Body '{"cccd":"012345678901"}'
+} catch { $_.Exception.Response.StatusCode.Value__ }
 ```
 
 - [ ] Test có API key (thay `YOUR_KEY`):
 
 ```powershell
-Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/v1/cccd/parse -Headers @{ "X-API-Key"="YOUR_KEY" } -ContentType "application/json" -Body "{\"cccd\":\"012345678901\"}"
+Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/v1/cccd/parse `
+  -Headers @{ "X-API-Key"="YOUR_KEY" } `
+  -ContentType "application/json" `
+  -Body '{"cccd":"012345678901"}'
 ```
 
-- [ ] Test rate limit (spam nhanh) và xác nhận có lúc nhận 429.
+- [ ] Test rate limit: gửi nhanh 20–30 request; kỳ vọng có lúc nhận 429.
 
 
 

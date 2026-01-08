@@ -6,8 +6,16 @@ from flask import Blueprint, current_app, jsonify, render_template, request
 
 from services.cccd_parser import parse_cccd
 from services.province_mapping import ProvinceVersion, map_province_name
+from app import limiter
 
 cccd_bp = Blueprint("cccd", __name__)
+
+
+def _mask_cccd(cccd: str) -> str:
+    if len(cccd) <= 4:
+        return "*" * len(cccd)
+    return f"{cccd[:3]}******{cccd[-3:]}"
+
 
 @cccd_bp.get("/demo")
 def demo():
@@ -15,10 +23,29 @@ def demo():
 
 
 @cccd_bp.post("/v1/cccd/parse")
+@limiter.limit("30 per minute")
 def cccd_parse():
     payload = request.get_json(silent=True) or {}
     cccd = payload.get("cccd")
     province_version = payload.get("province_version")
+
+    # API Key check (if configured)
+    settings = current_app.config.get("SETTINGS")
+    required_api_key = getattr(settings, "api_key", None)
+    if required_api_key:
+        provided_api_key = request.headers.get("X-API-Key")
+        if provided_api_key != required_api_key:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "is_valid_format": False,
+                        "data": None,
+                        "message": "API key không hợp lệ hoặc thiếu.",
+                    }
+                ),
+                401,
+            )
 
     # Basic validate (align with requirement.md)
     if cccd is None:
@@ -62,6 +89,7 @@ def cccd_parse():
         )
 
     data = parse_cccd(cccd)
+    masked = _mask_cccd(cccd)
 
     warnings: list[str] = []
     is_plausible = True
@@ -113,6 +141,15 @@ def cccd_parse():
     if isinstance(birth_year, int) and birth_year > date.today().year:
         warnings.append("birth_year_in_future")
         is_plausible = False
+
+    current_app.logger.info(
+        "cccd_parsed",
+        extra={
+            "cccd_masked": masked,
+            "province_version": version,
+            "warnings": warnings,
+        },
+    )
 
     return (
         jsonify(
