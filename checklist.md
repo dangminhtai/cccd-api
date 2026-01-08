@@ -104,4 +104,19 @@ git push
 - [ ] Thiết lập log tập trung/monitoring (tối thiểu: log file + rotate).
 - [ ] Thiết lập alert cơ bản (tăng 5xx, tăng 429 bất thường).
 
+---
+
+# BONUS (Tính năng nâng cao)
+
+## Bonus A) Hệ thống API Key theo Tier (bán gói)
+
+> Xem chi tiết: `guide_bonus_api_key_tiers.md`
+
+- [ ] Thiết kế database lưu API key (JSON/SQLite/PostgreSQL)
+- [ ] Script tạo key hàng loạt theo tier (free/premium/ultra)
+- [ ] Rate limit động theo tier
+- [ ] Admin API quản lý key (list, deactivate)
+- [ ] Usage tracking để tính tiền
+- [ ] (Production) Tích hợp Stripe/PayPal
+
 
