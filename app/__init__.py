@@ -1,4 +1,7 @@
-from flask import Flask, jsonify, request
+import traceback
+import uuid
+
+from flask import Flask, g, jsonify, request
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
@@ -23,9 +26,15 @@ def create_app() -> Flask:
 
     limiter.init_app(app)
 
+    # Generate request_id for each request (for tracing)
+    @app.before_request
+    def assign_request_id():
+        g.request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())[:8]
+
     # Custom 429 handler to return JSON instead of HTML
     @app.errorhandler(429)
     def ratelimit_handler(e):
+        app.logger.warning(f"rate_limited | request_id={g.get('request_id', '-')} | {e.description}")
         return (
             jsonify(
                 {
@@ -36,6 +45,42 @@ def create_app() -> Flask:
                 }
             ),
             429,
+        )
+
+    # Custom 500 handler: generic message to client, stacktrace only in log
+    @app.errorhandler(500)
+    def internal_error_handler(e):
+        req_id = g.get("request_id", "-")
+        app.logger.error(f"internal_error | request_id={req_id}\n{traceback.format_exc()}")
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "is_valid_format": False,
+                    "data": None,
+                    "message": "Lỗi hệ thống. Vui lòng thử lại sau.",
+                    "request_id": req_id,
+                }
+            ),
+            500,
+        )
+
+    # Catch-all for unhandled exceptions
+    @app.errorhandler(Exception)
+    def unhandled_exception_handler(e):
+        req_id = g.get("request_id", "-")
+        app.logger.error(f"unhandled_exception | request_id={req_id} | {type(e).__name__}: {e}\n{traceback.format_exc()}")
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "is_valid_format": False,
+                    "data": None,
+                    "message": "Lỗi hệ thống. Vui lòng thử lại sau.",
+                    "request_id": req_id,
+                }
+            ),
+            500,
         )
 
     # Routes

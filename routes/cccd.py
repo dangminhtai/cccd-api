@@ -2,13 +2,17 @@ from __future__ import annotations
 
 from datetime import date
 
-from flask import Blueprint, current_app, jsonify, render_template, request
+from flask import Blueprint, current_app, g, jsonify, render_template, request
 
 from services.cccd_parser import parse_cccd
 from services.province_mapping import ProvinceVersion, map_province_name
 from app import limiter
 
 cccd_bp = Blueprint("cccd", __name__)
+
+
+def _get_request_id() -> str:
+    return g.get("request_id", "-")
 
 
 def _mask_cccd(cccd: str) -> str:
@@ -42,6 +46,9 @@ def cccd_parse():
     if required_api_key:
         provided_api_key = request.headers.get("X-API-Key")
         if provided_api_key != required_api_key:
+            current_app.logger.warning(
+                f"auth_failed | request_id={_get_request_id()} | reason=invalid_or_missing_api_key"
+            )
             return (
                 jsonify(
                     {
@@ -56,6 +63,7 @@ def cccd_parse():
 
     # Basic validate (align with requirement.md)
     if cccd is None:
+        current_app.logger.warning(f"validation_failed | request_id={_get_request_id()} | reason=missing_cccd")
         return (
             jsonify(
                 {
@@ -69,6 +77,7 @@ def cccd_parse():
         )
 
     if not isinstance(cccd, str):
+        current_app.logger.warning(f"validation_failed | request_id={_get_request_id()} | reason=cccd_not_string")
         return (
             jsonify(
                 {
@@ -83,6 +92,9 @@ def cccd_parse():
 
     cccd = cccd.strip()
     if (not cccd.isdigit()) or (len(cccd) != 12):
+        current_app.logger.warning(
+            f"validation_failed | request_id={_get_request_id()} | reason=invalid_cccd_format | length={len(cccd)}"
+        )
         return (
             jsonify(
                 {
@@ -124,6 +136,9 @@ def cccd_parse():
         version = "current_34"
         warnings.append("province_version_alias_current_63")
     else:
+        current_app.logger.warning(
+            f"validation_failed | request_id={_get_request_id()} | reason=invalid_province_version | value={province_version}"
+        )
         return (
             jsonify(
                 {
@@ -150,7 +165,7 @@ def cccd_parse():
         is_plausible = False
 
     current_app.logger.info(
-        f"cccd_parsed | cccd_masked={masked} | province_version={version} | warnings={warnings}"
+        f"cccd_parsed | request_id={_get_request_id()} | cccd_masked={masked} | province_version={version} | warnings={warnings}"
     )
 
     return (
