@@ -10,6 +10,8 @@ class TestCCCDParser(unittest.TestCase):
         self.assertEqual(parse_gender_century("0000").century, 20)
         self.assertEqual(parse_gender_century("0001").gender, "Nữ")
         self.assertEqual(parse_gender_century("0002").century, 21)
+        self.assertEqual(parse_gender_century("0008").gender, "Nam")
+        self.assertEqual(parse_gender_century("0008").century, 24)
 
     def test_parse_cccd_basic(self):
         # province 079, gender code 2 (Nam/2000s => century 21), yy=03 -> 2003

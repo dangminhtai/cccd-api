@@ -18,8 +18,8 @@ _GENDER_CENTURY_MAP: dict[int, GenderCentury] = {
     5: GenderCentury(gender="Nữ", century=22),
     6: GenderCentury(gender="Nam", century=23),  # 2200-2299
     7: GenderCentury(gender="Nữ", century=23),
-    8: GenderCentury(gender="Nam", century=19),  # 1800-1899
-    9: GenderCentury(gender="Nữ", century=19),
+    8: GenderCentury(gender="Nam", century=24),  # 2300-2399
+    9: GenderCentury(gender="Nữ", century=24),
 }
 
 

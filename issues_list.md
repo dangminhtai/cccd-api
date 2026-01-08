@@ -94,4 +94,18 @@
   - đặt template trong `app/templates/` khi app nằm trong package `app/`, hoặc
   - nếu muốn template ở root thì phải cấu hình `template_folder` khi tạo Flask app.
 
+---
+
+## 11) Sai mapping mã giới tính/thế kỷ cho digit 8/9 (theo tài liệu CCCD)
+
+- **Hiện tượng**: digit 8/9 bị map sai thế kỷ (dẫn tới `century` và `birth_year` sai).
+- **Nguyên nhân**: mình nhầm quy ước; theo tài liệu bạn đưa:
+  - 0/1: thế kỷ 20 (1900–1999)
+  - 2/3: thế kỷ 21 (2000–2099)
+  - 4/5: thế kỷ 22 (2100–2199)
+  - 6/7: thế kỷ 23 (2200–2299)
+  - 8/9: thế kỷ 24 (2300–2399)
+- **Cách xử lý**: cập nhật map 8/9 → century=24 và bổ sung unit test.
+- **Cách tránh lần sau**: luôn đối chiếu với bảng quy ước và có test cho tất cả digit 0–9.
+
 
