@@ -50,11 +50,12 @@ def create_app() -> Flask:
             429,
         )
 
-    # Custom 500 handler: generic message to client, stacktrace only in log
+    # Custom 500 handler: generic message to client, concise log
     @app.errorhandler(500)
     def internal_error_handler(e):
         req_id = g.get("request_id", "-")
-        app.logger.error(f"internal_error | request_id={req_id}\n{traceback.format_exc()}")
+        # Concise log: only error type and message, no full stacktrace
+        app.logger.error(f"internal_error | request_id={req_id} | {type(e).__name__}: {e}")
         return (
             jsonify(
                 {
@@ -76,7 +77,10 @@ def create_app() -> Flask:
         if isinstance(e, HTTPException):
             return e
         req_id = g.get("request_id", "-")
-        app.logger.error(f"unhandled_exception | request_id={req_id} | {type(e).__name__}: {e}\n{traceback.format_exc()}")
+        # Concise log: type, message, and location (last frame)
+        tb_lines = traceback.format_exc().strip().split("\n")
+        location = tb_lines[-2].strip() if len(tb_lines) >= 2 else "-"
+        app.logger.error(f"unhandled_exception | request_id={req_id} | {type(e).__name__}: {e} | at: {location}")
         return (
             jsonify(
                 {
