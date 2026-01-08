@@ -6,9 +6,15 @@ from __future__ import annotations
 
 import os
 
-from flask import Blueprint, g, jsonify, request
+from flask import Blueprint, g, jsonify, render_template, request
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
+
+
+@admin_bp.get("/")
+def admin_dashboard():
+    """Trang admin dashboard"""
+    return render_template("admin.html")
 
 
 def _get_request_id() -> str:

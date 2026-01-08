@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Admin Dashboard - CCCD API</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; background: #f5f5f5; }
+      .container { max-width: 1200px; margin: 0 auto; background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+      h1 { margin-top: 0; color: #333; }
+      .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin: 24px 0; }
+      .stat-card { background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #0b57d0; }
+      .stat-card h3 { margin: 0 0 8px; font-size: 14px; color: #666; text-transform: uppercase; }
+      .stat-card .value { font-size: 32px; font-weight: 600; color: #333; }
+      .tier-stats { margin-top: 24px; }
+      .tier-stats table { width: 100%; border-collapse: collapse; }
+      .tier-stats th, .tier-stats td { padding: 12px; text-align: left; border-bottom: 1px solid #e0e0e0; }
+      .tier-stats th { background: #f8f9fa; font-weight: 600; }
+      .tier-stats tr:hover { background: #f8f9fa; }
+      .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+      .badge-free { background: #e3f2fd; color: #1976d2; }
+      .badge-premium { background: #fff3e0; color: #f57c00; }
+      .badge-ultra { background: #f3e5f5; color: #7b1fa2; }
+      .error { color: #d32f2f; background: #ffebee; padding: 12px; border-radius: 8px; margin: 16px 0; }
+      .loading { text-align: center; padding: 40px; color: #666; }
+      button { padding: 10px 16px; border: 0; border-radius: 8px; background: #0b57d0; color: white; cursor: pointer; font-size: 14px; }
+      button:hover { background: #0a4fb8; }
+      button:disabled { opacity: 0.6; cursor: not-allowed; }
+      input { padding: 10px; border: 1px solid #ccc; border-radius: 8px; min-width: 300px; }
+      .form-group { margin: 16px 0; }
+      label { display: block; margin-bottom: 6px; font-size: 14px; color: #555; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🔐 Admin Dashboard</h1>
+
+      <div class="form-group">
+        <label>Admin Secret Key</label>
+        <input id="adminKey" type="password" placeholder="Nhập ADMIN_SECRET từ .env" />
+        <button onclick="loadStats()">Tải thống kê</button>
+      </div>
+
+      <div id="error" class="error" style="display:none;"></div>
+      <div id="loading" class="loading" style="display:none;">Đang tải...</div>
+
+      <div id="stats" style="display:none;">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <h3>Requests hôm nay</h3>
+            <div class="value" id="requestsToday">0</div>
+          </div>
+        </div>
+
+        <div class="tier-stats">
+          <h2>Tổng quan theo Tier</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Tier</th>
+                <th>Tổng Keys</th>
+                <th>Keys đang hoạt động</th>
+              </tr>
+            </thead>
+            <tbody id="tierTableBody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function showError(msg) {
+        document.getElementById("error").textContent = msg;
+        document.getElementById("error").style.display = "block";
+        document.getElementById("stats").style.display = "none";
+      }
+
+      function hideError() {
+        document.getElementById("error").style.display = "none";
+      }
+
+      async function loadStats() {
+        const adminKey = document.getElementById("adminKey").value.trim();
+        if (!adminKey) {
+          showError("Vui lòng nhập Admin Secret Key");
+          return;
+        }
+
+        document.getElementById("loading").style.display = "block";
+        document.getElementById("stats").style.display = "none";
+        hideError();
+
+        try {
+          const resp = await fetch("/admin/stats", {
+            headers: { "X-Admin-Key": adminKey }
+          });
+
+          if (!resp.ok) {
+            const data = await resp.json();
+            throw new Error(data.error || `HTTP ${resp.status}`);
+          }
+
+          const data = await resp.json();
+
+          // Update requests today
+          document.getElementById("requestsToday").textContent = data.requests_today || 0;
+
+          // Update tier stats
+          const tbody = document.getElementById("tierTableBody");
+          tbody.innerHTML = "";
+
+          const tiers = data.tiers || {};
+          const tierOrder = ["free", "premium", "ultra"];
+          const tierLabels = { free: "Free", premium: "Premium", ultra: "Ultra" };
+
+          tierOrder.forEach(tier => {
+            if (tiers[tier]) {
+              const row = document.createElement("tr");
+              row.innerHTML = `
+                <td><span class="badge badge-${tier}">${tierLabels[tier]}</span></td>
+                <td>${tiers[tier].total || 0}</td>
+                <td>${tiers[tier].active || 0}</td>
+              `;
+              tbody.appendChild(row);
+            }
+          });
+
+          document.getElementById("loading").style.display = "none";
+          document.getElementById("stats").style.display = "block";
+        } catch (e) {
+          document.getElementById("loading").style.display = "none";
+          showError("Lỗi: " + e.message);
+        }
+      }
+
+      // Enter key to load
+      document.getElementById("adminKey").addEventListener("keypress", (e) => {
+        if (e.key === "Enter") loadStats();
+      });
+    </script>
+  </body>
+</html>
+

@@ -146,40 +146,25 @@ python scripts/generate_keys.py --tier ultra --count 5 --email vip@company.com
 
 ---
 
-### H. Sử dụng Admin API
+### H. Sử dụng Admin Dashboard
 
-- [X] Biết cách tạo key qua API
-- [ ] Biết cách xem thống kê
-- [ ] Biết cách vô hiệu hóa key
+- [ ] Biết cách xem thống kê trên web
+- [ ] Biết cách tạo key qua API (nếu cần tự động hoá)
 
-**Tạo key qua API:**
+**Xem thống kê trên web (dễ nhất):**
+
+1. Mở trình duyệt: `http://127.0.0.1:8000/admin/`
+2. Nhập Admin Secret Key (từ `.env`, biến `ADMIN_SECRET`)
+3. Bấm "Tải thống kê"
+4. Xem:
+   - Requests hôm nay
+   - Tổng số keys theo tier (free/premium/ultra)
+   - Số keys đang hoạt động
+
+**Tạo key qua API (nếu cần tự động hoá):**
 
 ```powershell
 Invoke-RestMethod -Uri "http://127.0.0.1:8000/admin/keys/create" -Method POST -ContentType "application/json" -Headers @{"X-Admin-Key"="your-admin-secret"} -Body '{"tier": "premium", "email": "customer@example.com", "days": 30}' | ConvertTo-Json -Depth 3
-```
-
-**Xem thống kê:**
-
-```powershell
-# PowerShell tự format JSON thành table → dùng ConvertTo-Json để xem raw
-Invoke-RestMethod -Uri "http://127.0.0.1:8000/admin/stats" -Headers @{"X-Admin-Key"="your-admin-secret"} | ConvertTo-Json -Depth 5
-```
-
-Output mẫu:
-```json
-{
-  "tiers": {
-    "free": {
-      "total": 5,
-      "active": 4
-    },
-    "premium": {
-      "total": 2,
-      "active": 2
-    }
-  },
-  "requests_today": 122
-}
 ```
 
 **Vô hiệu hóa key:**
@@ -221,6 +206,15 @@ Invoke-RestMethod -Uri "http://127.0.0.1:8000/admin/keys/free_abc123/deactivate"
 | `python scripts/generate_keys.py --tier premium --email x@y.com` | Tạo `prem_xxx` |
 | `python scripts/generate_keys.py --tier ultra --email x@y.com` | Tạo `ultr_xxx` |
 
+### Test Admin Dashboard
+
+| Bước | Hành động | Kỳ vọng |
+|------|-----------|---------|
+| 1 | Mở `http://127.0.0.1:8000/admin/` | Trang admin hiển thị |
+| 2 | Nhập Admin Secret Key (từ .env) | Input nhận được |
+| 3 | Bấm "Tải thống kê" | Thấy stats: requests_today, tiers table |
+| 4 | Nhập sai Admin Key | **403** - Unauthorized |
+
 ### Verify trong MySQL
 
 ```sql
@@ -239,7 +233,7 @@ SELECT key_prefix, tier, owner_email, active FROM api_keys;
 | Tạo key script | `python scripts/generate_keys.py --tier free --email x@y.com` | |
 | API với key | `/demo` + key → 200 | |
 | API không key | `/demo` không key → 401 | |
-| Admin API | `/admin/stats` → JSON stats | |
+| Admin Dashboard | `/admin/` → nhập key → thấy stats | |
 
 ---
 
