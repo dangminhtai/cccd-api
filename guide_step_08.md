@@ -24,31 +24,57 @@
 
 ## Tự test (Self-check)
 
-### Chạy tất cả tests
+Mở `/demo` trên trình duyệt và test từng trường hợp sau:
+
+### 1. Test Validation (input không hợp lệ)
+
+| Nhập vào ô CCCD | Kỳ vọng |
+|-----------------|---------|
+| *(để trống)* | **400** - "Thiếu trường cccd" |
+| `123` | **400** - "CCCD không hợp lệ" |
+| `12345678901234567890` | **400** - (quá dài, bị reject) |
+| `07920301234a` | **400** - (có chữ) |
+| `079203012345` | **200** - success=true ✅ |
+
+### 2. Test API Key (nếu đã bật trong .env)
+
+| API Key nhập | Kỳ vọng |
+|--------------|---------|
+| *(để trống)* | **401** - "API key không hợp lệ" |
+| `wrongkey` | **401** |
+| *(đúng key)* | **200** ✅ |
+
+### 3. Test Parse đúng
+
+Nhập `079203012345` (CCCD hợp lệ):
+
+| Field | Kỳ vọng |
+|-------|---------|
+| `province_code` | `079` |
+| `gender` | `Nam` |
+| `birth_year` | `2003` |
+| `century` | `21` |
+| `province_name` | `Hồ Chí Minh` (nếu legacy_63) |
+
+### 4. Test Province Version
+
+| Chọn dropdown | Kỳ vọng |
+|---------------|---------|
+| `legacy_63` | `province_version: "legacy_63"` |
+| `current_34` | `province_version: "current_34"` |
+
+### 5. Test Plausibility (năm sinh tương lai)
+
+Nhập `052399012345` (năm sinh 2099):
+- `is_plausible: false`
+- `warnings` có `birth_year_in_future`
+
+### 6. (Bonus) Chạy automated tests
 
 ```bash
 python -m pytest tests/ -v
 ```
-
 Kỳ vọng: **18 passed**
-
-### Danh sách test hiện có
-
-| File | Test cases |
-|------|------------|
-| `test_validation.py` | missing_cccd, cccd_not_string, cccd_with_letters, wrong_length_short, wrong_length_long, cccd_extremely_long, cccd_valid, invalid_province_version (8) |
-| `test_api_key.py` | missing_api_key_401, wrong_api_key_401, correct_api_key_200, no_api_key_allows_access (4) |
-| `test_cccd_parser.py` | parse_gender_century, parse_cccd_basic (2) |
-| `test_province_mapping.py` | province_name_resolved, province_code_not_found_warning, backward_compat_legacy_64_maps_to_legacy_63 (3) |
-| `test_plausibility.py` | birth_year_in_future_flagged (1) |
-
-### Test phát hiện sai lệch
-
-1. Mở `data/provinces_legacy_63.json`
-2. Đổi `"079": "Hồ Chí Minh"` thành `"079": "Test City"`
-3. Chạy `python -m pytest tests/test_province_mapping.py -v`
-4. Sẽ thấy test **FAIL** vì province_name không còn khớp
-5. Đổi lại `"079": "Hồ Chí Minh"` → test pass
 
 ---
 
