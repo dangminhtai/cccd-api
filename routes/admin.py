@@ -23,7 +23,11 @@ def _get_request_id() -> str:
 
 @admin_bp.before_request
 def check_admin_auth():
-    """Kiểm tra Admin key trước mọi request"""
+    """Kiểm tra Admin key trước mọi request (trừ GET /admin/ để hiển thị HTML)"""
+    # Không check auth cho route GET /admin/ (hiển thị HTML)
+    if request.method == "GET" and request.endpoint == "admin.admin_dashboard":
+        return None
+    
     admin_secret = os.getenv("ADMIN_SECRET")
     if not admin_secret:
         return jsonify({"error": "Admin API chưa được cấu hình (ADMIN_SECRET)"}), 503
