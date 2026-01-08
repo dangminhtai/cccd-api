@@ -74,3 +74,42 @@
 
 ## 8) Hướng dẫn người dùng tự test ở mỗi bước ở mỗi guide_step_xx.md
 
+ - Mỗi `guide_step_xx.md` nên có mục **“Tự test (Self-check)”** ở cuối file.
+ - Nếu step chưa có code thì “tự test” là:
+   - review doc theo checklist
+   - grep các chuỗi quan trọng (endpoint/field) để đảm bảo thống nhất
+ - Nếu step đã có code thì “tự test” là:
+   - chạy server
+   - gọi endpoint
+   - hoặc chạy pytest
+
+---
+
+## 9) Tránh dùng `git status` nếu không cần (theo yêu cầu tối giản)
+
+- Khi user muốn làm nhanh, **không chạy `git status` chỉ để “xem cho chắc”** nếu không được yêu cầu.
+- Thay vào đó, có thể đi thẳng:
+  - `git add -A`
+  - `git commit -m "..."`
+  - `git push`
+- Chỉ dùng `git status` khi:
+  - cần debug staging (quên add file / add nhầm file)
+  - hoặc user yêu cầu kiểm tra trạng thái
+
+## 10) Trong quá trình prompt nếu có lỗi nào thì hãy ghi nó vào issues_list.md để sau này không sai lại lỗi đó
+
+---
+
+## 11) Ưu tiên “test tối giản” bằng web local (ít command line nhất)
+
+- Mục tiêu của self-test là để **người không rành terminal vẫn test được**.
+- Quy ước khuyến nghị:
+  - luôn có trang demo web: `GET /demo`
+  - trang demo gọi API thật: `POST /v1/cccd/parse`
+  - hiển thị rõ 2 thứ: **HTTP Status** và **JSON response**
+- Tiêu chí “OK” nên viết ngắn gọn ngay trên trang demo và trong guide:
+  - Case đúng (CCCD 12 số): Status **200**, `success=true`, `is_valid_format=true`
+  - Case sai (CCCD sai độ dài/ký tự): Status **400**, `success=false`, `is_valid_format=false`
+- Chỉ dùng PowerShell/curl khi:
+  - debug sâu (headers/auth/rate limit), hoặc
+  - tự động hoá test (pytest/CI)
