@@ -178,6 +178,25 @@
         if (e.key === "Enter") loadStats();
       });
 
+      // Chỉ cho phép nhập số 0-9 vào ô "Số ngày"
+      document.getElementById("createDays").addEventListener("keypress", (e) => {
+        // Cho phép: số 0-9, Backspace, Delete, Arrow keys, Tab
+        const allowed = /[0-9]|Backspace|Delete|ArrowLeft|ArrowRight|Tab/;
+        if (!allowed.test(e.key)) {
+          e.preventDefault();
+        }
+      });
+
+      // Ngăn paste text không phải số
+      document.getElementById("createDays").addEventListener("paste", (e) => {
+        e.preventDefault();
+        const paste = (e.clipboardData || window.clipboardData).getData("text");
+        const numbersOnly = paste.replace(/[^0-9]/g, "");
+        if (numbersOnly) {
+          e.target.value = numbersOnly;
+        }
+      });
+
       async function createKey() {
         const adminKey = document.getElementById("adminKey").value.trim();
         const tier = document.getElementById("createTier").value;
