@@ -246,33 +246,64 @@ Invoke-RestMethod -Uri "http://127.0.0.1:8000/admin/keys/free_abc123/deactivate"
 
 **Cách test Free tier (10 req/phút):**
 
-1. Tạo key free: `/admin/` → Tạo key free cho `test@example.com`
-2. Copy key (ví dụ: `free_abc123...`)
+1. **Tạo key free thật**: `/admin/` → Tạo key free cho `test@example.com`
+2. **Copy key thật** (ví dụ: `free_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6`)
 3. Mở PowerShell, chạy script:
 
 ```powershell
-$key = "free_abc123..."  # Thay bằng key thật
+# QUAN TRỌNG: Thay bằng KEY THẬT vừa tạo từ /admin/
+$key = "free_a1b2c3XXXXXXXXXXXXXXXXXXXXXXXX"
+
+Write-Host "Testing rate limit với key free (10 req/phút)..."
+$successCount = 0
+$rateLimited = $false
+
 for ($i=1; $i -le 11; $i++) {
     Write-Host "Request $i"
     try {
         $resp = Invoke-RestMethod -Uri "http://127.0.0.1:8000/v1/cccd/parse" -Method POST -ContentType "application/json" -Headers @{"X-API-Key"=$key} -Body '{"cccd": "079203012345"}'
-        Write-Host "  Status: 200 OK"
+        Write-Host "  ✅ Status: 200 OK"
+        $successCount++
     } catch {
-        Write-Host "  Status: $($_.Exception.Response.StatusCode.value__)"
-        if ($_.Exception.Response.StatusCode.value__ -eq 429) {
-            Write-Host "  ✅ Rate limit hoạt động đúng!"
+        $statusCode = $_.Exception.Response.StatusCode.value__
+        Write-Host "  Status: $statusCode"
+        
+        if ($statusCode -eq 401) {
+            Write-Host "  ❌ Key không hợp lệ! Hãy dùng KEY THẬT từ /admin/"
+            break
+        }
+        if ($statusCode -eq 429) {
+            Write-Host "  ✅ Rate limit hoạt động đúng! (Đã đạt giới hạn)"
+            $rateLimited = $true
             break
         }
     }
     Start-Sleep -Milliseconds 100
 }
+
+Write-Host "`nKết quả:"
+Write-Host "  - Successful requests: $successCount"
+if ($rateLimited) {
+    Write-Host "  - ✅ Rate limit: PASS (429 ở request $($successCount+1))"
+} else {
+    Write-Host "  - ⚠️ Chưa thấy rate limit (có thể cần test nhiều hơn)"
+}
 ```
 
-4. Kỳ vọng: Request 1-10 → 200, Request 11 → **429**
+4. **Kỳ vọng:**
+   - Request 1-10 → **200 OK**
+   - Request 11 → **429** "Quá nhiều request"
+   - Nếu thấy **401** → Key không hợp lệ, hãy tạo key mới từ `/admin/`
 
 **Cách test Premium tier (100 req/phút):**
 
 Tương tự, nhưng tạo key premium và test 101 requests.
+
+**⚠️ Lưu ý:**
+
+- Phải dùng **KEY THẬT** từ `/admin/` để test rate limit
+- Key giả/sai sẽ trả **401** và vẫn bị đếm vào rate limit (để chống brute force)
+- Rate limit chỉ đúng khi test với key hợp lệ → request thành công (200)
 
 ### Test Email Validation
 

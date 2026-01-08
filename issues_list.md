@@ -181,4 +181,19 @@
   - Giải thích tại sao cần (PowerShell tự format)
   - Hoặc dùng `Invoke-WebRequest` + parse JSON thủ công
 
+---
+
+## 19) Rate limit đếm cả failed requests (401) → test rate limit sai
+
+- **Hiện tượng**: Test rate limit với key giả → Request 1-10 trả 401, Request 11 trả 429. User nghĩ rate limit đếm cả 401.
+- **Nguyên nhân**: Flask-Limiter đếm theo `key_func` (key string), không phân biệt response code. Key sai vẫn bị đếm vào rate limit (để chống brute force).
+- **Cách xử lý**: Hướng dẫn rõ trong guide:
+  - Phải dùng **KEY THẬT** từ `/admin/` để test rate limit
+  - Key giả/sai sẽ trả 401 và vẫn bị đếm
+  - Rate limit chỉ đúng khi test với key hợp lệ → request thành công (200)
+- **Cách tránh lần sau**: Khi viết hướng dẫn test rate limit, luôn:
+  - Nhấn mạnh phải dùng key hợp lệ
+  - Cung cấp script test với key thật
+  - Giải thích tại sao key sai vẫn bị đếm (security feature)
+
 
