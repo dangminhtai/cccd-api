@@ -113,3 +113,18 @@
 - Chỉ dùng PowerShell/curl khi:
   - debug sâu (headers/auth/rate limit), hoặc
   - tự động hoá test (pytest/CI)
+
+---
+
+## 12) Tránh lặp lại việc chạy `run.py` / kill process theo port nếu user đã tự test được
+
+- Nếu user đã có thể tự chạy và tự test bằng `/demo` rồi thì:
+  - **không cần** agent phải start/stop server lại sau mỗi step
+  - **không cần** kill process theo port (tránh làm gián đoạn các process khác của user)
+- Chỉ chạy smoke test khi:
+  - user yêu cầu “hãy test giúp”
+  - hoặc cần debug lỗi thật sự
+  - hoặc có thay đổi lớn ở routing/template khiến dễ gãy
+- Khi cần hướng dẫn dừng server:
+  - ưu tiên “Ctrl + C” ở terminal đang chạy `run.py`
+  - tránh các lệnh kill theo port trừ khi bị kẹt (port bị chiếm)
