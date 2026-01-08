@@ -20,8 +20,12 @@ if __name__ == "__main__":
         except Exception:
             pass
 
-    # In debug mode, Flask reloader starts the app twice; only open browser in the reloader child.
-    if os.getenv("WERKZEUG_RUN_MAIN") == "true" or os.getenv("FLASK_ENV") != "development":
+    # In debug mode, Flask reloader starts the app twice.
+    # Only open browser in the reloader child; in non-debug mode open once.
+    is_reloader_child = os.getenv("WERKZEUG_RUN_MAIN", "").lower() == "true"
+    is_debug_env = os.getenv("FLASK_ENV") == "development" or os.getenv("FLASK_DEBUG") == "1"
+
+    if (is_debug_env and is_reloader_child) or (not is_debug_env and not is_reloader_child):
         threading.Timer(0.8, open_demo).start()
 
     app.run(host="0.0.0.0", port=port, debug=True)
