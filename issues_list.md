@@ -108,4 +108,13 @@
 - **Cách xử lý**: cập nhật map 8/9 → century=24 và bổ sung unit test.
 - **Cách tránh lần sau**: luôn đối chiếu với bảng quy ước và có test cho tất cả digit 0–9.
 
+---
+
+## 12) Demo page không hiển thị trạng thái "API Key bật/tắt" gây khó test
+
+- **Hiện tượng**: người dùng test bước 6 (Security) mà status luôn 200, không biết tại sao.
+- **Nguyên nhân**: mặc định `.env` chưa cấu hình `API_KEY`, nên server không yêu cầu key → luôn 200; nhưng trang `/demo` không nói rõ điều này.
+- **Cách xử lý**: hiển thị trạng thái "🔐 API Key đang BẬT" (kèm key cần nhập) hoặc "🔓 API Key đang TẮT" (kèm hướng dẫn bật) ngay trên `/demo`.
+- **Cách tránh lần sau**: khi viết demo page cho feature có cấu hình on/off, luôn hiển thị trạng thái hiện tại để người test biết phải làm gì.
+
 

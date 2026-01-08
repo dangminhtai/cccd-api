@@ -45,11 +45,34 @@
       <button id="btn">Parse</button>
     </div>
 
+    <!-- Security status -->
+    <div style="margin-top:16px; padding:12px; border-radius:8px; background: {% if api_key_required %}#e8f5e9{% else %}#fff3e0{% endif %};">
+      {% if api_key_required %}
+        <strong style="color:#2e7d32;">🔐 API Key đang BẬT</strong>
+        <p style="margin:6px 0 0; font-size:13px; color:#555;">
+          Server yêu cầu API key. Key hiện tại: <code>{{ configured_key }}</code><br>
+          ▸ Để trống ô "API Key" → <span class="bad">401</span><br>
+          ▸ Nhập sai key → <span class="bad">401</span><br>
+          ▸ Nhập đúng key → <span class="ok">200</span>
+        </p>
+      {% else %}
+        <strong style="color:#e65100;">🔓 API Key đang TẮT</strong>
+        <p style="margin:6px 0 0; font-size:13px; color:#555;">
+          Server chưa yêu cầu API key (mọi request đều được chấp nhận).<br>
+          <b>Để test tính năng API Key:</b><br>
+          1. Mở file <code>.env</code><br>
+          2. Đặt <code>API_KEY=mysecretkey123</code> (hoặc bất kỳ giá trị nào)<br>
+          3. Restart server (<code>Ctrl+C</code> rồi <code>py run.py</code>)<br>
+          4. Quay lại trang này và test lại.
+        </p>
+      {% endif %}
+    </div>
+
     <div style="margin-top:16px" class="hint">
       Kỳ vọng:
       <ul>
         <li>Nhập CCCD đúng 12 số → <span class="ok">HTTP 200</span>, <code>success=true</code>, <code>is_valid_format=true</code></li>
-        <li>Nhập CCCD sai (ví dụ “123”) → <span class="bad">HTTP 400</span>, <code>success=false</code>, <code>is_valid_format=false</code></li>
+        <li>Nhập CCCD sai (ví dụ "123") → <span class="bad">HTTP 400</span>, <code>success=false</code>, <code>is_valid_format=false</code></li>
         <li>Nhập CCCD đúng format nhưng năm sinh ở tương lai (ví dụ 2099) → <span class="ok">HTTP 200</span>, <code>is_plausible=false</code>, <code>warnings</code> có <code>birth_year_in_future</code></li>
         <li>Nếu <code>province_code</code> không có trong mapping → <code>province_name=null</code> và <code>warnings</code> có <code>province_code_not_found</code></li>
       </ul>

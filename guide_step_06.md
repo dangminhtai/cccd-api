@@ -24,17 +24,36 @@ API xử lý dữ liệu nhạy cảm nên cần “an toàn ngay từ đầu”
 
 ## Tự test (Self-check)
 
-Test ngay trên web `/demo` (không cần lệnh terminal):
+Test ngay trên web `/demo` (không cần lệnh terminal).
 
-1) Mở `http://127.0.0.1:8000/demo`
-2) Nếu bạn đã đặt `API_KEY` trong `.env`, nhập nó vào ô “API Key”; nếu chưa đặt, để trống.
-3) Bấm **Parse**:
-   - Thiếu/ sai API key (khi có cấu hình) → thấy status 401.
-   - Đúng API key → status 200, có dữ liệu parse.
-4) Test rate limit: bấm nhanh nhiều lần (khoảng >30 lần/phút) sẽ có lúc thấy 429.
+### Bước A: Bật API Key (nếu chưa)
 
-Đối chiếu nhanh:
-- 200 khi hợp lệ, 400 khi sai định dạng, 401 khi thiếu/sai API key (nếu bật), 429 khi spam.
+1. Mở file `.env` trong thư mục gốc project.
+2. Sửa dòng `API_KEY=` thành `API_KEY=mysecretkey123` (hoặc bất kỳ chuỗi nào bạn muốn).
+3. Restart server: `Ctrl+C` → `py run.py`
+
+### Bước B: Test trên /demo
+
+1. Mở `http://127.0.0.1:8000/demo`
+2. Quan sát **hộp trạng thái** trên trang:
+   - 🔐 **Xanh lá**: API Key đang BẬT → hiển thị luôn key cần nhập.
+   - 🔓 **Cam**: API Key đang TẮT → làm lại Bước A.
+3. Test các trường hợp:
+   | Trường hợp | Ô API Key | Kỳ vọng |
+   |------------|-----------|---------|
+   | Sai key | `wrongkey` | **401** |
+   | Không nhập | *(trống)* | **401** |
+   | Đúng key | `mysecretkey123` | **200** |
+4. Test rate limit: bấm Parse liên tục >30 lần/phút → sẽ có lúc thấy **429**.
+
+### Đối chiếu nhanh
+
+| Status | Ý nghĩa |
+|--------|---------|
+| 200 | OK |
+| 400 | Sai định dạng CCCD |
+| 401 | Thiếu/sai API key |
+| 429 | Spam quá nhiều |
 
 
 

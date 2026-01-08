@@ -19,7 +19,14 @@ def _mask_cccd(cccd: str) -> str:
 
 @cccd_bp.get("/demo")
 def demo():
-    return render_template("demo.html")
+    settings = current_app.config.get("SETTINGS")
+    api_key_required = bool(getattr(settings, "api_key", None))
+    configured_key = getattr(settings, "api_key", "") or ""
+    return render_template(
+        "demo.html",
+        api_key_required=api_key_required,
+        configured_key=configured_key,
+    )
 
 
 @cccd_bp.post("/v1/cccd/parse")

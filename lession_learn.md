@@ -147,3 +147,18 @@
 - **Bài học**: Với config dạng enum, luôn:
   - xác định tập giá trị hợp lệ, ghi rõ trong `.env.example`
   - chấp nhận alias an toàn + log/warning để người dùng sửa cấu hình
+
+---
+
+## 15) Demo page phải hiển thị trạng thái cấu hình (bật/tắt) của feature đang test
+
+- **Issue**: Khi test feature "API Key", người dùng luôn thấy status 200, không biết tại sao không thể test trường hợp 401.
+- **Nguyên nhân**: Server chưa cấu hình `API_KEY`, nhưng demo page không nói rõ điều này.
+- **Cách xử lý**:
+  - Trên `/demo`, hiển thị hộp trạng thái:
+    - 🔐 Xanh lá: "API Key đang BẬT" + key cần nhập.
+    - 🔓 Cam: "API Key đang TẮT" + hướng dẫn bật.
+- **Bài học**: Khi tạo demo page cho feature có cấu hình on/off, luôn:
+  - render trạng thái hiện tại (enabled/disabled)
+  - hướng dẫn ngay trên trang cách bật/tắt nếu chưa đúng
+  - đừng để người test đoán mò
