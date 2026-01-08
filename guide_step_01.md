@@ -55,6 +55,8 @@ Invoke-RestMethod http://127.0.0.1:8000/health
 
 Kết quả đúng: `{"status":"ok"}`
 
+Ghi chú: nếu bạn mở `http://127.0.0.1:8000/` thì trước đây sẽ thấy 404; hiện tại đã có route `/` trả message hướng dẫn để dễ kiểm tra.
+
 5) Dừng server: `Ctrl + C`
 
 
