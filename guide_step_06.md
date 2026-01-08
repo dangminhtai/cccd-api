@@ -22,5 +22,23 @@ API xử lý dữ liệu nhạy cảm nên cần “an toàn ngay từ đầu”
 - [ ] Spam request bị 429
 - [ ] Log không có CCCD đầy đủ
 
+## Tự test (Self-check)
+
+> Thực hiện được sau khi bạn đã bật auth/rate limit cho endpoint `POST /v1/cccd/parse`.
+
+- [ ] Test thiếu API key (kỳ vọng 401/403):
+
+```powershell
+Invoke-WebRequest -Method Post -Uri http://127.0.0.1:8000/v1/cccd/parse -ContentType "application/json" -Body "{\"cccd\":\"012345678901\"}" -SkipHttpErrorCheck
+```
+
+- [ ] Test có API key (thay `YOUR_KEY`):
+
+```powershell
+Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/v1/cccd/parse -Headers @{ "X-API-Key"="YOUR_KEY" } -ContentType "application/json" -Body "{\"cccd\":\"012345678901\"}"
+```
+
+- [ ] Test rate limit (spam nhanh) và xác nhận có lúc nhận 429.
+
 
 

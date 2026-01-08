@@ -25,5 +25,18 @@ Chốt “hình dạng” API để tất cả hệ thống gọi đều **nhấ
 - [ ] `requirement.md` phản ánh đúng request/response cuối cùng
 - [ ] Mọi ví dụ JSON trong tài liệu thống nhất cùng một format
 
+## Tự test (Self-check)
+
+- [ ] Mở `requirement.md` và xác nhận có đủ:
+  - endpoint `POST /v1/cccd/parse`
+  - request fields: `cccd`, `province_version`
+  - response fields: `success`, `is_valid_format`, `data`, `message`
+- [ ] Chọn 1 chuẩn `gender` và đảm bảo toàn bộ doc dùng đúng 1 chuẩn đó
+- [ ] (Tuỳ chọn) dùng grep để rà nhanh:
+
+```bash
+git grep "/v1/cccd/parse"
+```
+
 
 

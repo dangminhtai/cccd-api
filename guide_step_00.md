@@ -27,5 +27,11 @@ git push
 - [ ] `git status` sạch (working tree clean) sau khi push
 - [ ] Nhìn thấy commit mới trên GitHub
 
+## Tự test (Self-check)
+
+- [ ] Chạy `git status` và thấy: `working tree clean`
+- [ ] Chạy `git log -1 --oneline` và thấy commit mới nhất đúng nội dung step vừa làm
+- [ ] Chạy `git push` và không báo lỗi (hoặc vào GitHub thấy commit đã lên)
+
 
 

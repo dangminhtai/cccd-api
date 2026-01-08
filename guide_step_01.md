@@ -26,3 +26,35 @@ Tạo “khung” dự án Flask rõ ràng để sau này thêm route/logic/test
 - [X] Repo có cấu trúc thư mục rõ ràng
 - [] Có thể chạy “hello world” Flask (nếu đã tạo code)
 - [ ] Không commit nhầm `.env`/venv
+
+## Tự test (Self-check)
+
+1) Cài dependency:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+2) (Tuỳ chọn) tạo `.env` (hoặc bỏ qua để dùng port mặc định 8000):
+
+```bash
+PORT=8000
+```
+
+3) Chạy server:
+
+```bash
+python run.py
+```
+
+4) Gọi health check (PowerShell):
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:8000/health
+```
+
+Kết quả đúng: `{"status":"ok"}`
+
+5) Dừng server: `Ctrl + C`
+
+

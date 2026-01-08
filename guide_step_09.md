@@ -23,5 +23,13 @@ Người khác đọc là triển khai/tích hợp được ngay, không cần h
 - [ ] Một dev mới clone repo có thể chạy local trong 10–15 phút
 - [ ] Một đối tác đọc doc có thể gọi API và hiểu response
 
+## Tự test (Self-check)
+
+- [ ] “Dry-run” tài liệu theo đúng hướng dẫn:
+  - cài deps
+  - chạy server
+  - gọi `/health` và `/v1/cccd/parse`
+- [ ] Nhờ một người khác đọc doc và thử gọi API theo ví dụ (nếu họ làm được mà không hỏi lại nhiều → doc đạt).
+
 
 

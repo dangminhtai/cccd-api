@@ -23,5 +23,18 @@
 - [ ] Cùng một `province_code`, đổi `province_version` cho ra `province_name` đúng theo từng danh sách
 - [ ] Có test mapping cơ bản
 
+## Tự test (Self-check)
+
+> Thực hiện được sau khi đã có mapping JSON và endpoint `POST /v1/cccd/parse`.
+
+- [ ] Gọi cùng một CCCD giả lập nhưng đổi `province_version`:
+
+```powershell
+Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/v1/cccd/parse -ContentType "application/json" -Body "{\"cccd\":\"012345678901\",\"province_version\":\"legacy_64\"}"
+Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/v1/cccd/parse -ContentType "application/json" -Body "{\"cccd\":\"012345678901\",\"province_version\":\"current_34\"}"
+```
+
+- [ ] Kết quả đúng: `data.province_name` thay đổi theo `province_version` (nếu danh sách 2 bên khác nhau).
+
 
 

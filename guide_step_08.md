@@ -22,5 +22,15 @@
 - [ ] Chạy test pass hết
 - [ ] Khi đổi mapping/tên tỉnh, test giúp phát hiện sai lệch ngay
 
+## Tự test (Self-check)
+
+- [ ] Chạy unit tests (khi đã viết test):
+
+```bash
+python -m pytest -q
+```
+
+- [ ] Thử chỉnh mapping tỉnh/thành (1 case) và chạy lại test để xem test bắt lỗi/sai lệch.
+
 
 

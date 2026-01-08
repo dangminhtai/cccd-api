@@ -24,5 +24,21 @@ Từ `cccd` (chuỗi số) tách ra các thông tin cần trả về:
 - [ ] Có thể parse đúng với một vài CCCD giả lập (đã thống nhất rule nội bộ)
 - [ ] Các hàm parse có unit test
 
+## Tự test (Self-check)
+
+> Thực hiện được sau khi bạn đã implement endpoint `POST /v1/cccd/parse` và logic parse.
+
+- [ ] Gọi API với 1 CCCD giả lập (không dùng CCCD thật):
+
+```powershell
+Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/v1/cccd/parse -ContentType "application/json" -Body "{\"cccd\":\"012345678901\"}"
+```
+
+- [ ] Kết quả đúng:
+  - HTTP 200
+  - `success=true`
+  - `data.birth_year` có giá trị
+  - `data.gender` có giá trị theo chuẩn đã chốt
+
 
 

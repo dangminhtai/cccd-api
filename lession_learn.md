@@ -60,7 +60,6 @@
 ## 7) Sau mỗi bước phải commit + push (để dễ review và rollback)
 
 - Làm xong **mỗi step** (vd: step 01, step 02...) thì:
-  - `git status` kiểm tra thay đổi
   - `git add ...` (ưu tiên add đúng phần của step đó)
   - `git commit -m "..."`
   - `git push`
@@ -72,4 +71,6 @@
   - `step02: define api contract docs`
   - `fix: adjust step numbering`
 
+
+## 8) Hướng dẫn người dùng tự test ở mỗi bước ở mỗi guide_step_xx.md
 

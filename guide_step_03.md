@@ -24,5 +24,23 @@ Chặn lỗi “ngay từ cửa” để giảm sai dữ liệu và giảm tải
 
 - [ ] Test case “thiếu `cccd` / không phải số / sai độ dài” đều trả 400 đúng format
 
+## Tự test (Self-check)
+
+> Thực hiện được sau khi bạn đã implement endpoint `POST /v1/cccd/parse`.
+
+- [ ] Test thiếu `cccd` (PowerShell):
+
+```powershell
+Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/v1/cccd/parse -ContentType "application/json" -Body "{}"
+```
+
+- [ ] Test `cccd` có chữ:
+
+```powershell
+Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/v1/cccd/parse -ContentType "application/json" -Body "{\"cccd\":\"0123ABC\"}"
+```
+
+- [ ] Kết quả đúng: HTTP 400 và response có `success=false`, `is_valid_format=false`, `data=null`.
+
 
 

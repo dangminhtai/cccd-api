@@ -20,5 +20,13 @@ Khi có lỗi production, nhìn log là biết chuyện gì xảy ra (mà vẫn 
 - [ ] Có log cho cả case success và error
 - [ ] 500 không lộ chi tiết nội bộ ra client
 
+## Tự test (Self-check)
+
+- [ ] Gọi API (khi đã có endpoint) và kiểm tra log server:
+  - CCCD phải được **mask** (không xuất hiện full 12 số)
+- [ ] Tạo 1 lỗi cố tình (ví dụ truyền input sai kiểu) và kiểm tra:
+  - client nhận message chung
+  - log server có thông tin lỗi để trace
+
 
 

@@ -27,5 +27,17 @@
 - [ ] Có thể gọi `/health` và `/v1/cccd/parse` từ bên ngoài
 - [ ] Khi API lỗi, có log để trace và có alert tối thiểu
 
+## Tự test (Self-check)
+
+- [ ] Chạy production server (ví dụ gunicorn) và đảm bảo vẫn gọi được `/health`:
+
+```bash
+gunicorn -w 2 -b 0.0.0.0:8000 wsgi:app
+```
+
+- [ ] Từ máy khác (hoặc browser) gọi:
+  - `http://<server-ip>:8000/health`
+- [ ] Tắt gunicorn và chắc chắn port được giải phóng.
+
 
 
