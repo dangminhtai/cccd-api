@@ -236,6 +236,74 @@ Invoke-RestMethod -Uri "http://127.0.0.1:8000/admin/keys/free_abc123/deactivate"
 | 5 | Bấm "Tạo Key" | Thấy key `prem_xxx` hiển thị |
 | 6 | Copy key và test trên `/demo` | **200** - success |
 
+### Test Rate Limit theo Tier
+
+| Tier | Test | Kỳ vọng |
+|------|------|---------|
+| **Free** | Tạo key free, gọi API 10 lần liên tiếp | 10 lần đầu → **200**, lần 11 → **429** |
+| **Premium** | Tạo key premium, gọi API 100 lần | 100 lần đầu → **200**, lần 101 → **429** |
+| **Ultra** | Tạo key ultra, gọi API nhiều lần | Không bị 429 (1000 req/phút) |
+
+**Cách test Free tier (10 req/phút):**
+
+1. Tạo key free: `/admin/` → Tạo key free cho `test@example.com`
+2. Copy key (ví dụ: `free_abc123...`)
+3. Mở PowerShell, chạy script:
+
+```powershell
+$key = "free_abc123..."  # Thay bằng key thật
+for ($i=1; $i -le 11; $i++) {
+    Write-Host "Request $i"
+    try {
+        $resp = Invoke-RestMethod -Uri "http://127.0.0.1:8000/v1/cccd/parse" -Method POST -ContentType "application/json" -Headers @{"X-API-Key"=$key} -Body '{"cccd": "079203012345"}'
+        Write-Host "  Status: 200 OK"
+    } catch {
+        Write-Host "  Status: $($_.Exception.Response.StatusCode.value__)"
+        if ($_.Exception.Response.StatusCode.value__ -eq 429) {
+            Write-Host "  ✅ Rate limit hoạt động đúng!"
+            break
+        }
+    }
+    Start-Sleep -Milliseconds 100
+}
+```
+
+4. Kỳ vọng: Request 1-10 → 200, Request 11 → **429**
+
+**Cách test Premium tier (100 req/phút):**
+
+Tương tự, nhưng tạo key premium và test 101 requests.
+
+### Test Email Validation
+
+| Email nhập | Kỳ vọng |
+|------------|---------|
+| `test@example.com` | ✅ **200** - hợp lệ |
+| `user.name@example.com` | ✅ **200** - hợp lệ |
+| `not-an-email` | ❌ **400** - "Email không hợp lệ" |
+| `@example.com` | ❌ **400** - "Email không hợp lệ" |
+| `user@` | ❌ **400** - "Email không hợp lệ" |
+| `user@.com` | ❌ **400** - "Email không hợp lệ" |
+| *(để trống)* | ❌ **400** - "email là bắt buộc" |
+
+**Cách test:**
+
+1. Mở `/admin/`
+2. Scroll xuống form "Tạo API Key mới"
+3. Nhập email sai format → Bấm "Tạo Key"
+4. Xem error message
+
+### Test Days Validation
+
+| Days nhập | Kỳ vọng |
+|-----------|---------|
+| `30` | ✅ **200** - hợp lệ |
+| `1` | ✅ **200** - hợp lệ |
+| `0` | ❌ **400** - "Số ngày phải >= 1" |
+| `-1` | ❌ **400** - "Số ngày phải >= 1" |
+| `abc` | ❌ **400** - "Số ngày phải là số nguyên" |
+| *(để trống)* | ✅ **200** - vĩnh viễn |
+
 ### Verify trong MySQL
 
 ```sql
@@ -255,6 +323,12 @@ SELECT key_prefix, tier, owner_email, active FROM api_keys;
 | API với key | `/demo` + key → 200 | |
 | API không key | `/demo` không key → 401 | |
 | Admin Dashboard | `/admin/` → nhập key → thấy stats | |
+| Tạo key trên web | `/admin/` → form → tạo key thành công | |
+| Rate limit Free | Key free → 11 requests → lần 11 = 429 | |
+| Rate limit Premium | Key premium → 101 requests → lần 101 = 429 | |
+| Email validation | Email sai format → 400 | |
+| Days validation | Days < 1 hoặc không phải số → 400 | |
+| Automated tests | `python -m pytest tests/` → all pass | |
 
 ---
 

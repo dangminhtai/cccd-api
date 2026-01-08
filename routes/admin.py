@@ -56,6 +56,21 @@ def create_key():
     if not email:
         return jsonify({"error": "email là bắt buộc"}), 400
     
+    # Validate email format
+    import re
+    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if not re.match(email_pattern, email):
+        return jsonify({"error": "Email không hợp lệ"}), 400
+    
+    # Validate days if provided
+    if days is not None:
+        try:
+            days_int = int(days)
+            if days_int < 1:
+                return jsonify({"error": "Số ngày phải >= 1"}), 400
+        except (ValueError, TypeError):
+            return jsonify({"error": "Số ngày phải là số nguyên"}), 400
+    
     try:
         api_key = create_api_key(tier=tier, owner_email=email, days_valid=days)
         return jsonify({

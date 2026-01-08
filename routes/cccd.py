@@ -81,8 +81,23 @@ def _check_api_key():
         return True, None, None
 
 
+def _get_rate_limit():
+    """Lấy rate limit động theo tier của API key"""
+    settings = current_app.config.get("SETTINGS")
+    api_key_mode = getattr(settings, "api_key_mode", "simple")
+    
+    if api_key_mode == "tiered":
+        provided_api_key = request.headers.get("X-API-Key")
+        if provided_api_key:
+            from services.api_key_service import get_rate_limit_for_key
+            return get_rate_limit_for_key(provided_api_key)
+    
+    # Default cho simple mode hoặc không có key
+    return "30 per minute"
+
+
 @cccd_bp.post("/v1/cccd/parse")
-@limiter.limit("30 per minute")
+@limiter.limit(_get_rate_limit)
 def cccd_parse():
     payload = request.get_json(silent=True) or {}
     cccd = payload.get("cccd")
