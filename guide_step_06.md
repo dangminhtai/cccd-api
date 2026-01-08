@@ -18,9 +18,9 @@ API xử lý dữ liệu nhạy cảm nên cần “an toàn ngay từ đầu”
 
 ## Hoàn thành khi
 
-- [ ] Gọi thiếu/ sai API key bị từ chối (401 theo quy ước hiện tại)
-- [ ] Spam request bị 429
-- [ ] Log không có CCCD đầy đủ (chỉ log dạng mask)
+- [x] Gọi thiếu/ sai API key bị từ chối (401 theo quy ước hiện tại)
+- [x] Spam request bị 429 (trả JSON, không phải HTML)
+- [x] Log không có CCCD đầy đủ (chỉ log dạng mask)
 
 ## Tự test (Self-check)
 
@@ -46,6 +46,15 @@ Test ngay trên web `/demo` (không cần lệnh terminal).
    | Đúng key | `mysecretkey123` | **200** |
 4. Test rate limit: bấm Parse liên tục >30 lần/phút → sẽ có lúc thấy **429**.
 
+### Bước C: Verify log mask
+
+1. Nhìn vào **terminal** đang chạy server sau khi bấm Parse.
+2. Phải thấy log kiểu:
+   ```
+   INFO:app:cccd_parsed | cccd_masked=079******345 | province_version=current_34 | warnings=[]
+   ```
+3. ✅ **Đạt** nếu: thấy `cccd_masked=079******345` (che giữa), **KHÔNG** thấy số CCCD đầy đủ `079203012345`.
+
 ### Đối chiếu nhanh
 
 | Status | Ý nghĩa |
@@ -53,7 +62,17 @@ Test ngay trên web `/demo` (không cần lệnh terminal).
 | 200 | OK |
 | 400 | Sai định dạng CCCD |
 | 401 | Thiếu/sai API key |
-| 429 | Spam quá nhiều |
+| 429 | Spam quá nhiều (JSON response) |
+
+---
+
+## ✅ DoD (Definition of Done) - Bước 6
+
+| Tiêu chí | Cách verify | Kết quả |
+|----------|-------------|---------|
+| API Key check | `/demo` → để trống/sai key → **401** | ✅ |
+| Rate limit | Spam >30 lần/phút → **429** (JSON) | ✅ |
+| Masked log | Terminal thấy `cccd_masked=xxx******xxx` | ✅ |
 
 
 
