@@ -1,120 +1,142 @@
 # guide_step_10.md — Bước 10: Hệ thống API Key theo Tier (bán gói)
 
-## Tổng quan
+## Mục tiêu
 
-Bạn muốn bán API theo 3 gói:
+Tạo hệ thống bán API theo 3 gói: Free, Premium, Ultra với rate limit khác nhau.
 
-| Tier | Rate Limit | Giá |
-|------|------------|-----|
-| `free` | 10 requests/phút | Miễn phí |
-| `premium` | 100 requests/phút | $9/tháng |
-| `ultra` | 1000 requests/phút | $49/tháng |
-
----
-
-## Bước 1: Thiết kế Database lưu API Key
-
-Tạo file `data/api_keys.json` (đơn giản) hoặc dùng SQLite/PostgreSQL (production):
-
-```json
-{
-  "keys": [
-    {
-      "key": "free_abc123",
-      "tier": "free",
-      "owner_email": "user1@example.com",
-      "created_at": "2026-01-09",
-      "expires_at": null,
-      "active": true
-    },
-    {
-      "key": "premium_xyz789",
-      "tier": "premium",
-      "owner_email": "user2@example.com",
-      "created_at": "2026-01-09",
-      "expires_at": "2026-02-09",
-      "active": true
-    }
-  ]
-}
-```
+| Tier | Rate Limit | Giá (ví dụ) |
+|------|------------|-------------|
+| `free` | 10 req/phút | Miễn phí |
+| `premium` | 100 req/phút | $9/tháng |
+| `ultra` | 1000 req/phút | $49/tháng |
 
 ---
 
-## Bước 2: Tạo script sinh API Key hàng loạt
+## Checklist
 
-Tạo file `scripts/generate_keys.py`:
+### A. Chuẩn bị MySQL
 
-```python
-import json
-import secrets
-import argparse
-from datetime import datetime, timedelta
-from pathlib import Path
+- [ ] Đã cài MySQL trên máy
+- [ ] Đã tạo database `cccd_api`
+- [ ] Đã chạy script tạo bảng
 
-DATA_FILE = Path("data/api_keys.json")
+**Cách làm:**
 
-def load_keys():
-    if DATA_FILE.exists():
-        return json.loads(DATA_FILE.read_text(encoding="utf-8"))
-    return {"keys": []}
+1. Mở MySQL Workbench hoặc terminal MySQL
+2. Chạy file `scripts/db_schema.sql`:
+   ```
+   mysql -u root -p < scripts/db_schema.sql
+   ```
+3. Verify: chạy `SHOW TABLES;` → thấy 3 bảng: `api_keys`, `api_usage`, `tier_config`
 
-def save_keys(data):
-    DATA_FILE.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+---
 
-def generate_key(tier: str) -> str:
-    """Tạo key có prefix theo tier"""
-    prefix = {"free": "free", "premium": "prem", "ultra": "ultr"}
-    random_part = secrets.token_hex(16)  # 32 chars
-    return f"{prefix.get(tier, 'unkn')}_{random_part}"
+### B. Cấu hình .env
 
-def create_keys(tier: str, count: int, owner_email: str, days_valid: int = None):
-    """Tạo nhiều key cùng lúc"""
-    data = load_keys()
-    
-    created_at = datetime.now().strftime("%Y-%m-%d")
-    expires_at = None
-    if days_valid:
-        expires_at = (datetime.now() + timedelta(days=days_valid)).strftime("%Y-%m-%d")
-    
-    new_keys = []
-    for _ in range(count):
-        key = generate_key(tier)
-        entry = {
-            "key": key,
-            "tier": tier,
-            "owner_email": owner_email,
-            "created_at": created_at,
-            "expires_at": expires_at,
-            "active": True
-        }
-        data["keys"].append(entry)
-        new_keys.append(key)
-    
-    save_keys(data)
-    return new_keys
+- [ ] Đã set `API_KEY_MODE=tiered`
+- [ ] Đã điền thông tin MySQL
+- [ ] Đã đặt `ADMIN_SECRET`
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Generate API keys")
-    parser.add_argument("--tier", required=True, choices=["free", "premium", "ultra"])
-    parser.add_argument("--count", type=int, default=1, help="Số key cần tạo")
-    parser.add_argument("--email", required=True, help="Email chủ sở hữu")
-    parser.add_argument("--days", type=int, help="Số ngày hợp lệ (để trống = vĩnh viễn)")
-    
-    args = parser.parse_args()
-    keys = create_keys(args.tier, args.count, args.email, args.days)
-    
-    print(f"Đã tạo {len(keys)} key(s) tier '{args.tier}':")
-    for k in keys:
-        print(f"  {k}")
+**Cách làm:**
+
+1. Mở file `.env`
+2. Sửa các dòng sau:
+
+```env
+API_KEY_MODE=tiered
+
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_USER=root
+MYSQL_PASSWORD=your_password_here
+MYSQL_DATABASE=cccd_api
+
+ADMIN_SECRET=change-this-to-random-string
 ```
 
-**Cách dùng:**
+3. Lưu file
+
+---
+
+### C. Cài thư viện MySQL
+
+- [ ] Đã cài PyMySQL
+
+**Cách làm:**
 
 ```powershell
-# Tạo 1 key free
-python scripts/generate_keys.py --tier free --email user@example.com
+pip install PyMySQL==1.1.0
+```
 
+---
+
+### D. Restart server
+
+- [ ] Server đang chạy với mode tiered
+
+**Cách làm:**
+
+1. Dừng server cũ: `Ctrl+C`
+2. Chạy lại: `python run.py`
+3. Verify: không có lỗi kết nối MySQL
+
+---
+
+### E. Tạo API key đầu tiên
+
+- [ ] Đã tạo được key free
+- [ ] Đã lưu key (chỉ hiển thị 1 lần!)
+
+**Cách làm:**
+
+```powershell
+python scripts/generate_keys.py --tier free --email test@example.com
+```
+
+Output mẫu:
+```
+Tạo 1 key(s) tier 'free' cho test@example.com...
+------------------------------------------------------------
+  [1] free_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
+------------------------------------------------------------
+Đã tạo 1/1 key(s)
+
+⚠️  LƯU Ý: Key chỉ hiển thị 1 lần này. Hãy lưu lại!
+```
+
+**Copy và lưu key này!**
+
+---
+
+### F. Test API với key mới
+
+- [ ] Gọi API với key → 200 success
+- [ ] Gọi API không có key → 401
+
+**Cách làm:**
+
+1. Mở `/demo` trên browser
+2. Nhập key vừa tạo vào ô "API Key"
+3. Nhập CCCD `079203012345`
+4. Bấm Parse → **200** success
+
+Hoặc test bằng PowerShell:
+
+```powershell
+# Thay YOUR_KEY bằng key vừa tạo
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/v1/cccd/parse" -Method POST -ContentType "application/json" -Headers @{"X-API-Key"="YOUR_KEY"} -Body '{"cccd": "079203012345"}'
+```
+
+---
+
+### G. Tạo key hàng loạt (cho khách hàng)
+
+- [ ] Biết cách tạo nhiều key cùng lúc
+- [ ] Biết cách tạo key có thời hạn
+
+**Cách làm:**
+
+```powershell
 # Tạo 10 key premium, hết hạn sau 30 ngày
 python scripts/generate_keys.py --tier premium --count 10 --email bulk@company.com --days 30
 
@@ -124,315 +146,87 @@ python scripts/generate_keys.py --tier ultra --count 5 --email vip@company.com
 
 ---
 
-## Bước 3: Sửa logic validate API Key theo tier
+### H. Sử dụng Admin API
 
-Tạo file `services/api_key_service.py`:
+- [ ] Biết cách tạo key qua API
+- [ ] Biết cách xem thống kê
+- [ ] Biết cách vô hiệu hóa key
 
-```python
-import json
-from pathlib import Path
-from datetime import datetime
-from dataclasses import dataclass
+**Tạo key qua API:**
 
-DATA_FILE = Path("data/api_keys.json")
+```powershell
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/admin/keys/create" -Method POST -ContentType "application/json" -Headers @{"X-Admin-Key"="your-admin-secret"} -Body '{"tier": "premium", "email": "customer@example.com", "days": 30}'
+```
 
-@dataclass
-class APIKeyInfo:
-    key: str
-    tier: str
-    owner_email: str
-    active: bool
-    expired: bool
+**Xem thống kê:**
 
-TIER_LIMITS = {
-    "free": "10 per minute",
-    "premium": "100 per minute",
-    "ultra": "1000 per minute",
-}
+```powershell
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/admin/stats" -Headers @{"X-Admin-Key"="your-admin-secret"}
+```
 
-def get_key_info(api_key: str) -> APIKeyInfo | None:
-    """Tra cứu thông tin key"""
-    if not DATA_FILE.exists():
-        return None
-    
-    data = json.loads(DATA_FILE.read_text(encoding="utf-8"))
-    
-    for entry in data.get("keys", []):
-        if entry["key"] == api_key:
-            # Check expired
-            expired = False
-            if entry.get("expires_at"):
-                exp_date = datetime.strptime(entry["expires_at"], "%Y-%m-%d")
-                expired = datetime.now() > exp_date
-            
-            return APIKeyInfo(
-                key=api_key,
-                tier=entry["tier"],
-                owner_email=entry["owner_email"],
-                active=entry.get("active", True),
-                expired=expired,
-            )
-    
-    return None
+**Vô hiệu hóa key:**
 
-def get_rate_limit(api_key: str) -> str:
-    """Lấy rate limit theo tier của key"""
-    info = get_key_info(api_key)
-    if info and info.active and not info.expired:
-        return TIER_LIMITS.get(info.tier, "10 per minute")
-    return "10 per minute"  # default cho key không hợp lệ
+```powershell
+# Thay free_abc123 bằng prefix của key cần vô hiệu
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/admin/keys/free_abc123/deactivate" -Method POST -Headers @{"X-Admin-Key"="your-admin-secret"}
 ```
 
 ---
 
-## Bước 4: Cập nhật route để dùng tier-based rate limit
+## Hoàn thành khi
 
-Sửa `routes/cccd.py`:
-
-```python
-from services.api_key_service import get_key_info, get_rate_limit, TIER_LIMITS
-
-@cccd_bp.post("/v1/cccd/parse")
-def cccd_parse():
-    # ... existing code ...
-    
-    # API Key check with tier
-    provided_api_key = request.headers.get("X-API-Key")
-    key_info = get_key_info(provided_api_key) if provided_api_key else None
-    
-    if key_info is None:
-        return jsonify({"success": False, "message": "API key không hợp lệ."}), 401
-    
-    if not key_info.active:
-        return jsonify({"success": False, "message": "API key đã bị vô hiệu hóa."}), 401
-    
-    if key_info.expired:
-        return jsonify({"success": False, "message": "API key đã hết hạn."}), 401
-    
-    # ... rest of the code ...
-```
-
-Sửa `app/__init__.py` để rate limit theo tier:
-
-```python
-from services.api_key_service import get_rate_limit
-
-def _dynamic_rate_limit():
-    api_key = request.headers.get("X-API-Key")
-    return get_rate_limit(api_key)
-
-limiter = Limiter(
-    key_func=_rate_limit_key,
-    default_limits=[_dynamic_rate_limit],  # Dynamic!
-    storage_uri="memory://"
-)
-```
-
----
-
-## Bước 5: Tạo Admin API để quản lý key
-
-Tạo file `routes/admin.py`:
-
-```python
-from flask import Blueprint, jsonify, request
-from services.api_key_service import get_key_info
-import json
-from pathlib import Path
-
-admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
-DATA_FILE = Path("data/api_keys.json")
-ADMIN_SECRET = "your-admin-secret"  # Đặt trong .env
-
-@admin_bp.before_request
-def check_admin_auth():
-    if request.headers.get("X-Admin-Key") != ADMIN_SECRET:
-        return jsonify({"error": "Unauthorized"}), 403
-
-@admin_bp.get("/keys")
-def list_keys():
-    """Liệt kê tất cả key"""
-    data = json.loads(DATA_FILE.read_text(encoding="utf-8"))
-    return jsonify(data)
-
-@admin_bp.post("/keys/<key>/deactivate")
-def deactivate_key(key):
-    """Vô hiệu hóa key"""
-    data = json.loads(DATA_FILE.read_text(encoding="utf-8"))
-    for entry in data["keys"]:
-        if entry["key"] == key:
-            entry["active"] = False
-            DATA_FILE.write_text(json.dumps(data, indent=2), encoding="utf-8")
-            return jsonify({"message": f"Key {key} đã bị vô hiệu hóa"})
-    return jsonify({"error": "Key not found"}), 404
-
-@admin_bp.get("/keys/<key>/usage")
-def key_usage(key):
-    """Xem usage của key (cần thêm tracking)"""
-    # TODO: Implement usage tracking
-    return jsonify({"key": key, "requests_today": 0, "requests_month": 0})
-```
-
----
-
-## Bước 6: Tracking Usage (để tính tiền)
-
-Tạo file `services/usage_tracker.py`:
-
-```python
-import json
-from pathlib import Path
-from datetime import datetime
-from collections import defaultdict
-
-USAGE_FILE = Path("data/usage.json")
-
-def log_request(api_key: str):
-    """Ghi nhận 1 request"""
-    data = _load_usage()
-    today = datetime.now().strftime("%Y-%m-%d")
-    
-    if api_key not in data:
-        data[api_key] = {}
-    if today not in data[api_key]:
-        data[api_key][today] = 0
-    
-    data[api_key][today] += 1
-    _save_usage(data)
-
-def get_usage(api_key: str, days: int = 30) -> dict:
-    """Lấy usage trong N ngày gần nhất"""
-    data = _load_usage()
-    return data.get(api_key, {})
-
-def _load_usage():
-    if USAGE_FILE.exists():
-        return json.loads(USAGE_FILE.read_text())
-    return {}
-
-def _save_usage(data):
-    USAGE_FILE.write_text(json.dumps(data, indent=2))
-```
-
-Thêm vào `routes/cccd.py`:
-
-```python
-from services.usage_tracker import log_request
-
-# Sau khi validate key thành công:
-log_request(provided_api_key)
-```
-
----
-
-## Tóm tắt cấu trúc file
-
-```
-CCCD-API/
-├── data/
-│   ├── api_keys.json      # Lưu danh sách key
-│   └── usage.json         # Lưu usage tracking
-├── scripts/
-│   └── generate_keys.py   # Script tạo key hàng loạt
-├── services/
-│   ├── api_key_service.py # Logic validate key + tier
-│   └── usage_tracker.py   # Tracking usage
-├── routes/
-│   ├── admin.py           # Admin API quản lý key
-│   └── cccd.py            # (sửa) validate key theo tier
-```
+- [x] MySQL đã setup với 3 bảng
+- [x] `.env` đã cấu hình `API_KEY_MODE=tiered`
+- [x] Tạo được key bằng script
+- [x] Gọi API với key → thành công
+- [x] Gọi API không có key → 401
+- [x] Admin API hoạt động
 
 ---
 
 ## Tự test (Self-check)
 
-### 1. Setup MySQL
+### Test trên /demo
+
+| Bước | Hành động | Kỳ vọng |
+|------|-----------|---------|
+| 1 | Mở `/demo` | Trang hiển thị |
+| 2 | Để trống API Key, bấm Parse | **401** - thiếu key |
+| 3 | Nhập key free vừa tạo, bấm Parse | **200** - success |
+| 4 | Nhập key sai `wrong_key`, bấm Parse | **401** - key không hợp lệ |
+
+### Test tạo key
+
+| Lệnh | Kỳ vọng |
+|------|---------|
+| `python scripts/generate_keys.py --tier free --email x@y.com` | Tạo `free_xxx` |
+| `python scripts/generate_keys.py --tier premium --email x@y.com` | Tạo `prem_xxx` |
+| `python scripts/generate_keys.py --tier ultra --email x@y.com` | Tạo `ultr_xxx` |
+
+### Verify trong MySQL
 
 ```sql
--- Chạy script tạo database
-mysql -u root -p < scripts/db_schema.sql
+SELECT key_prefix, tier, owner_email, active FROM api_keys;
 ```
 
-### 2. Cấu hình .env
-
-```env
-API_KEY_MODE=tiered
-MYSQL_HOST=localhost
-MYSQL_PORT=3306
-MYSQL_USER=root
-MYSQL_PASSWORD=your_password
-MYSQL_DATABASE=cccd_api
-ADMIN_SECRET=my-admin-secret-123
-```
-
-### 3. Cài PyMySQL
-
-```powershell
-pip install PyMySQL==1.1.0
-```
-
-### 4. Restart server
-
-```powershell
-# Ctrl+C để dừng server cũ
-python run.py
-```
-
-### 5. Tạo API key
-
-```powershell
-python scripts/generate_keys.py --tier free --email test@example.com
-# Output: free_abc123...
-```
-
-### 6. Test API với key mới
-
-```powershell
-Invoke-RestMethod -Uri "http://127.0.0.1:8000/v1/cccd/parse" -Method POST -ContentType "application/json" -Headers @{"X-API-Key"="free_abc123..."} -Body '{"cccd": "079203012345"}'
-```
-→ Kỳ vọng: `success: True`
-
-### 7. Test Admin API
-
-```powershell
-# Tạo key qua Admin API
-Invoke-RestMethod -Uri "http://127.0.0.1:8000/admin/keys/create" -Method POST -ContentType "application/json" -Headers @{"X-Admin-Key"="my-admin-secret-123"} -Body '{"tier": "premium", "email": "vip@example.com", "days": 30}'
-
-# Xem stats
-Invoke-RestMethod -Uri "http://127.0.0.1:8000/admin/stats" -Headers @{"X-Admin-Key"="my-admin-secret-123"}
-```
-
-### 8. Checklist
-
-| Test | Kỳ vọng | ✓ |
-|------|---------|---|
-| Tạo key free | Key `free_xxx` được tạo | |
-| Tạo key premium | Key `prem_xxx` được tạo | |
-| Gọi API với key đúng | 200 success | |
-| Gọi API với key sai | 401 "không hợp lệ" | |
-| Admin API /stats | Thống kê số key | |
-| Admin API deactivate | Key bị vô hiệu | |
+→ Thấy các key vừa tạo
 
 ---
 
 ## ✅ DoD (Definition of Done) - Bước 10
 
-| Tiêu chí | Kết quả |
-|----------|---------|
-| MySQL schema đã tạo | ✅ |
-| API key service với SHA256 | ✅ |
-| Script generate_keys.py | ✅ |
-| Admin API (create, deactivate, stats) | ✅ |
-| Usage tracking | ✅ |
-| Hỗ trợ cả simple và tiered mode | ✅ |
+| Tiêu chí | Cách verify | ✓ |
+|----------|-------------|---|
+| MySQL setup | `SHOW TABLES;` → 3 bảng | |
+| Tạo key script | `python scripts/generate_keys.py --tier free --email x@y.com` | |
+| API với key | `/demo` + key → 200 | |
+| API không key | `/demo` không key → 401 | |
+| Admin API | `/admin/stats` → JSON stats | |
 
 ---
 
-## Production Notes
+## Lưu ý bảo mật
 
-1. ✅ **MySQL** thay vì JSON file
-2. ✅ **SHA256 hash** - không lưu key plaintext
-3. **Redis** cho rate limiting (thay vì memory) - TODO
-4. **Stripe/PayPal** để tự động tạo key khi thanh toán - BONUS
-5. **Dashboard** cho khách hàng xem usage - BONUS
-
+1. **Key chỉ hiển thị 1 lần** - sau khi tạo, chỉ lưu hash trong DB
+2. **ADMIN_SECRET** - đặt chuỗi dài, ngẫu nhiên, không để mặc định
+3. **MySQL password** - không commit vào git (đã ignore trong .gitignore)
