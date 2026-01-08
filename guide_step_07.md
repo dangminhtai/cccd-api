@@ -19,7 +19,7 @@ Khi có lỗi production, nhìn log là biết chuyện gì xảy ra (mà vẫn 
 
 - [x] Có log cho cả case success và error
 - [x] 500 không lộ chi tiết nội bộ ra client
-- [x] Có request_id để trace
+- [] Có request_id để trace
 
 ## Tự test (Self-check)
 

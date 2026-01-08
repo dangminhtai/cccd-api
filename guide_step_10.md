@@ -344,24 +344,95 @@ CCCD-API/
 
 ---
 
-## Self-check
+## Tự test (Self-check)
 
-| Test | Lệnh | Kỳ vọng |
-|------|------|---------|
-| Tạo key free | `python scripts/generate_keys.py --tier free --email test@x.com` | Tạo key `free_xxx` |
-| Tạo 5 key premium | `... --tier premium --count 5 --days 30` | 5 key `prem_xxx` |
-| Dùng key free | Gọi API với key | Rate limit 10/phút |
-| Dùng key premium | Gọi API với key | Rate limit 100/phút |
-| Key hết hạn | Gọi API với key đã expire | 401 "đã hết hạn" |
-| Deactivate key | `POST /admin/keys/{key}/deactivate` | Key bị vô hiệu |
+### 1. Setup MySQL
+
+```sql
+-- Chạy script tạo database
+mysql -u root -p < scripts/db_schema.sql
+```
+
+### 2. Cấu hình .env
+
+```env
+API_KEY_MODE=tiered
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_USER=root
+MYSQL_PASSWORD=your_password
+MYSQL_DATABASE=cccd_api
+ADMIN_SECRET=my-admin-secret-123
+```
+
+### 3. Cài PyMySQL
+
+```powershell
+pip install PyMySQL==1.1.0
+```
+
+### 4. Restart server
+
+```powershell
+# Ctrl+C để dừng server cũ
+python run.py
+```
+
+### 5. Tạo API key
+
+```powershell
+python scripts/generate_keys.py --tier free --email test@example.com
+# Output: free_abc123...
+```
+
+### 6. Test API với key mới
+
+```powershell
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/v1/cccd/parse" -Method POST -ContentType "application/json" -Headers @{"X-API-Key"="free_abc123..."} -Body '{"cccd": "079203012345"}'
+```
+→ Kỳ vọng: `success: True`
+
+### 7. Test Admin API
+
+```powershell
+# Tạo key qua Admin API
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/admin/keys/create" -Method POST -ContentType "application/json" -Headers @{"X-Admin-Key"="my-admin-secret-123"} -Body '{"tier": "premium", "email": "vip@example.com", "days": 30}'
+
+# Xem stats
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/admin/stats" -Headers @{"X-Admin-Key"="my-admin-secret-123"}
+```
+
+### 8. Checklist
+
+| Test | Kỳ vọng | ✓ |
+|------|---------|---|
+| Tạo key free | Key `free_xxx` được tạo | |
+| Tạo key premium | Key `prem_xxx` được tạo | |
+| Gọi API với key đúng | 200 success | |
+| Gọi API với key sai | 401 "không hợp lệ" | |
+| Admin API /stats | Thống kê số key | |
+| Admin API deactivate | Key bị vô hiệu | |
+
+---
+
+## ✅ DoD (Definition of Done) - Bước 10
+
+| Tiêu chí | Kết quả |
+|----------|---------|
+| MySQL schema đã tạo | ✅ |
+| API key service với SHA256 | ✅ |
+| Script generate_keys.py | ✅ |
+| Admin API (create, deactivate, stats) | ✅ |
+| Usage tracking | ✅ |
+| Hỗ trợ cả simple và tiered mode | ✅ |
 
 ---
 
 ## Production Notes
 
-1. **Đừng dùng JSON file** cho production → dùng PostgreSQL/MySQL
-2. **Mã hóa key** trong database (hash, không lưu plaintext)
-3. **Redis** cho rate limiting (thay vì memory)
-4. **Stripe/PayPal** để tự động tạo key khi thanh toán
-5. **Dashboard** cho khách hàng xem usage của họ
+1. ✅ **MySQL** thay vì JSON file
+2. ✅ **SHA256 hash** - không lưu key plaintext
+3. **Redis** cho rate limiting (thay vì memory) - TODO
+4. **Stripe/PayPal** để tự động tạo key khi thanh toán - BONUS
+5. **Dashboard** cho khách hàng xem usage - BONUS
 

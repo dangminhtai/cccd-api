@@ -24,13 +24,61 @@ def _mask_cccd(cccd: str) -> str:
 @cccd_bp.get("/demo")
 def demo():
     settings = current_app.config.get("SETTINGS")
-    api_key_required = bool(getattr(settings, "api_key", None))
+    api_key_mode = getattr(settings, "api_key_mode", "simple")
+    api_key_required = (
+        api_key_mode == "tiered" or 
+        bool(getattr(settings, "api_key", None))
+    )
     configured_key = getattr(settings, "api_key", "") or ""
     return render_template(
         "demo.html",
         api_key_required=api_key_required,
         configured_key=configured_key,
+        api_key_mode=api_key_mode,
     )
+
+
+def _check_api_key():
+    """
+    Kiểm tra API key theo mode (simple hoặc tiered)
+    Returns: (is_valid, error_response, key_info)
+    """
+    settings = current_app.config.get("SETTINGS")
+    api_key_mode = getattr(settings, "api_key_mode", "simple")
+    provided_api_key = request.headers.get("X-API-Key")
+    
+    if api_key_mode == "tiered":
+        # Tiered mode: validate với MySQL
+        from services.api_key_service import validate_api_key, log_request
+        is_valid, error_msg, key_info = validate_api_key(provided_api_key)
+        if not is_valid:
+            return False, (
+                jsonify({
+                    "success": False,
+                    "is_valid_format": False,
+                    "data": None,
+                    "message": error_msg,
+                }),
+                401,
+            ), None
+        # Log usage
+        log_request(provided_api_key)
+        return True, None, key_info
+    else:
+        # Simple mode: so sánh với API_KEY trong .env
+        required_api_key = getattr(settings, "api_key", None)
+        if required_api_key:
+            if provided_api_key != required_api_key:
+                return False, (
+                    jsonify({
+                        "success": False,
+                        "is_valid_format": False,
+                        "data": None,
+                        "message": "API key không hợp lệ hoặc thiếu.",
+                    }),
+                    401,
+                ), None
+        return True, None, None
 
 
 @cccd_bp.post("/v1/cccd/parse")
@@ -40,26 +88,13 @@ def cccd_parse():
     cccd = payload.get("cccd")
     province_version = payload.get("province_version")
 
-    # API Key check (if configured)
-    settings = current_app.config.get("SETTINGS")
-    required_api_key = getattr(settings, "api_key", None)
-    if required_api_key:
-        provided_api_key = request.headers.get("X-API-Key")
-        if provided_api_key != required_api_key:
-            current_app.logger.warning(
-                f"auth_failed | request_id={_get_request_id()} | reason=invalid_or_missing_api_key"
-            )
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "is_valid_format": False,
-                        "data": None,
-                        "message": "API key không hợp lệ hoặc thiếu.",
-                    }
-                ),
-                401,
-            )
+    # API Key check
+    is_valid, error_response, key_info = _check_api_key()
+    if not is_valid:
+        current_app.logger.warning(
+            f"auth_failed | request_id={_get_request_id()} | reason=invalid_or_missing_api_key"
+        )
+        return error_response
 
     # Basic validate (align with requirement.md)
     if cccd is None:

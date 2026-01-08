@@ -101,6 +101,12 @@ def create_app() -> Flask:
     app.register_blueprint(health_bp)
     app.register_blueprint(cccd_bp)
 
+    # Admin routes (only if tiered mode is enabled)
+    import os
+    if os.getenv("API_KEY_MODE") == "tiered":
+        from routes.admin import admin_bp
+        app.register_blueprint(admin_bp)
+
     return app
 
 

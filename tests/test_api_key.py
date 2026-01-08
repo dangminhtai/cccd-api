@@ -8,8 +8,8 @@ class TestAPIKey(unittest.TestCase):
     def setUp(self):
         app = create_app()
         app.testing = True
-        # Replace Settings with one that requires API key
-        app.config["SETTINGS"] = Settings(api_key="test-secret-key")
+        # Replace Settings with one that requires API key (simple mode)
+        app.config["SETTINGS"] = Settings(api_key="test-secret-key", api_key_mode="simple")
         self.client = app.test_client()
 
     def test_missing_api_key_returns_401(self):
@@ -48,8 +48,8 @@ class TestNoAPIKey(unittest.TestCase):
     def setUp(self):
         app = create_app()
         app.testing = True
-        # Replace Settings with one that has no API key
-        app.config["SETTINGS"] = Settings(api_key=None)
+        # Replace Settings with one that has no API key (simple mode)
+        app.config["SETTINGS"] = Settings(api_key=None, api_key_mode="simple")
         self.client = app.test_client()
 
     def test_no_api_key_configured_allows_access(self):
