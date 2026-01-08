@@ -24,28 +24,17 @@ API xử lý dữ liệu nhạy cảm nên cần “an toàn ngay từ đầu”
 
 ## Tự test (Self-check)
 
-> Thực hiện được sau khi bật auth/rate limit cho `POST /v1/cccd/parse`. Nếu `API_KEY` để trống thì API không yêu cầu key.
+Test ngay trên web `/demo` (không cần lệnh terminal):
 
-- [ ] Test thiếu API key (kỳ vọng 401 nếu đã cấu hình `API_KEY`):
+1) Mở `http://127.0.0.1:8000/demo`
+2) Nếu bạn đã đặt `API_KEY` trong `.env`, nhập nó vào ô “API Key”; nếu chưa đặt, để trống.
+3) Bấm **Parse**:
+   - Thiếu/ sai API key (khi có cấu hình) → thấy status 401.
+   - Đúng API key → status 200, có dữ liệu parse.
+4) Test rate limit: bấm nhanh nhiều lần (khoảng >30 lần/phút) sẽ có lúc thấy 429.
 
-```powershell
-try {
-  Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/v1/cccd/parse `
-    -ContentType "application/json" `
-    -Body '{"cccd":"012345678901"}'
-} catch { $_.Exception.Response.StatusCode.Value__ }
-```
-
-- [ ] Test có API key (thay `YOUR_KEY`):
-
-```powershell
-Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/v1/cccd/parse `
-  -Headers @{ "X-API-Key"="YOUR_KEY" } `
-  -ContentType "application/json" `
-  -Body '{"cccd":"012345678901"}'
-```
-
-- [ ] Test rate limit: gửi nhanh 20–30 request; kỳ vọng có lúc nhận 429.
+Đối chiếu nhanh:
+- 200 khi hợp lệ, 400 khi sai định dạng, 401 khi thiếu/sai API key (nếu bật), 429 khi spam.
 
 
 

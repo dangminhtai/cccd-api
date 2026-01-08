@@ -38,6 +38,10 @@
           <option value="current_34">current_34</option>
         </select>
       </div>
+      <div>
+        <label>API Key (nếu đã cấu hình)</label>
+        <input id="api_key" placeholder="X-API-Key" />
+      </div>
       <button id="btn">Parse</button>
     </div>
 
@@ -61,6 +65,7 @@
       const statusEl = document.getElementById("status");
       const cccdEl = document.getElementById("cccd");
       const pvEl = document.getElementById("province_version");
+      const apiKeyEl = document.getElementById("api_key");
 
       async function run() {
         btn.disabled = true;
@@ -74,9 +79,13 @@
         if (pvEl.value) payload.province_version = pvEl.value;
 
         try {
+          const headers = { "Content-Type": "application/json" };
+          const apiKey = (apiKeyEl.value || "").trim();
+          if (apiKey) headers["X-API-Key"] = apiKey;
+
           const resp = await fetch("/v1/cccd/parse", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers,
             body: JSON.stringify(payload),
           });
 
