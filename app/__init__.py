@@ -21,6 +21,9 @@ limiter = Limiter(key_func=_rate_limit_key, default_limits=["30 per minute"], st
 def create_app() -> Flask:
     app = Flask(__name__)
 
+    # Allow Vietnamese characters in JSON responses (no Unicode escape)
+    app.json.ensure_ascii = False
+
     settings = Settings.from_env()
     app.config["SETTINGS"] = settings
 
@@ -65,9 +68,13 @@ def create_app() -> Flask:
             500,
         )
 
-    # Catch-all for unhandled exceptions
+    # Catch-all for unhandled exceptions (but NOT HTTP exceptions like 404)
     @app.errorhandler(Exception)
     def unhandled_exception_handler(e):
+        # Let HTTP exceptions (404, 405, etc.) be handled by Flask default
+        from werkzeug.exceptions import HTTPException
+        if isinstance(e, HTTPException):
+            return e
         req_id = g.get("request_id", "-")
         app.logger.error(f"unhandled_exception | request_id={req_id} | {type(e).__name__}: {e}\n{traceback.format_exc()}")
         return (

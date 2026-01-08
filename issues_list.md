@@ -126,4 +126,22 @@
 - **Cách xử lý**: thêm `@app.errorhandler(429)` trong `create_app()` để trả JSON theo chuẩn API.
 - **Cách tránh lần sau**: khi dùng extension có error handler mặc định (limiter, auth...), luôn kiểm tra response format và override nếu cần để đảm bảo API trả JSON nhất quán.
 
+---
+
+## 14) Handler `Exception` bắt luôn 404 → trả 500 sai
+
+- **Hiện tượng**: truy cập URL không tồn tại (ví dụ `/demoss`) → trả 500 thay vì 404.
+- **Nguyên nhân**: `@app.errorhandler(Exception)` bắt tất cả exception, kể cả `werkzeug.exceptions.NotFound` (404).
+- **Cách xử lý**: trong handler, kiểm tra `isinstance(e, HTTPException)` và `return e` để Flask xử lý mặc định.
+- **Cách tránh lần sau**: khi viết catch-all exception handler, luôn exclude HTTP exceptions.
+
+---
+
+## 15) JSON response escape tiếng Việt thành `\uXXXX`
+
+- **Hiện tượng**: message tiếng Việt hiển thị `L\u1ed7i h\u1ec7 th\u1ed1ng` thay vì `Lỗi hệ thống`.
+- **Nguyên nhân**: Flask mặc định `ensure_ascii=True` trong JSON encoder.
+- **Cách xử lý**: set `app.json.ensure_ascii = False` trong `create_app()`.
+- **Cách tránh lần sau**: với API có message tiếng Việt, luôn set `ensure_ascii=False` ngay từ đầu.
+
 
