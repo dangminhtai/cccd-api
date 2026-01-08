@@ -67,7 +67,8 @@ Body (JSON):
 
 - `cccd` (string, bắt buộc): chuỗi số CCCD
 - `province_version` (string, tuỳ chọn): phiên bản “danh sách tỉnh/thành” để hiển thị tên
-  - Ví dụ: `legacy_64` hoặc `current_34`
+  - Ví dụ: `legacy_63` hoặc `current_34`
+  - (Tương thích ngược) `legacy_64` được chấp nhận như alias của `legacy_63`
   - Nếu không truyền, dùng mặc định theo cấu hình hệ thống
 
 ### 5.3 Response (thành công)
@@ -103,7 +104,7 @@ Ví dụ (minh hoạ):
   },
   "is_valid_format": true,
   "is_plausible": true,
-  "province_version": "legacy_64",
+  "province_version": "legacy_63",
   "warnings": []
 }
 ```
@@ -173,7 +174,7 @@ Vì tên tỉnh/thành có thể thay đổi theo thời gian, yêu cầu như s
 
 - Có một nơi duy nhất quản lý “danh sách tỉnh/thành” (ví dụ file JSON trong repo hoặc bảng DB).
 - Cho phép có **2 chế độ hiển thị**:
-  - `legacy_64`: theo danh sách cũ (phục vụ hệ thống cũ)
+  - `legacy_63`: theo danh sách cũ (63 tỉnh/thành)
   - `current_34`: theo danh sách mới (phục vụ hệ thống mới)
 - Mặc định dùng chế độ theo cấu hình (`DEFAULT_PROVINCE_VERSION`).
 
@@ -211,7 +212,7 @@ Tối thiểu cần:
 
 - Test validate: thiếu `cccd`, sai độ dài, có ký tự chữ.
 - Test parse: một vài CCCD giả lập để ra đúng `birth_year`, `gender`, `province_code`.
-- Test mapping: `province_version=legacy_64` và `province_version=current_34` cho cùng `province_code`.
+- Test mapping: `province_version=legacy_63` và `province_version=current_34` cho cùng `province_code`.
 
 ---
 

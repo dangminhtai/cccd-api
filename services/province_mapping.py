@@ -4,14 +4,14 @@ import json
 from pathlib import Path
 from typing import Literal
 
-ProvinceVersion = Literal["legacy_64", "current_34"]
+ProvinceVersion = Literal["legacy_63", "current_34"]
 
 _CACHE: dict[ProvinceVersion, dict[str, str]] = {}
 
 
 def _data_path(version: ProvinceVersion) -> Path:
     repo_root = Path(__file__).resolve().parents[1]
-    if version == "legacy_64":
+    if version == "legacy_63":
         return repo_root / "data" / "provinces_legacy_63.json"
     return repo_root / "data" / "provinces_current_34.json"
 

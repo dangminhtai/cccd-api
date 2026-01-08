@@ -13,7 +13,7 @@
 - Unit test parse:
   - vài CCCD giả lập để ra đúng `birth_year`, `gender`, `province_code`
 - Unit test mapping:
-  - cùng `province_code` nhưng `legacy_64` vs `current_34`
+  - cùng `province_code` nhưng `legacy_63` vs `current_34`
 - API test:
   - gọi `POST /v1/cccd/parse` và kiểm tra response có đủ field
 

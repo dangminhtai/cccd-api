@@ -54,7 +54,7 @@ git push
 
 - [ ] Tạo nguồn dữ liệu mapping tỉnh/thành (ưu tiên file JSON trong repo cho bản đầu).
 - [ ] Hỗ trợ `province_version`:
-  - [ ] `legacy_64` (danh sách cũ)
+  - [ ] `legacy_63` (danh sách cũ)
   - [ ] `current_34` (danh sách mới)
 - [ ] Mặc định theo cấu hình `DEFAULT_PROVINCE_VERSION` nếu client không truyền.
 - [ ] Trường hợp `province_code` không có trong mapping: trả `province_name=null` + message/warning rõ ràng.

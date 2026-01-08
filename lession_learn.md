@@ -127,4 +127,11 @@
   - hoặc có thay đổi lớn ở routing/template khiến dễ gãy
 - Khi cần hướng dẫn dừng server:
   - ưu tiên “Ctrl + C” ở terminal đang chạy `run.py`
-  - tránh các lệnh kill theo port trừ khi bị kẹt (port bị chiếm)
+## 13) Đảm bảo tính nhất quán giữa tên file mapping và version name trong code/docs
+
+- **Issue**: Khi đổi tên file `provinces_legacy_64.json` thành `provinces_legacy_63.json`, nếu không cập nhật đồng bộ các hằng số/literal `legacy_64` thành `legacy_63` trong code và tài liệu sẽ gây hiểu lầm cho người dùng.
+- **Cách xử lý**:
+  - Chuẩn hoá toàn bộ reference về tên mới (`legacy_63`).
+  - Nếu cần tương thích ngược, hỗ trợ alias (`legacy_64`) trong code nhưng trả về kết quả kèm warning khuyến cáo dùng tên mới.
+  - Cập nhật cả file `.md` hướng dẫn và `checklist.md`.
+- **Bài học**: Khi thay đổi một định danh (identifier) mang tính toàn cục, hãy dùng `grep` để quét sạch và cập nhật tất cả các chỗ liên quan ngay lập tức.

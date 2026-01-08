@@ -18,7 +18,7 @@ Tạo “khung” dự án Flask rõ ràng để sau này thêm route/logic/test
 - Chuẩn bị cấu hình môi trường:
   - `PORT`
   - `API_KEY` (nếu dùng API key)
-  - `DEFAULT_PROVINCE_VERSION` (vd: `legacy_64` hoặc `current_34`)
+  - `DEFAULT_PROVINCE_VERSION` (vd: `legacy_63` hoặc `current_34`)
 - Thêm `.gitignore` (bỏ `.env`, venv, cache, v.v.)
 
 ## Kết quả mong muốn

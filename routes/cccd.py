@@ -66,14 +66,19 @@ def cccd_parse():
     warnings: list[str] = []
     is_plausible = True
 
-    # Resolve province_version
+    # Resolve province_version (canonical: legacy_63 / current_34)
     settings = current_app.config.get("SETTINGS")
     default_version = getattr(settings, "default_province_version", "current_34")
     version: ProvinceVersion
     if province_version is None or province_version == "":
-        version = "legacy_64" if default_version == "legacy_64" else "current_34"
-    elif province_version in ("legacy_64", "current_34"):
+        # Accept old config value "legacy_64" as alias
+        version = "legacy_63" if default_version in ("legacy_63", "legacy_64") else "current_34"
+    elif province_version in ("legacy_63", "current_34"):
         version = province_version
+    elif province_version == "legacy_64":
+        # Backward-compatible alias
+        version = "legacy_63"
+        warnings.append("province_version_alias_legacy_64")
     else:
         return (
             jsonify(
@@ -81,7 +86,7 @@ def cccd_parse():
                     "success": False,
                     "is_valid_format": False,
                     "data": None,
-                    "message": "province_version không hợp lệ (chỉ nhận legacy_64 hoặc current_34).",
+                    "message": "province_version không hợp lệ (chỉ nhận legacy_63 hoặc current_34).",
                 }
             ),
             400,

@@ -10,7 +10,7 @@
   - `data/provinces_legacy_63.json`
   - `data/provinces_current_34.json`
 - Hỗ trợ tham số `province_version`:
-  - `legacy_64`
+  - `legacy_63` (danh sách cũ 63 tỉnh/thành)
   - `current_34`
 - Nếu client không truyền `province_version`:
   - dùng `DEFAULT_PROVINCE_VERSION` (config)
@@ -42,7 +42,7 @@ py .\run.py
 
 4) Chọn `province_version` và bấm **Parse**:
 
-- [ ] `legacy_64` → `data.province_name` phải ra tên theo file `data/provinces_legacy_63.json`
+- [ ] `legacy_63` → `data.province_name` phải ra tên theo file `data/provinces_legacy_63.json`
 - [ ] `current_34` → `data.province_name` phải ra tên theo file `data/provinces_current_34.json`
 
 Nếu `province_code` không tồn tại trong mapping thì:
