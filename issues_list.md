@@ -52,4 +52,35 @@
 - **Cách xử lý**: dùng `Get-CimInstance Win32_Process` lọc `CommandLine` chứa `python run.py` rồi `Stop-Process`.
 - **Cách tránh lần sau**: ưu tiên PowerShell thuần, viết rõ nhiều dòng thay vì one-liner phức tạp; verify bằng gọi lại `/health` để chắc đã stop.
 
+---
+
+## 7) PowerShell không hỗ trợ `&&` như bash (lỗi khi chain lệnh git)
+
+- **Hiện tượng**: chạy `git add -A && git commit ... && git push` báo lỗi: `The token '&&' is not a valid statement separator in this version.`
+- **Nguyên nhân**: PowerShell (đặc biệt Windows PowerShell 5.1) không dùng `&&` để nối lệnh như bash/zsh.
+- **Cách xử lý**:
+  - chạy từng lệnh riêng, hoặc
+  - dùng `;` để tách lệnh trong PowerShell.
+- **Cách tránh lần sau**: khi chạy trên Windows/PowerShell, mặc định dùng `;` hoặc tách từng command (đặc biệt cho các chuỗi git add/commit/push).
+
+---
+
+## 8) Windows PowerShell 5.1 không có `-SkipHttpErrorCheck` (Invoke-WebRequest)
+
+- **Hiện tượng**: chạy lệnh self-test có `Invoke-WebRequest ... -SkipHttpErrorCheck` báo lỗi: `A parameter cannot be found that matches parameter name 'SkipHttpErrorCheck'.`
+- **Nguyên nhân**: `-SkipHttpErrorCheck` chỉ có ở PowerShell 7+; Windows PowerShell 5.1 không hỗ trợ.
+- **Cách xử lý**: dùng `try/catch` + `-ErrorAction Stop` để bắt HTTP 4xx/5xx và in status/content.
+- **Cách tránh lần sau**: khi viết hướng dẫn self-test, mặc định dùng cú pháp tương thích PS 5.1 (hoặc ghi rõ “PowerShell 7+” nếu dùng option mới).
+
+---
+
+## 9) Test API bị lỗi do “PowerShell trong PowerShell” làm hỏng `$`/escape JSON
+
+- **Hiện tượng**: khi chạy `powershell -Command "..."` bên trong PowerShell để test API:
+  - biểu thức có `$_...` bị mất `$` → lỗi parse kiểu `Unexpected token '.Exception...'`
+  - body JSON bị escape sai → API nhận sai/thiếu field → trả 400 dù tưởng là request đúng
+- **Nguyên nhân**: biến `$...` và escape `\"` bị shell ngoài parse sai do gọi PowerShell lồng PowerShell.
+- **Cách xử lý**: chạy lệnh test **trực tiếp** trong session PowerShell hiện tại (không bọc `powershell -Command`).
+- **Cách tránh lần sau**: tránh lồng PowerShell; nếu bắt buộc phải bọc, cần escape `$`/quotes đúng cách (dễ sai) → ưu tiên không bọc.
+
 
