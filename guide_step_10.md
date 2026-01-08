@@ -150,7 +150,7 @@ python scripts/generate_keys.py --tier ultra --count 5 --email vip@company.com
 
 - [X] Biết cách xem thống kê trên web
 - [X] Biết cách tạo key trên web
-- [ ] Biết cách tạo key qua API (nếu cần tự động hoá)
+- [X] Biết cách tạo key qua API (nếu cần tự động hoá)
 
 **Xem thống kê trên web:**
 
@@ -333,7 +333,17 @@ Tương tự, nhưng tạo key premium và test 101 requests.
 | `0` | ❌ **400** - "Số ngày phải >= 1" |
 | `-1` | ❌ **400** - "Số ngày phải >= 1" |
 | `abc` | ❌ **400** - "Số ngày phải là số nguyên" |
+| `e9` | ❌ **400** - Frontend validate ngay, không gửi lên server |
+| `1.5` | ❌ **400** - "Số ngày phải là số nguyên" |
 | *(để trống)* | ✅ **200** - vĩnh viễn |
+
+**Cách test:**
+
+1. Mở `/admin/`
+2. Scroll xuống form "Tạo API Key mới"
+3. Nhập email hợp lệ
+4. Nhập `e9` vào ô "Số ngày" → Bấm "Tạo Key"
+5. Kỳ vọng: **Error ngay trên form** "Số ngày phải là số nguyên >= 1" (không gửi request)
 
 ### Verify trong MySQL
 

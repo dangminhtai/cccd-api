@@ -196,4 +196,21 @@
   - Cung cấp script test với key thật
   - Giải thích tại sao key sai vẫn bị đếm (security feature)
 
+---
+
+## 20) Input "days" nhận string không phải số (ví dụ "e9") → tạo key vĩnh viễn
+
+- **Hiện tượng**: Nhập "e9" vào ô "Số ngày hợp lệ" → key được tạo vĩnh viễn (không có expires_at).
+- **Nguyên nhân**:
+  - Frontend: `parseInt("e9")` → `NaN`, `if (NaN)` → false → không gửi field `days`
+  - Backend: `days = None` → `days_valid = None` → key vĩnh viễn
+- **Cách xử lý**:
+  - Frontend: Check `isNaN(parseInt(days))` trước khi gửi, validate ngay
+  - Backend: Check `if days is not None and days != ""` và validate chặt chẽ
+  - HTML: Thêm `step="1"` và `pattern="[0-9]+"` cho input number
+- **Cách tránh lần sau**: Khi validate input số:
+  - Frontend: Luôn check `isNaN()` và range trước khi gửi
+  - Backend: Luôn validate lại, không tin frontend
+  - HTML: Dùng `type="number"` + `step="1"` + `pattern` để hạn chế input sai
+
 

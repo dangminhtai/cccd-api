@@ -94,7 +94,7 @@
             </div>
             <div>
               <label>Số ngày hợp lệ (để trống = vĩnh viễn)</label>
-              <input id="createDays" type="number" placeholder="30" min="1" />
+              <input id="createDays" type="number" placeholder="30" min="1" step="1" pattern="[0-9]+" />
             </div>
           </div>
           <button onclick="createKey()">Tạo Key</button>
@@ -201,7 +201,15 @@
 
         try {
           const body = { tier, email };
-          if (days) body.days = parseInt(days);
+          if (days) {
+            const daysNum = parseInt(days);
+            if (isNaN(daysNum) || daysNum < 1) {
+              document.getElementById("createError").textContent = "Số ngày phải là số nguyên >= 1";
+              document.getElementById("createError").style.display = "block";
+              return;
+            }
+            body.days = daysNum;
+          }
 
           const resp = await fetch("/admin/keys/create", {
             method: "POST",
