@@ -69,7 +69,43 @@ Nhập `052399012345` (năm sinh 2099):
 - `is_plausible: false`
 - `warnings` có `birth_year_in_future`
 
-### 6. (Bonus) Chạy automated tests
+### 6. Test Backend trực tiếp (Terminal)
+
+Nếu nghi ngờ lỗi từ backend, copy-paste các lệnh sau vào PowerShell:
+
+**Test CCCD hợp lệ:**
+```powershell
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/v1/cccd/parse" -Method POST -ContentType "application/json" -Body '{"cccd": "079203012345"}'
+```
+→ Kỳ vọng: `success: True`, `province_code: 079`, `gender: Nam`
+
+**Test CCCD sai format:**
+```powershell
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/v1/cccd/parse" -Method POST -ContentType "application/json" -Body '{"cccd": "123"}'
+```
+→ Kỳ vọng: Lỗi 400 "CCCD không hợp lệ"
+
+**Test thiếu CCCD:**
+```powershell
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/v1/cccd/parse" -Method POST -ContentType "application/json" -Body '{}'
+```
+→ Kỳ vọng: Lỗi 400 "Thiếu trường cccd"
+
+**Test với API Key (nếu đã bật):**
+```powershell
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/v1/cccd/parse" -Method POST -ContentType "application/json" -Headers @{"X-API-Key"="your-api-key-here"} -Body '{"cccd": "079203012345"}'
+```
+→ Kỳ vọng: `success: True` (nếu key đúng), Lỗi 401 (nếu key sai)
+
+**Test string cực dài (DoS protection):**
+```powershell
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/v1/cccd/parse" -Method POST -ContentType "application/json" -Body '{"cccd": "000000000000000000000000000000000000000000000000000"}'
+```
+→ Kỳ vọng: Lỗi 400 (reject ngay, không xử lý)
+
+---
+
+### 7. (Bonus) Chạy automated tests
 
 ```bash
 python -m pytest tests/ -v
