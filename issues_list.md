@@ -144,4 +144,17 @@
 - **Cách xử lý**: set `app.json.ensure_ascii = False` trong `create_app()`.
 - **Cách tránh lần sau**: với API có message tiếng Việt, luôn set `ensure_ascii=False` ngay từ đầu.
 
+---
+
+## 16) Input CCCD không giới hạn độ dài ở frontend (security risk)
+
+- **Hiện tượng**: ô nhập CCCD cho phép nhập quá 12 ký tự, tiềm ẩn rủi ro injection/bypass.
+- **Nguyên nhân**: thiếu `maxlength` và `pattern` validation ở HTML input.
+- **Cách xử lý**: thêm `maxlength="12" pattern="[0-9]{12}" inputmode="numeric"` vào input field.
+- **Cách tránh lần sau**: với input có định dạng cố định (CCCD, SĐT, mã OTP...), luôn:
+  - Giới hạn `maxlength` ở frontend
+  - Thêm `pattern` regex
+  - Dùng `inputmode="numeric"` cho mobile
+  - Backend vẫn phải validate (defense in depth)
+
 
