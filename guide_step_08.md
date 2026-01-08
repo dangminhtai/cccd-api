@@ -71,7 +71,11 @@ Nhập `052399012345` (năm sinh 2099):
 
 ### 6. Test Backend trực tiếp (Terminal)
 
-Nếu nghi ngờ lỗi từ backend, copy-paste các lệnh sau vào PowerShell:
+Nếu nghi ngờ lỗi từ backend, copy-paste các lệnh sau vào PowerShell.
+
+> ⚠️ **Nếu bạn đã bật `API_KEY` trong `.env`**: thêm `-Headers @{"X-API-Key"="your-key"}` vào mỗi lệnh, hoặc tắt API_KEY tạm thời bằng cách comment dòng `API_KEY=...` trong `.env` rồi restart server.
+
+#### A. Nếu CHƯA bật API_KEY (hoặc đã tắt tạm):
 
 **Test CCCD hợp lệ:**
 ```powershell
@@ -91,17 +95,33 @@ Invoke-RestMethod -Uri "http://127.0.0.1:8000/v1/cccd/parse" -Method POST -Conte
 ```
 → Kỳ vọng: Lỗi 400 "Thiếu trường cccd"
 
-**Test với API Key (nếu đã bật):**
-```powershell
-Invoke-RestMethod -Uri "http://127.0.0.1:8000/v1/cccd/parse" -Method POST -ContentType "application/json" -Headers @{"X-API-Key"="your-api-key-here"} -Body '{"cccd": "079203012345"}'
-```
-→ Kỳ vọng: `success: True` (nếu key đúng), Lỗi 401 (nếu key sai)
-
 **Test string cực dài (DoS protection):**
 ```powershell
 Invoke-RestMethod -Uri "http://127.0.0.1:8000/v1/cccd/parse" -Method POST -ContentType "application/json" -Body '{"cccd": "000000000000000000000000000000000000000000000000000"}'
 ```
 → Kỳ vọng: Lỗi 400 (reject ngay, không xử lý)
+
+#### B. Nếu ĐÃ bật API_KEY:
+
+Thay `YOUR_API_KEY` bằng key thật trong `.env`:
+
+**Test CCCD hợp lệ (có API Key):**
+```powershell
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/v1/cccd/parse" -Method POST -ContentType "application/json" -Headers @{"X-API-Key"="YOUR_API_KEY"} -Body '{"cccd": "079203012345"}'
+```
+→ Kỳ vọng: `success: True`
+
+**Test sai API Key:**
+```powershell
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/v1/cccd/parse" -Method POST -ContentType "application/json" -Headers @{"X-API-Key"="wrong-key"} -Body '{"cccd": "079203012345"}'
+```
+→ Kỳ vọng: Lỗi 401 "API key không hợp lệ"
+
+**Test thiếu API Key:**
+```powershell
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/v1/cccd/parse" -Method POST -ContentType "application/json" -Body '{"cccd": "079203012345"}'
+```
+→ Kỳ vọng: Lỗi 401 "API key không hợp lệ hoặc thiếu"
 
 ---
 
