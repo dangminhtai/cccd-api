@@ -24,8 +24,8 @@ Tạo “khung” dự án Flask rõ ràng để sau này thêm route/logic/test
 ## Kết quả mong muốn
 
 - [X] Repo có cấu trúc thư mục rõ ràng
-- [] Có thể chạy “hello world” Flask (nếu đã tạo code)
-- [ ] Không commit nhầm `.env`/venv
+- [X] Chạy được server và gọi /health trả {"status":"ok"}
+- [X] Không commit nhầm `.env`/venv
 
 ## Tự test (Self-check)
 
@@ -58,5 +58,16 @@ Kết quả đúng: `{"status":"ok"}`
 Ghi chú: nếu bạn mở `http://127.0.0.1:8000/` thì trước đây sẽ thấy 404; hiện tại đã có route `/` trả message hướng dẫn để dễ kiểm tra.
 
 5) Dừng server: `Ctrl + C`
+
+---
+
+## Trạng thái
+
+- **DoD**: ✅ Done
+- **Đã verify**: ✅ Done (đã chạy server và gọi `/health` trả `{"status":"ok"}`)
+
+## Bước tiếp theo
+
+Chuyển sang `guide_step_02.md` (Thiết kế API & chuẩn response).
 
 
