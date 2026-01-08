@@ -81,7 +81,7 @@ HTTP 200:
   - `province_name` (string | null)
   - `gender` (string | null): chuẩn hoá giá trị: `Nam` / `Nữ` (chọn 1 chuẩn và dùng thống nhất)
   - `birth_year` (number | null)
-  - `century` (string | null): thế kỷ (nếu dùng)
+  - `century` (number | null): thế kỷ (ví dụ 21 cho năm 2000–2099, nếu dùng)
   - `age` (number | null): tuổi (nếu dùng)
 - `message` (string | null): thông điệp ngắn gọn cho client (nếu cần)
 
@@ -95,7 +95,7 @@ Ví dụ (minh hoạ):
     "province_name": "Thành phố Hồ Chí Minh",
     "gender": "Nam",
     "birth_year": 1996,
-    "century": "20",
+    "century": 20,
     "age": 29
   },
   "is_valid_format": true

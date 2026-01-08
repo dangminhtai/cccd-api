@@ -6,20 +6,20 @@ from datetime import date
 @dataclass(frozen=True)
 class GenderCentury:
     gender: str  # "Nam" | "Nữ"
-    century: str  # "18" | "19" | "20" | "21" | "22"
+    century: int  # century number (e.g. 21 for years 2000-2099)
 
 
 _GENDER_CENTURY_MAP: dict[int, GenderCentury] = {
-    0: GenderCentury(gender="Nam", century="19"),
-    1: GenderCentury(gender="Nữ", century="19"),
-    2: GenderCentury(gender="Nam", century="20"),
-    3: GenderCentury(gender="Nữ", century="20"),
-    4: GenderCentury(gender="Nam", century="21"),
-    5: GenderCentury(gender="Nữ", century="21"),
-    6: GenderCentury(gender="Nam", century="22"),
-    7: GenderCentury(gender="Nữ", century="22"),
-    8: GenderCentury(gender="Nam", century="18"),
-    9: GenderCentury(gender="Nữ", century="18"),
+    0: GenderCentury(gender="Nam", century=20),  # 1900-1999
+    1: GenderCentury(gender="Nữ", century=20),
+    2: GenderCentury(gender="Nam", century=21),  # 2000-2099
+    3: GenderCentury(gender="Nữ", century=21),
+    4: GenderCentury(gender="Nam", century=22),  # 2100-2199
+    5: GenderCentury(gender="Nữ", century=22),
+    6: GenderCentury(gender="Nam", century=23),  # 2200-2299
+    7: GenderCentury(gender="Nữ", century=23),
+    8: GenderCentury(gender="Nam", century=19),  # 1800-1899
+    9: GenderCentury(gender="Nữ", century=19),
 }
 
 
@@ -49,7 +49,8 @@ def parse_birth_year(cccd: str) -> int | None:
     yy = cccd[4:6]
     if not yy.isdigit():
         return None
-    return int(gc.century) * 100 + int(yy)
+    # century=21 => years 2000-2099 => prefix 20xx
+    return (gc.century - 1) * 100 + int(yy)
 
 
 def parse_age(birth_year: int | None, as_of_year: int | None = None) -> int | None:

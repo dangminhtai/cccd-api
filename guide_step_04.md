@@ -46,7 +46,7 @@ py .\run.py
   - JSON có `is_valid_format: true`
   - `data.province_code` = `079`
   - `data.gender` = `Nam` (với ví dụ trên)
-  - `data.century` = `20`
+  - `data.century` = `21`
   - `data.birth_year` = `2003`
 
 ---
