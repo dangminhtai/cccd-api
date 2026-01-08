@@ -83,4 +83,15 @@
 - **Cách xử lý**: chạy lệnh test **trực tiếp** trong session PowerShell hiện tại (không bọc `powershell -Command`).
 - **Cách tránh lần sau**: tránh lồng PowerShell; nếu bắt buộc phải bọc, cần escape `$`/quotes đúng cách (dễ sai) → ưu tiên không bọc.
 
+---
+
+## 10) `TemplateNotFound` khi đặt `templates/` sai vị trí (Flask app nằm trong package `app/`)
+
+- **Hiện tượng**: mở `/demo` báo `jinja2.exceptions.TemplateNotFound: demo.html`.
+- **Nguyên nhân**: Flask được tạo từ module `app` (`Flask(__name__)` trong `app/__init__.py`), nên thư mục template mặc định phải nằm ở **`app/templates/`** (không phải `templates/` ở root).
+- **Cách xử lý**: chuyển template sang `app/templates/demo.html`.
+- **Cách tránh lần sau**:
+  - đặt template trong `app/templates/` khi app nằm trong package `app/`, hoặc
+  - nếu muốn template ở root thì phải cấu hình `template_folder` khi tạo Flask app.
+
 
