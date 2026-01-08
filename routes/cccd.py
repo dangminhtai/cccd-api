@@ -150,12 +150,7 @@ def cccd_parse():
         is_plausible = False
 
     current_app.logger.info(
-        "cccd_parsed",
-        extra={
-            "cccd_masked": masked,
-            "province_version": version,
-            "warnings": warnings,
-        },
+        f"cccd_parsed | cccd_masked={masked} | province_version={version} | warnings={warnings}"
     )
 
     return (
