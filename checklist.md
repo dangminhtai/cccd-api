@@ -5,10 +5,12 @@
 > Mục tiêu: API nhận `cccd` và trả về `province_name`, `gender`, `birth_year` (có thể kèm `province_code`, `age` nếu cần).
 
 
-Yêu cầu trên github
+
+Yêu cầu trên github (Agent tự làm bước này)
 git add <somefile>
 git commit -m <current state commit>
 git push
+
 ---
 
 ## 1) Chuẩn bị dự án
