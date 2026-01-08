@@ -162,3 +162,19 @@
   - render trạng thái hiện tại (enabled/disabled)
   - hướng dẫn ngay trên trang cách bật/tắt nếu chưa đúng
   - đừng để người test đoán mò
+
+---
+
+## 16) Self-check là NGƯỜI test thủ công, không phải máy chạy pytest
+
+- **Issue**: Viết "Self-check" chỉ có lệnh `python -m pytest` → người dùng không biết test thủ công như thế nào.
+- **Nguyên nhân**: Nhầm lẫn giữa "automated test" và "manual self-check".
+- **Cách xử lý**: Viết Self-check dạng bảng:
+  - Cột 1: Nhập gì vào `/demo`
+  - Cột 2: Kỳ vọng status/response là gì
+  - Liệt kê từng case: validation, API key, parse, province version, plausibility
+- **Bài học**: Self-check phải:
+  - Dành cho người **không tin code** và muốn verify bằng tay
+  - Dùng `/demo` page (ít command line nhất)
+  - Có bảng input → expected output rõ ràng
+  - Automated tests (pytest) chỉ là bonus ở cuối
