@@ -178,3 +178,21 @@
   - Dùng `/demo` page (ít command line nhất)
   - Có bảng input → expected output rõ ràng
   - Automated tests (pytest) chỉ là bonus ở cuối
+
+---
+
+## 17) Guide phải là checklist từng bước, KHÔNG PHẢI dump code
+
+- **Issue**: Viết `guide_step_10.md` với hàng trăm dòng code Python/SQL → người đọc không biết bắt đầu từ đâu.
+- **Nguyên nhân**: Nhầm lẫn giữa "tài liệu kỹ thuật" và "hướng dẫn từng bước".
+- **Cách xử lý**: Viết guide dạng:
+  - **Checklist nhỏ**: `- [ ] Đã tạo database`
+  - **"Cách làm"**: 1-2-3 bước cụ thể
+  - **Bảng kỳ vọng**: Input → Output
+  - Code chỉ là **lệnh ngắn** để copy-paste, không phải file code dài
+- **Bài học**: Guide file phải:
+  - Dành cho người **không biết code** cũng làm theo được
+  - Có checkbox để tick khi hoàn thành
+  - Mỗi section có "Cách làm" rõ ràng
+  - Code dài → để trong `scripts/` hoặc `services/`, guide chỉ gọi lệnh
+  - Người đọc tư duy theo **quy trình**, không tư duy theo **code**
