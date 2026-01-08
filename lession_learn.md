@@ -135,3 +135,15 @@
   - Nếu cần tương thích ngược, hỗ trợ alias (`legacy_64`) trong code nhưng trả về kết quả kèm warning khuyến cáo dùng tên mới.
   - Cập nhật cả file `.md` hướng dẫn và `checklist.md`.
 - **Bài học**: Khi thay đổi một định danh (identifier) mang tính toàn cục, hãy dùng `grep` để quét sạch và cập nhật tất cả các chỗ liên quan ngay lập tức.
+
+---
+
+## 14) Sai config `DEFAULT_PROVINCE_VERSION` sẽ silently fallback nếu không hỗ trợ alias
+
+- **Issue**: Đặt `DEFAULT_PROVINCE_VERSION=current_63` (typo) làm API vẫn dùng mặc định `current_34`, gây nhầm lẫn.
+- **Cách xử lý**:
+  - Chuẩn hoá giá trị hợp lệ (`legacy_63`, `current_34`), cập nhật file `.env` mẫu.
+  - Hỗ trợ alias (`current_63` → `current_34`, `legacy_64` → `legacy_63`) và thêm warning trong response khi nhận alias.
+- **Bài học**: Với config dạng enum, luôn:
+  - xác định tập giá trị hợp lệ, ghi rõ trong `.env.example`
+  - chấp nhận alias an toàn + log/warning để người dùng sửa cấu hình

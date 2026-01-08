@@ -72,13 +72,22 @@ def cccd_parse():
     version: ProvinceVersion
     if province_version is None or province_version == "":
         # Accept old config value "legacy_64" as alias
-        version = "legacy_63" if default_version in ("legacy_63", "legacy_64") else "current_34"
+        if default_version in ("legacy_63", "legacy_64"):
+            version = "legacy_63"
+        elif default_version in ("current_34", "current_63"):
+            version = "current_34"
+        else:
+            version = "current_34"
     elif province_version in ("legacy_63", "current_34"):
         version = province_version
     elif province_version == "legacy_64":
         # Backward-compatible alias
         version = "legacy_63"
         warnings.append("province_version_alias_legacy_64")
+    elif province_version == "current_63":
+        # Backward-compatible alias
+        version = "current_34"
+        warnings.append("province_version_alias_current_63")
     else:
         return (
             jsonify(
