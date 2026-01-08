@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import date
+
 from flask import Blueprint, jsonify, render_template, request
 
 from services.cccd_parser import parse_cccd
@@ -59,12 +61,22 @@ def cccd_parse():
 
     data = parse_cccd(cccd)
 
+    warnings: list[str] = []
+    is_plausible = True
+
+    birth_year = data.get("birth_year")
+    if isinstance(birth_year, int) and birth_year > date.today().year:
+        warnings.append("birth_year_in_future")
+        is_plausible = False
+
     return (
         jsonify(
             {
                 "success": True,
                 "data": data,
                 "is_valid_format": True,
+                "is_plausible": is_plausible,
+                "warnings": warnings,
             }
         ),
         200,

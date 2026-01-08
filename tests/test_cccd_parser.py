@@ -21,6 +21,7 @@ class TestCCCDParser(unittest.TestCase):
         self.assertEqual(out["gender"], "Nam")
         self.assertEqual(out["century"], 21)
         self.assertEqual(out["birth_year"], 2003)
+        self.assertIsInstance(out["age"], int)
 
 
 if __name__ == "__main__":

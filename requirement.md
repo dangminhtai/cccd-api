@@ -76,6 +76,7 @@ HTTP 200:
 
 - `success` (boolean)
 - `is_valid_format` (boolean): CCCD có đúng định dạng cơ bản hay không
+- `is_plausible` (boolean): dữ liệu có “hợp lý” theo ngữ cảnh hiện tại hay không (ví dụ năm sinh không ở tương lai)
 - `data` (object | null)
   - `province_code` (string | null): mã tỉnh lấy từ CCCD (nếu parse được)
   - `province_name` (string | null)
@@ -83,6 +84,7 @@ HTTP 200:
   - `birth_year` (number | null)
   - `century` (number | null): thế kỷ (ví dụ 21 cho năm 2000–2099, nếu dùng)
   - `age` (number | null): tuổi (nếu dùng)
+- `warnings` (array): danh sách cảnh báo (ví dụ `birth_year_in_future`)
 - `message` (string | null): thông điệp ngắn gọn cho client (nếu cần)
 
 Ví dụ (minh hoạ):
@@ -98,7 +100,9 @@ Ví dụ (minh hoạ):
     "century": 20,
     "age": 29
   },
-  "is_valid_format": true
+  "is_valid_format": true,
+  "is_plausible": true,
+  "warnings": []
 }
 ```
 

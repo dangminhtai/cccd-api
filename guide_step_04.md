@@ -48,6 +48,16 @@ py .\run.py
   - `data.gender` = `Nam` (với ví dụ trên)
   - `data.century` = `21`
   - `data.birth_year` = `2003`
+  - `is_plausible: true`
+  - `warnings` là mảng rỗng `[]`
+
+4) Test case “năm sinh tương lai” (để phát hiện CCCD không hợp lý)
+
+- Nhập CCCD giả lập có năm sinh 2099 (ví dụ `052399012345`) rồi bấm **Parse**
+  - OK khi thấy:
+    - `Status: 200` (vì format vẫn đúng)
+    - `is_plausible: false`
+    - `warnings` có chứa `"birth_year_in_future"`
 
 ---
 
