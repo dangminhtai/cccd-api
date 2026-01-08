@@ -117,4 +117,13 @@
 - **Cách xử lý**: hiển thị trạng thái "🔐 API Key đang BẬT" (kèm key cần nhập) hoặc "🔓 API Key đang TẮT" (kèm hướng dẫn bật) ngay trên `/demo`.
 - **Cách tránh lần sau**: khi viết demo page cho feature có cấu hình on/off, luôn hiển thị trạng thái hiện tại để người test biết phải làm gì.
 
+---
+
+## 13) Flask-Limiter trả HTML thay vì JSON khi rate limit (429)
+
+- **Hiện tượng**: khi bị rate limit, response trả về `<!doctype html><title>429 Too Many Requests</title>...` thay vì JSON.
+- **Nguyên nhân**: Flask-Limiter mặc định dùng template HTML cho error 429.
+- **Cách xử lý**: thêm `@app.errorhandler(429)` trong `create_app()` để trả JSON theo chuẩn API.
+- **Cách tránh lần sau**: khi dùng extension có error handler mặc định (limiter, auth...), luôn kiểm tra response format và override nếu cần để đảm bảo API trả JSON nhất quán.
+
 

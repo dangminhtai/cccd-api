@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, jsonify, request
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
@@ -22,6 +22,21 @@ def create_app() -> Flask:
     app.config["SETTINGS"] = settings
 
     limiter.init_app(app)
+
+    # Custom 429 handler to return JSON instead of HTML
+    @app.errorhandler(429)
+    def ratelimit_handler(e):
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "is_valid_format": False,
+                    "data": None,
+                    "message": f"Quá nhiều request. Giới hạn: {e.description}",
+                }
+            ),
+            429,
+        )
 
     # Routes
     from routes.health import health_bp
