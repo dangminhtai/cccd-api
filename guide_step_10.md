@@ -148,10 +148,11 @@ python scripts/generate_keys.py --tier ultra --count 5 --email vip@company.com
 
 ### H. Sử dụng Admin Dashboard
 
-- [ ] Biết cách xem thống kê trên web
+- [X] Biết cách xem thống kê trên web
+- [X] Biết cách tạo key trên web
 - [ ] Biết cách tạo key qua API (nếu cần tự động hoá)
 
-**Xem thống kê trên web (dễ nhất):**
+**Xem thống kê trên web:**
 
 1. Mở trình duyệt: `http://127.0.0.1:8000/admin/`
 2. Nhập Admin Secret Key (từ `.env`, biến `ADMIN_SECRET`)
@@ -160,6 +161,15 @@ python scripts/generate_keys.py --tier ultra --count 5 --email vip@company.com
    - Requests hôm nay
    - Tổng số keys theo tier (free/premium/ultra)
    - Số keys đang hoạt động
+
+**Tạo key trên web:**
+
+1. Trên trang `/admin/`, scroll xuống phần "🔑 Tạo API Key mới"
+2. Chọn Tier (Free/Premium/Ultra)
+3. Nhập Email chủ sở hữu
+4. (Tuỳ chọn) Nhập số ngày hợp lệ (để trống = vĩnh viễn)
+5. Bấm "Tạo Key"
+6. **Copy key ngay** - chỉ hiển thị 1 lần!
 
 **Tạo key qua API (nếu cần tự động hoá):**
 
@@ -214,6 +224,17 @@ Invoke-RestMethod -Uri "http://127.0.0.1:8000/admin/keys/free_abc123/deactivate"
 | 2 | Nhập Admin Secret Key (từ .env) | Input nhận được |
 | 3 | Bấm "Tải thống kê" | Thấy stats: requests_today, tiers table |
 | 4 | Nhập sai Admin Key | **403** - Unauthorized |
+
+### Test tạo key trên web
+
+| Bước | Hành động | Kỳ vọng |
+|------|-----------|---------|
+| 1 | Scroll xuống phần "Tạo API Key mới" | Form hiển thị |
+| 2 | Chọn Tier = Premium | Dropdown chọn được |
+| 3 | Nhập email `test@example.com` | Input nhận được |
+| 4 | Nhập days = 30 | Input nhận được |
+| 5 | Bấm "Tạo Key" | Thấy key `prem_xxx` hiển thị |
+| 6 | Copy key và test trên `/demo` | **200** - success |
 
 ### Verify trong MySQL
 

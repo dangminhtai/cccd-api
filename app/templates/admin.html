@@ -26,9 +26,16 @@
       button { padding: 10px 16px; border: 0; border-radius: 8px; background: #0b57d0; color: white; cursor: pointer; font-size: 14px; }
       button:hover { background: #0a4fb8; }
       button:disabled { opacity: 0.6; cursor: not-allowed; }
-      input { padding: 10px; border: 1px solid #ccc; border-radius: 8px; min-width: 300px; }
+      input, select { padding: 10px; border: 1px solid #ccc; border-radius: 8px; min-width: 300px; }
       .form-group { margin: 16px 0; }
       label { display: block; margin-bottom: 6px; font-size: 14px; color: #555; }
+      .form-row { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; }
+      .form-row > div { flex: 1; min-width: 200px; }
+      .success { color: #2e7d32; background: #e8f5e9; padding: 12px; border-radius: 8px; margin: 16px 0; }
+      .key-display { background: #f5f5f5; padding: 16px; border-radius: 8px; margin: 16px 0; font-family: monospace; word-break: break-all; }
+      .key-display strong { color: #d32f2f; }
+      .section { margin-top: 32px; padding-top: 24px; border-top: 2px solid #e0e0e0; }
+      .section h2 { margin-top: 0; }
     </style>
   </head>
   <body>
@@ -65,6 +72,38 @@
             <tbody id="tierTableBody">
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>🔑 Tạo API Key mới</h2>
+        
+        <div class="form-group">
+          <div class="form-row">
+            <div>
+              <label>Tier</label>
+              <select id="createTier">
+                <option value="free">Free (10 req/phút)</option>
+                <option value="premium">Premium (100 req/phút)</option>
+                <option value="ultra">Ultra (1000 req/phút)</option>
+              </select>
+            </div>
+            <div>
+              <label>Email chủ sở hữu</label>
+              <input id="createEmail" type="email" placeholder="customer@example.com" />
+            </div>
+            <div>
+              <label>Số ngày hợp lệ (để trống = vĩnh viễn)</label>
+              <input id="createDays" type="number" placeholder="30" min="1" />
+            </div>
+          </div>
+          <button onclick="createKey()">Tạo Key</button>
+        </div>
+
+        <div id="createError" class="error" style="display:none;"></div>
+        <div id="createSuccess" class="success" style="display:none;">
+          <strong>⚠️ LƯU Ý: Key chỉ hiển thị 1 lần này. Hãy copy và lưu ngay!</strong>
+          <div class="key-display" id="createdKey"></div>
         </div>
       </div>
     </div>
@@ -138,6 +177,63 @@
       document.getElementById("adminKey").addEventListener("keypress", (e) => {
         if (e.key === "Enter") loadStats();
       });
+
+      async function createKey() {
+        const adminKey = document.getElementById("adminKey").value.trim();
+        const tier = document.getElementById("createTier").value;
+        const email = document.getElementById("createEmail").value.trim();
+        const days = document.getElementById("createDays").value.trim();
+
+        if (!adminKey) {
+          showError("Vui lòng nhập Admin Secret Key trước");
+          return;
+        }
+
+        if (!email) {
+          document.getElementById("createError").textContent = "Vui lòng nhập email";
+          document.getElementById("createError").style.display = "block";
+          document.getElementById("createSuccess").style.display = "none";
+          return;
+        }
+
+        document.getElementById("createError").style.display = "none";
+        document.getElementById("createSuccess").style.display = "none";
+
+        try {
+          const body = { tier, email };
+          if (days) body.days = parseInt(days);
+
+          const resp = await fetch("/admin/keys/create", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Admin-Key": adminKey
+            },
+            body: JSON.stringify(body)
+          });
+
+          if (!resp.ok) {
+            const data = await resp.json();
+            throw new Error(data.error || `HTTP ${resp.status}`);
+          }
+
+          const data = await resp.json();
+          
+          // Hiển thị key
+          document.getElementById("createdKey").textContent = data.api_key;
+          document.getElementById("createSuccess").style.display = "block";
+          
+          // Reset form
+          document.getElementById("createEmail").value = "";
+          document.getElementById("createDays").value = "";
+          
+          // Reload stats để cập nhật số lượng keys
+          loadStats();
+        } catch (e) {
+          document.getElementById("createError").textContent = "Lỗi: " + e.message;
+          document.getElementById("createError").style.display = "block";
+        }
+      }
     </script>
   </body>
 </html>
