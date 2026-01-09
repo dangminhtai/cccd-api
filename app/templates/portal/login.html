@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Đăng nhập - CCCD API</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .container { max-width: 450px; width: 100%; background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        h1 { color: #333; margin-bottom: 10px; font-size: 28px; text-align: center; }
+        .subtitle { color: #666; margin-bottom: 30px; text-align: center; font-size: 14px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: #333; font-weight: 500; font-size: 14px; }
+        input[type="email"], input[type="password"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; transition: border-color 0.2s; }
+        input:focus { outline: none; border-color: #667eea; }
+        .checkbox-group { display: flex; align-items: center; margin-bottom: 20px; }
+        .checkbox-group input[type="checkbox"] { width: auto; margin-right: 8px; }
+        .btn { width: 100%; padding: 12px; border: 0; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; background: #667eea; color: white; transition: background 0.2s; }
+        .btn:hover { background: #5568d3; }
+        .flash-messages { margin-bottom: 20px; }
+        .flash { padding: 12px; border-radius: 8px; margin-bottom: 10px; }
+        .flash-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .flash-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .flash-warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .register-link { text-align: center; margin-top: 20px; color: #666; font-size: 14px; }
+        .register-link a { color: #667eea; text-decoration: none; }
+        .register-link a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Đăng nhập</h1>
+        <p class="subtitle">Đăng nhập vào tài khoản của bạn</p>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        <form method="POST" action="{{ url_for('portal.login') }}">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required autofocus>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Mật khẩu</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="remember_me" name="remember_me">
+                <label for="remember_me" style="margin: 0;">Ghi nhớ đăng nhập</label>
+            </div>
+            
+            <button type="submit" class="btn">Đăng nhập</button>
+        </form>
+        
+        <div class="register-link">
+            Chưa có tài khoản? <a href="{{ url_for('portal.register') }}">Đăng ký ngay</a>
+        </div>
+    </div>
+</body>
+</html>

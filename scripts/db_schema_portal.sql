@@ -58,10 +58,11 @@ CREATE TABLE IF NOT EXISTS payments (
 
 -- Link API keys to users (update existing api_keys table)
 -- Note: This assumes api_keys table already exists from Step 10
-ALTER TABLE api_keys 
-ADD COLUMN IF NOT EXISTS user_id INT NULL,
-ADD FOREIGN KEY IF NOT EXISTS fk_api_keys_user_id (user_id) REFERENCES users(id) ON DELETE SET NULL,
-ADD INDEX IF NOT EXISTS idx_user_id (user_id);
+-- MySQL doesn't support IF NOT EXISTS in ALTER TABLE, so we check first
+-- Run this manually if needed:
+-- ALTER TABLE api_keys ADD COLUMN user_id INT NULL;
+-- ALTER TABLE api_keys ADD FOREIGN KEY fk_api_keys_user_id (user_id) REFERENCES users(id) ON DELETE SET NULL;
+-- CREATE INDEX idx_api_keys_user_id ON api_keys(user_id);
 
 -- Default subscription for new users (free tier)
 -- This will be created automatically when user registers

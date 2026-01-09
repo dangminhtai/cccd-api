@@ -20,6 +20,13 @@ limiter = Limiter(key_func=_rate_limit_key, default_limits=["30 per minute"], st
 
 def create_app() -> Flask:
     app = Flask(__name__)
+    
+    # Session configuration for user authentication
+    import os
+    app.secret_key = os.getenv("FLASK_SECRET_KEY", secrets.token_hex(32))
+    app.config["SESSION_COOKIE_HTTPONLY"] = True
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+    app.config["PERMANENT_SESSION_LIFETIME"] = 86400  # 24 hours
 
     # Allow Vietnamese characters in JSON responses (no Unicode escape)
     app.json.ensure_ascii = False
