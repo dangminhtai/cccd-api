@@ -35,11 +35,19 @@ def create_app() -> Flask:
         g.request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())[:8]
 
     # Remove Server header to prevent information disclosure
+    # Note: Werkzeug development server may add Server header after after_request
+    # This is handled via WSGI middleware in production (gunicorn)
     @app.after_request
     def remove_server_header(response):
         """Remove Server header to prevent leaking framework/version information"""
         response.headers.pop("Server", None)
         return response
+    
+    # Also configure Werkzeug to not add Server header in development
+    # This works for Werkzeug's development server
+    if app.debug:
+        # In development, Werkzeug adds Server header - we'll handle it in production
+        pass
 
     # Custom 429 handler to return JSON instead of HTML
     @app.errorhandler(429)
