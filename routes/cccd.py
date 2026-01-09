@@ -22,6 +22,7 @@ def _mask_cccd(cccd: str) -> str:
 
 
 @cccd_bp.route("/v1/cccd/parse", methods=["OPTIONS"])
+@limiter.exempt  # Exempt OPTIONS from rate limiting
 def cccd_parse_options():
     """Reject OPTIONS method - only POST is allowed"""
     return jsonify({"error": "Method not allowed"}), 405

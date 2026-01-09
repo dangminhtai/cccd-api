@@ -321,13 +321,24 @@ try {
 - Nếu có `Access-Control-Allow-Origin: *` → VULNERABLE (cho phép mọi origin)
 
 #### Request 2: Test OPTIONS preflight
-1. **OPTIONS** `{{base_url}}/v1/cccd/parse`
-2. **Headers:**
+1. **Method:** Chọn `OPTIONS` (không phải POST!)
+2. **URL:** `{{base_url}}/v1/cccd/parse` (không có query parameter!)
+3. **Headers:**
    - `Origin`: `https://evil.com`
    - `Access-Control-Request-Method`: `POST`
    - `Access-Control-Request-Headers`: `X-API-Key, Content-Type`
 
+**⚠️ Lưu ý:**
+- **Phải chọn method OPTIONS** trong Postman (dropdown bên trái URL)
+- **Không thêm query parameter** vào URL (ví dụ: `?free_xxx`)
+- **Không cần Body** cho OPTIONS request
+
 **✅ Kết quả mong đợi:** Status `405 Method Not Allowed` (đã fix ở test 2.2)
+
+**❌ Nếu nhận 400 Bad Request:**
+- Kiểm tra lại method đã chọn OPTIONS chưa
+- Kiểm tra URL không có query parameter
+- Kiểm tra không có Body trong request
 
 ---
 
