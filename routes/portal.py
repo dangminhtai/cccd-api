@@ -139,6 +139,7 @@ def keys():
         
         if action == "create":
             tier = request.form.get("tier", current_tier)
+            days_valid_str = request.form.get("days_valid", "").strip()
             
             # Validate tier matches subscription
             if tier not in ("free", "premium", "ultra"):
@@ -150,6 +151,19 @@ def keys():
                 flash(f"Bạn chỉ có thể tạo API key tier {current_tier}. Vui lòng nâng cấp để sử dụng tier {tier}.", "error")
                 return redirect(url_for("portal.keys"))
             
+            # Parse days_valid
+            days_valid = None
+            if days_valid_str:
+                try:
+                    days_valid_int = int(days_valid_str)
+                    if days_valid_int < 1:
+                        flash("Số ngày hợp lệ phải lớn hơn 0", "error")
+                        return redirect(url_for("portal.keys"))
+                    days_valid = days_valid_int
+                except ValueError:
+                    flash("Số ngày hợp lệ phải là số nguyên", "error")
+                    return redirect(url_for("portal.keys"))
+            
             # Create key
             from services.api_key_service import create_api_key
             try:
@@ -157,10 +171,14 @@ def keys():
                     tier=tier,
                     owner_email=user["email"],
                     user_id=user_id,
+                    days_valid=days_valid,
                 )
                 # Store in session to show once
                 session["new_api_key"] = api_key
-                flash("Tạo API key thành công! Vui lòng lưu lại ngay.", "success")
+                if days_valid:
+                    flash(f"Tạo API key thành công! Key sẽ hết hạn sau {days_valid} ngày. Vui lòng lưu lại ngay.", "success")
+                else:
+                    flash("Tạo API key thành công! Key vĩnh viễn. Vui lòng lưu lại ngay.", "success")
             except Exception as e:
                 flash(f"Lỗi khi tạo API key: {str(e)}", "error")
             

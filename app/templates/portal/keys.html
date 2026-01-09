@@ -110,6 +110,10 @@
                         <option value="ultra" {% if current_tier == 'ultra' %}selected{% endif %} {% if current_tier != 'ultra' %}disabled{% endif %}>Ultra (1000 req/min)</option>
                     </select>
                 </div>
+                <div class="form-group">
+                    <label for="days_valid">Số ngày hợp lệ (để trống = vĩnh viễn)</label>
+                    <input type="number" id="days_valid" name="days_valid" min="1" step="1" placeholder="Ví dụ: 30" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px;">
+                </div>
                 <button type="submit" class="btn">Tạo API Key</button>
             </form>
             {% if current_tier == 'free' %}
@@ -117,6 +121,9 @@
                 💡 Bạn đang ở tier Free. <a href="#" style="color: #667eea;">Nâng cấp</a> để tạo Premium/Ultra keys.
             </p>
             {% endif %}
+            <p style="margin-top: 8px; color: #666; font-size: 14px;">
+                💡 Để trống "Số ngày hợp lệ" nếu muốn key vĩnh viễn. Nhập số ngày (ví dụ: 30) để key tự động hết hạn sau N ngày.
+            </p>
         </div>
         
         <div class="section">
