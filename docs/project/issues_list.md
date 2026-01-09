@@ -291,4 +291,32 @@
   - WSGI middleware chỉ dùng cho production, không cần cho development server
   - Hoặc chỉ wrap khi dùng với WSGI server (gunicorn), không wrap trong `run.py`
 
+---
+
+## 24) Gunicorn không chạy được trên Windows (fcntl module not found)
+
+- **Hiện tượng**: Chạy `gunicorn -w 4 -b 0.0.0.0:8000 wsgi:app` trên Windows báo lỗi: `ModuleNotFoundError: No module named 'fcntl'`
+- **Nguyên nhân**: 
+  - `fcntl` là module Unix-specific, không có trên Windows
+  - Gunicorn được thiết kế cho Unix/Linux, không hỗ trợ Windows natively
+  - Windows không có các system calls mà Gunicorn cần (fork, fcntl, etc.)
+- **Cách xử lý**: 
+  - **Option 1:** Dùng `waitress` thay vì Gunicorn trên Windows:
+    ```powershell
+    pip install waitress
+    waitress-serve --host=0.0.0.0 --port=8000 wsgi:app
+    ```
+  - **Option 2:** Dùng Flask dev server cho testing (không phù hợp production):
+    ```powershell
+    python run.py
+    ```
+  - **Option 3:** Deploy trên Linux server hoặc dùng Docker (chạy Linux container)
+  - **Option 4:** Dùng WSL (Windows Subsystem for Linux) để chạy Gunicorn
+- **Cách tránh lần sau**: Khi viết hướng dẫn deploy:
+  - **Ghi rõ** Gunicorn chỉ chạy trên Unix/Linux
+  - **Đề xuất Waitress** cho Windows development/testing
+  - **Khuyến nghị Docker** hoặc Linux server cho production
+  - **Hoặc WSL** nếu muốn test Gunicorn trên Windows
+  - **Auto-detect OS** trong deploy script và dùng server phù hợp
+
 

@@ -135,13 +135,26 @@ cp env.example .env
 nano .env  # Sửa các giá trị cần thiết
 ```
 
-**Bước 3: Chạy với Gunicorn**
+**Bước 3: Chạy với Gunicorn (Linux) hoặc Waitress (Windows)**
 
+⚠️ **Lưu ý:** Gunicorn chỉ chạy trên Linux/Mac, không chạy trên Windows.
+
+**Trên Linux/Mac:**
 ```bash
 # Chạy trực tiếp (test)
 gunicorn -w 4 -b 0.0.0.0:8000 wsgi:app
 
 # Hoặc dùng systemd service (xem phần C)
+```
+
+**Trên Windows (development/testing):**
+```powershell
+# Dùng Waitress thay vì Gunicorn
+pip install waitress
+waitress-serve --host=0.0.0.0 --port=8000 wsgi:app
+
+# Hoặc dùng Flask dev server (chỉ cho testing)
+python run.py
 ```
 
 **Bước 4: Cấu hình Nginx**
@@ -316,11 +329,22 @@ Invoke-RestMethod -Uri "http://127.0.0.1:8000/v1/cccd/parse" `
 # Kỳ vọng: success: true, province_code: 079
 ```
 
-### Test 3: Production Server (Gunicorn)
+### Test 3: Production Server
 
-```powershell
+**Trên Linux/Mac:**
+```bash
 # Chạy gunicorn
 gunicorn -w 4 -b 0.0.0.0:8000 wsgi:app
+
+# Test từ terminal khác
+curl http://127.0.0.1:8000/health
+```
+
+**Trên Windows:**
+```powershell
+# Chạy waitress (Gunicorn không chạy được trên Windows)
+pip install waitress
+waitress-serve --host=0.0.0.0 --port=8000 wsgi:app
 
 # Test từ terminal khác
 Invoke-RestMethod -Uri "http://127.0.0.1:8000/health"
