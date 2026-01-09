@@ -353,4 +353,23 @@
   - Chạy `python run.py` hoặc test import sau khi refactor
   - Dùng linter/IDE để phát hiện missing imports
 
+---
+
+## 27) Dùng `@check_admin_auth` như decorator gây lỗi TypeError
+
+- **Hiện tượng**: Chạy `python run.py` báo lỗi: `TypeError: check_admin_auth() takes 0 positional arguments but 1 was given` tại dòng có `@check_admin_auth`
+- **Nguyên nhân**: 
+  - `check_admin_auth` là một `@before_request` handler, không phải decorator function
+  - Khi dùng `@check_admin_auth` như decorator, Python sẽ pass function làm argument, nhưng `check_admin_auth` không nhận argument
+  - `@before_request` handler tự động chạy cho tất cả routes trong blueprint, không cần decorator riêng
+- **Cách xử lý**: 
+  - Xóa `@check_admin_auth` decorator khỏi các routes
+  - `check_admin_auth` đã là `@before_request` handler, sẽ tự động chạy
+  - Nếu cần exclude một số routes, thêm logic vào `check_admin_auth` để check `request.endpoint`
+- **Cách tránh lần sau**: Khi dùng Flask `@before_request`:
+  - **Không dùng** `@before_request` handler như decorator cho routes riêng lẻ
+  - `@before_request` tự động áp dụng cho tất cả routes trong blueprint
+  - Nếu cần exclude routes, check `request.endpoint` trong handler
+  - Nếu cần decorator riêng, tạo function decorator riêng (không phải `before_request`)
+
 
