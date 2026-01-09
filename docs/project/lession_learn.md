@@ -224,3 +224,29 @@
   - Production: Luôn dùng Gunicorn + Nginx (Server header sẽ được xóa)
   - Đừng tốn thời gian cố fix điều không thể fix được
   - Ghi rõ trong code comment: "Werkzeug dev server adds header after after_request"
+
+---
+
+## 20) ĐỪNG BAO GIỜ TIN những gì người dùng nhập vào - Luôn validate đầu vào
+
+- **Issue**: Người dùng có thể nhập bất kỳ thứ gì vào form/API, kể cả dữ liệu độc hại hoặc sai format.
+- **Nguyên nhân**: 
+  - Thiếu validation ở backend
+  - Chỉ dựa vào frontend validation (có thể bypass)
+  - Không kiểm tra độ dài đầu vào → DoS risk
+- **Cách xử lý**:
+  - **Luôn validate ở backend** (không tin frontend)
+  - **Kiểm tra độ dài đầu vào** ngay từ đầu (trước khi xử lý)
+  - **Validate format** (regex, type checking)
+  - **Sanitize input** nếu cần (nhưng không thay thế validation)
+  - **Reject sớm** nếu không hợp lệ (tiết kiệm CPU/memory)
+- **Ví dụ**:
+  - Email: Check format regex + độ dài tối đa (255 chars)
+  - Password: Check độ dài tối thiểu (8 chars) + độ dài tối đa (100 chars)
+  - CCCD: Check độ dài chính xác (12) + chỉ số (0-9)
+  - Days valid: Check là số nguyên dương + không quá lớn (ví dụ max 3650 = 10 năm)
+- **Bài học**: 
+  - **Backend validation là bắt buộc**, frontend chỉ là UX
+  - **Validate độ dài đầu vào** để tránh DoS với string cực dài
+  - **Reject sớm** = tiết kiệm tài nguyên server
+  - **Defense in depth**: Validate nhiều lớp (frontend + backend + database constraints)

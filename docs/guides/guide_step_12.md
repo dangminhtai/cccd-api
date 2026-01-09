@@ -79,11 +79,13 @@ Tạo trang web để khách hàng có thể:
 ## Implementation Plan
 
 ### Phase 1: Database & Auth (Core)
+
 - [X] Tạo database schema (`users`, `subscriptions`, `payments`)
 - [X] Implement user registration/login
 - [X] Session management
 - [X] Password hashing
-- [X]  Ghi nhớ đăng nhập hoạt động đúng
+- [X] Input validation (độ dài, format) - **ĐỪNG TIN USER INPUT** (Lesson #20)
+
 ### Phase 2: API Key Management
 - [X] Portal UI để tạo API keys
 - [X] Link với existing `api_keys` table

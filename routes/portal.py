@@ -37,13 +37,33 @@ def register():
         password = request.form.get("password", "")
         full_name = request.form.get("full_name", "").strip()
         
-        # Validation
+        # Validation - ĐỪNG TIN USER INPUT (Lesson #20)
+        # Check required fields
         if not email or not password or not full_name:
             flash("Vui lòng điền đầy đủ thông tin", "error")
             return render_template("portal/register.html")
         
+        # Check length limits (prevent DoS)
+        if len(email) > 255:
+            flash("Email quá dài (tối đa 255 ký tự)", "error")
+            return render_template("portal/register.html")
+        
+        if len(password) > 100:
+            flash("Mật khẩu quá dài (tối đa 100 ký tự)", "error")
+            return render_template("portal/register.html")
+        
+        if len(full_name) > 255:
+            flash("Họ tên quá dài (tối đa 255 ký tự)", "error")
+            return render_template("portal/register.html")
+        
+        # Check password minimum length
         if len(password) < 8:
             flash("Mật khẩu phải có ít nhất 8 ký tự", "error")
+            return render_template("portal/register.html")
+        
+        # Basic email format validation
+        if "@" not in email or "." not in email.split("@")[-1]:
+            flash("Email không hợp lệ", "error")
             return render_template("portal/register.html")
         
         # Register user
