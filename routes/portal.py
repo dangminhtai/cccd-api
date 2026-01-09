@@ -278,3 +278,115 @@ def usage_api():
     from flask import jsonify
     return jsonify(stats)
 
+
+@portal_bp.route("/billing")
+@require_login
+def billing():
+    """Billing history và subscription management"""
+    user_id = session.get("user_id")
+    user = get_user_by_id(user_id)
+    
+    if not user:
+        session.clear()
+        flash("Phiên đăng nhập đã hết hạn", "warning")
+        return redirect(url_for("portal.login"))
+    
+    subscription = get_user_subscription(user_id)
+    from services.billing_service import get_user_payments, get_tier_pricing
+    
+    payments = get_user_payments(user_id)
+    pricing = get_tier_pricing()
+    
+    return render_template(
+        "portal/billing.html",
+        user=user,
+        subscription=subscription,
+        payments=payments,
+        pricing=pricing,
+    )
+
+
+@portal_bp.route("/upgrade", methods=["GET", "POST"])
+@require_login
+def upgrade():
+    """Upgrade tier - Manual payment flow"""
+    user_id = session.get("user_id")
+    user = get_user_by_id(user_id)
+    
+    if not user:
+        session.clear()
+        flash("Phiên đăng nhập đã hết hạn", "warning")
+        return redirect(url_for("portal.login"))
+    
+    subscription = get_user_subscription(user_id)
+    current_tier = subscription["tier"] if subscription else "free"
+    
+    from services.billing_service import get_tier_pricing, create_payment, approve_payment
+    
+    pricing = get_tier_pricing()
+    
+    if request.method == "POST":
+        action = request.form.get("action")
+        
+        if action == "request_upgrade":
+            target_tier = request.form.get("tier")
+            
+            if target_tier not in pricing:
+                flash("Tier không hợp lệ", "error")
+                return redirect(url_for("portal.upgrade"))
+            
+            if target_tier == current_tier:
+                flash("Bạn đã ở tier này rồi", "warning")
+                return redirect(url_for("portal.upgrade"))
+            
+            # Check if downgrade
+            tier_order = {"free": 0, "premium": 1, "ultra": 2}
+            if tier_order.get(target_tier, 0) < tier_order.get(current_tier, 0):
+                flash("Không thể downgrade. Vui lòng liên hệ admin.", "error")
+                return redirect(url_for("portal.upgrade"))
+            
+            # Create payment request
+            amount = pricing[target_tier]["price"]
+            payment_id = create_payment(
+                user_id=user_id,
+                amount=amount,
+                currency="USD",
+                payment_gateway="manual",
+                notes=f"Upgrade from {current_tier} to {target_tier}",
+            )
+            
+            if payment_id:
+                flash(
+                    f"Đã tạo yêu cầu nâng cấp lên {pricing[target_tier]['name']}. "
+                    f"Admin sẽ xử lý thanh toán ${amount:.2f} và kích hoạt tier mới.",
+                    "success"
+                )
+            else:
+                flash("Lỗi khi tạo yêu cầu thanh toán", "error")
+            
+            return redirect(url_for("portal.billing"))
+        
+        elif action == "approve_payment":
+            # Admin only - nhưng để đây cho MVP (manual approval)
+            payment_id = request.form.get("payment_id")
+            if payment_id:
+                try:
+                    payment_id_int = int(payment_id)
+                    if approve_payment(payment_id_int, user_id):
+                        flash("Thanh toán đã được approve và subscription đã được update", "success")
+                    else:
+                        flash("Không thể approve payment", "error")
+                except (ValueError, Exception) as e:
+                    flash(f"Lỗi: {str(e)}", "error")
+            
+            return redirect(url_for("portal.billing"))
+    
+    # GET: Show upgrade page
+    return render_template(
+        "portal/upgrade.html",
+        user=user,
+        subscription=subscription,
+        current_tier=current_tier,
+        pricing=pricing,
+    )
+

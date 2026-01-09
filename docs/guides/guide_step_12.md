@@ -90,11 +90,11 @@ Tạo trang web để khách hàng có thể:
 - [X] List/delete keys từ portal
 
 ### Phase 3: Dashboard & Stats
-- [ ] Backend: Query từ `request_logs` table (Python/SQL)
-- [ ] Backend: Aggregate data (requests per day, status codes, response times)
-- [ ] Backend: Trả về JSON API endpoint `/portal/usage`
-- [ ] Frontend: Dashboard UI hiển thị stats
-- [ ] Frontend: Charts/graphs với Chart.js (JavaScript chạy trên browser)
+- [X] Backend: Query từ `request_logs` table (Python/SQL)
+- [X] Backend: Aggregate data (requests per day, status codes, response times)
+- [X] Backend: Trả về JSON API endpoint `/portal/usage/api`
+- [X] Frontend: Dashboard UI hiển thị stats (`/portal/usage`)
+- [X] Frontend: Charts/graphs với Chart.js (JavaScript chạy trên browser)
 
 **Lưu ý về kiến trúc:**
 - **Backend (Python)**: Query database → aggregate data → trả JSON
