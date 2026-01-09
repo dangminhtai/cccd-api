@@ -196,3 +196,18 @@
   - Mỗi section có "Cách làm" rõ ràng
   - Code dài → để trong `scripts/` hoặc `services/`, guide chỉ gọi lệnh
   - Người đọc tư duy theo **quy trình**, không tư duy theo **code**
+
+---
+
+## 18) LUÔN push sau khi commit, không chỉ commit rồi để đó
+
+- **Issue**: Commit nhiều lần nhưng quên push → local branch "ahead" nhiều commits, dễ mất nếu máy hỏng.
+- **Nguyên nhân**: Chỉ nhớ commit nhưng quên push, hoặc nghĩ "push sau cũng được".
+- **Cách xử lý**: 
+  - **Luôn** chạy `git push` ngay sau `git commit`
+  - Hoặc dùng alias: `git config --global alias.cp '!git commit -m "$1" && git push'`
+  - Kiểm tra bằng `git status` hoặc `git log origin/main..HEAD` để xem có commit chưa push
+- **Bài học**: 
+  - Commit + Push phải đi đôi với nhau (theo lesson #7)
+  - Push ngay để có backup trên remote, tránh mất code nếu máy hỏng
+  - Nếu có nhiều commits chưa push, dùng `git push` để push tất cả
