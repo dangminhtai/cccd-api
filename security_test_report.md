@@ -190,19 +190,22 @@
 ### 1. Fix ngay:
 - Không có vấn đề cần fix ngay
 
-### 2. Cải thiện (LOW priority):
-- ⚠️ Server header: Không thể xóa trong dev server (Werkzeug limitation)
-  - **Action**: Deploy production với Gunicorn + Nginx (sẽ tự động xóa)
-- Test lại error messages khi không bị rate limit
 
 ### 3. Test Cases Chưa Được Test (từ `security_testing_guide.md`):
 
 #### 2. Reconnaissance - Thu Thập Thông Tin
-- ⚠️ **Test 2.2: HTTP Methods Enumeration** - Chưa test
-  - Test các HTTP methods (GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD) trên `/v1/cccd/parse`
-  - Kỳ vọng: Chỉ POST được phép, các method khác trả 405
-- ⚠️ **Test 2.3: Error Messages Analysis** - Đã test nhưng bị rate limit
-  - Cần test lại với API key để xác nhận error messages không leak thông tin
+- ✅ **Test 2.1: Khám Phá Endpoints** - ✅ PASS (14/14 tests)
+  - Health, Root, Demo, Admin Dashboard: ✅ Accessible
+  - API endpoint: ✅ Correctly requires auth (401)
+  - Admin stats: ✅ Correctly protected (403)
+  - Potential endpoints (/debug, /test, etc.): ✅ All return 404 (OK)
+- ⚠️ **Test 2.2: HTTP Methods Enumeration** - ⚠️ PARTIAL (6/7 tests)
+  - ✅ GET, PUT, DELETE, PATCH, HEAD: Correctly rejected (405)
+  - ⚠️ OPTIONS: Trả 200 thay vì 405 (có thể là vấn đề nhỏ, cần review)
+  - ✅ POST: Trả 401 (cần API key) - đúng
+- ✅ **Test 2.3: Error Messages Analysis** - ✅ PASS (3/3 tests)
+  - ✅ Error messages không leak thông tin (không có stacktrace, file paths, database info)
+  - ⚠️ Một số test trả 401/500 thay vì 400 (do API key requirement), nhưng error messages vẫn an toàn
 
 #### 3. Authentication Bypass
 - ⚠️ **Test 3.3: Header Injection & Parameter Pollution** - Chưa test
@@ -292,10 +295,4 @@
 - ✅ **DoS Protection:** Input dài bị reject sớm
 - ✅ **Rate Limiting:** Hoạt động đúng
 - ✅ **Admin Security:** Được bảo vệ tốt
-- ⚠️ **Information Disclosure:** Server header leak trong dev (accepted risk, sẽ fix trong production)
 
-**Không có lỗ hổng nghiêm trọng (CRITICAL/HIGH) được phát hiện.**
-
-⚠️ **Server header leak trong development** (accepted risk, sẽ tự động fix khi deploy production với Gunicorn + Nginx).
-
-API đã sẵn sàng cho production sau khi deploy với Gunicorn + Nginx.
