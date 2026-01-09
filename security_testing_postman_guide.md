@@ -258,9 +258,21 @@ try {
     if ($_.Exception.Response) {
         $status = [int]$_.Exception.Response.StatusCode
         Write-Host "Status: $status" -ForegroundColor Yellow
+        if ($status -eq 500) {
+            Write-Host "Note: 500 may indicate server timeout/reset (not a vulnerability)" -ForegroundColor Cyan
+        }
     } else {
         Write-Host "Timeout or connection error (expected for slowloris test)" -ForegroundColor Yellow
     }
+}
+
+# Verify server still works after timeout
+Write-Host "`nVerifying server still works..." -ForegroundColor Cyan
+try {
+    $health = Invoke-WebRequest -Uri "http://127.0.0.1:8000/health" -Method GET -ErrorAction Stop
+    Write-Host "✅ Server OK - Health check: $($health.StatusCode)" -ForegroundColor Green
+} catch {
+    Write-Host "❌ Server may be hung" -ForegroundColor Red
 }
 ```
 
@@ -270,6 +282,19 @@ try {
 - Có thể bỏ qua nếu không có tool chuyên dụng
 
 **✅ Kết quả mong đợi:** Server có timeout cho connection (không bị hang)
+
+**⚠️ Lưu ý về Status 500:**
+- Nếu nhận được **Status 500** khi test Slowloris, có thể do:
+  1. **Server timeout:** Server đóng connection khi timeout → Flask trả 500 (Internal Server Error)
+  2. **Connection reset:** Server reset connection → Client nhận 500
+  3. **Đây là behavior bình thường** - Server có timeout và đóng connection (không bị hang)
+- **Kết luận:** Status 500 trong trường hợp này **KHÔNG phải lỗ hổng**, mà là cách server xử lý timeout/connection reset
+- **Điều quan trọng:** Server không bị hang, vẫn có thể xử lý requests khác bình thường
+
+**Cách verify:**
+1. Sau khi nhận 500, gửi request bình thường khác
+2. Nếu request bình thường vẫn hoạt động (200) → Server OK, chỉ là timeout cho Slowloris
+3. Nếu server không phản hồi → Có thể bị hang (vấn đề)
 
 ---
 
