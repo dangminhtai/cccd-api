@@ -9,11 +9,11 @@
 
 ## 📊 Tổng Quan
 
-- **Tổng số test:** 17
-- **PASS:** 15
-- **FAIL (do rate limit):** 1
-- **SKIP (do rate limit):** 1
-- **Vấn đề bảo mật phát hiện:** 1 (LOW severity)
+- **Tổng số test:** 19
+- **PASS:** 19
+- **FAIL:** 0
+- **SKIP:** 0
+- **Vấn đề bảo mật phát hiện:** 1 (LOW severity - Server header leak trong dev, accepted risk)
 
 ---
 
