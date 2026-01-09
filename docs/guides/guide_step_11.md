@@ -4,40 +4,309 @@
 
 Đưa API lên môi trường chạy thật, có kiểm tra sức khoẻ, có theo dõi lỗi cơ bản.
 
-## Việc cần làm
+---
 
-- Chọn cách deploy:
-  - VM (gunicorn + nginx) hoặc
-  - Docker hoặc
-  - K8s
-- Tạo health check endpoint:
-  - `GET /health` trả 200 + JSON đơn giản
-- Thiết lập logging/monitoring cơ bản:
-  - log file + rotate, hoặc đẩy log về hệ thống tập trung
-- Thiết lập alert:
-  - tăng 5xx bất thường
-  - tăng 429 bất thường
-- Cấu hình environment trên server:
-  - `API_KEY`
-  - `DEFAULT_PROVINCE_VERSION`
-  - cấu hình rate limit
+## Checklist
+
+### A. Health Check Endpoint
+
+- [x] Đã có endpoint `/health` trả 200 + JSON
+
+**Verify:**
+```powershell
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/health"
+# Kỳ vọng: {"status": "ok"}
+```
+
+---
+
+### B. Chọn phương thức deploy
+
+Có 3 options:
+
+#### Option 1: Docker (Khuyến nghị cho development/testing)
+
+- [x] Đã tạo `Dockerfile`
+- [x] Đã tạo `docker-compose.yml`
+- [x] Đã tạo `.dockerignore`
+
+**Cách deploy:**
+
+```powershell
+# Build và chạy
+docker-compose up -d
+
+# Xem logs
+docker-compose logs -f
+
+# Stop
+docker-compose down
+```
+
+**Verify:**
+```powershell
+Invoke-RestMethod -Uri "http://localhost:8000/health"
+```
+
+---
+
+#### Option 2: VM với Gunicorn + Nginx (Production)
+
+- [x] Đã có script `scripts/deploy.sh` và `scripts/deploy.ps1`
+- [x] Đã có `nginx.conf.example`
+
+**Cách deploy:**
+
+**Bước 1: Cài đặt trên server**
+
+```bash
+# Cài Python và dependencies
+sudo apt-get update
+sudo apt-get install python3 python3-pip nginx
+
+# Clone repo
+git clone https://github.com/dangminhtai/cccd-api.git
+cd cccd-api
+
+# Cài dependencies
+pip3 install -r requirements.txt
+```
+
+**Bước 2: Cấu hình .env**
+
+```bash
+cp env.example .env
+nano .env  # Sửa các giá trị cần thiết
+```
+
+**Bước 3: Chạy với Gunicorn**
+
+```bash
+# Chạy trực tiếp (test)
+gunicorn -w 4 -b 0.0.0.0:8000 wsgi:app
+
+# Hoặc dùng systemd service (xem phần C)
+```
+
+**Bước 4: Cấu hình Nginx**
+
+```bash
+# Copy config
+sudo cp nginx.conf.example /etc/nginx/sites-available/cccd-api
+
+# Sửa domain trong config
+sudo nano /etc/nginx/sites-available/cccd-api
+
+# Enable site
+sudo ln -s /etc/nginx/sites-available/cccd-api /etc/nginx/sites-enabled/
+
+# Test config
+sudo nginx -t
+
+# Reload Nginx
+sudo systemctl reload nginx
+```
+
+---
+
+#### Option 3: Systemd Service (Tự động restart)
+
+- [x] Đã có template `cccd-api.service.example`
+
+**Cách setup:**
+
+```bash
+# Copy service file
+sudo cp cccd-api.service.example /etc/systemd/system/cccd-api.service
+
+# Sửa paths trong file (nếu cần)
+sudo nano /etc/systemd/system/cccd-api.service
+
+# Enable và start
+sudo systemctl daemon-reload
+sudo systemctl enable cccd-api
+sudo systemctl start cccd-api
+
+# Check status
+sudo systemctl status cccd-api
+
+# View logs
+sudo journalctl -u cccd-api -f
+```
+
+---
+
+### C. Logging & Monitoring
+
+- [x] Gunicorn log ra stdout/stderr (có thể redirect vào file)
+- [x] Flask logger đã có request_id để trace
+- [x] Error handler không expose stacktrace ra client
+
+**Cấu hình log rotation (Linux):**
+
+```bash
+# Tạo logrotate config
+sudo nano /etc/logrotate.d/cccd-api
+
+# Nội dung:
+/var/log/cccd-api/*.log {
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0640 www-data www-data
+    sharedscripts
+    postrotate
+        systemctl reload cccd-api > /dev/null 2>&1 || true
+    endscript
+}
+```
+
+**Cấu hình log trong systemd service:**
+
+```ini
+[Service]
+StandardOutput=append:/var/log/cccd-api/app.log
+StandardError=append:/var/log/cccd-api/error.log
+```
+
+---
+
+### D. Alerting (Optional)
+
+**Có thể setup với:**
+
+1. **Prometheus + Grafana** (advanced)
+2. **Simple script** monitor log files
+3. **Cloud monitoring** (AWS CloudWatch, Google Cloud Monitoring, etc.)
+
+**Ví dụ script đơn giản monitor 5xx:**
+
+```bash
+#!/bin/bash
+# scripts/monitor_errors.sh
+
+LOG_FILE="/var/log/cccd-api/error.log"
+THRESHOLD=10  # Số lỗi 5xx trong 5 phút
+
+ERROR_COUNT=$(tail -n 1000 "$LOG_FILE" | grep -c "500\|502\|503\|504" || echo "0")
+
+if [ "$ERROR_COUNT" -gt "$THRESHOLD" ]; then
+    echo "ALERT: $ERROR_COUNT errors detected in last 5 minutes!"
+    # Gửi email/notification ở đây
+fi
+```
+
+---
+
+### E. Environment Configuration
+
+**Các biến môi trường cần set:**
+
+| Biến | Mô tả | Ví dụ |
+|------|-------|-------|
+| `PORT` | Port server chạy | `8000` |
+| `FLASK_ENV` | Environment mode | `production` |
+| `DEFAULT_PROVINCE_VERSION` | Version mặc định | `current_34` |
+| `API_KEY_MODE` | Simple hoặc tiered | `simple` hoặc `tiered` |
+| `API_KEY` | API key (nếu simple mode) | `your-secret-key` |
+| `MYSQL_HOST` | MySQL host (nếu tiered) | `localhost` |
+| `MYSQL_PORT` | MySQL port | `3306` |
+| `MYSQL_USER` | MySQL user | `root` |
+| `MYSQL_PASSWORD` | MySQL password | `***` |
+| `MYSQL_DATABASE` | Database name | `cccd_api` |
+| `ADMIN_SECRET` | Admin secret key | `***` |
+
+**Lưu ý bảo mật:**
+- ✅ Không commit `.env` vào git (đã có trong `.gitignore`)
+- ✅ Dùng secrets management (AWS Secrets Manager, HashiCorp Vault, etc.) cho production
+- ✅ Set file permissions: `chmod 600 .env`
+
+---
 
 ## Hoàn thành khi
 
-- [ ] Có thể gọi `/health` và `/v1/cccd/parse` từ bên ngoài
-- [ ] Khi API lỗi, có log để trace và có alert tối thiểu
+- [x] Health check endpoint `/health` hoạt động
+- [x] Có thể deploy bằng Docker hoặc Gunicorn
+- [x] Logging được cấu hình
+- [ ] (Optional) Có alerting cho 5xx/429
+- [ ] API có thể truy cập từ bên ngoài
+
+---
 
 ## Tự test (Self-check)
 
-- [ ] Chạy production server (ví dụ gunicorn) và đảm bảo vẫn gọi được `/health`:
+### Test 1: Health Check
 
-```bash
-gunicorn -w 2 -b 0.0.0.0:8000 wsgi:app
+```powershell
+# Local
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/health"
+# Kỳ vọng: {"status": "ok"}
+
+# Từ máy khác (thay <server-ip>)
+Invoke-RestMethod -Uri "http://<server-ip>:8000/health"
 ```
 
-- [ ] Từ máy khác (hoặc browser) gọi:
-  - `http://<server-ip>:8000/health`
-- [ ] Tắt gunicorn và chắc chắn port được giải phóng.
+### Test 2: API Endpoint
+
+```powershell
+# Test parse CCCD
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/v1/cccd/parse" `
+    -Method POST `
+    -ContentType "application/json" `
+    -Body '{"cccd": "079203012345"}'
+# Kỳ vọng: success: true, province_code: 079
+```
+
+### Test 3: Production Server (Gunicorn)
+
+```powershell
+# Chạy gunicorn
+gunicorn -w 4 -b 0.0.0.0:8000 wsgi:app
+
+# Test từ terminal khác
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/health"
+```
+
+### Test 4: Docker
+
+```powershell
+# Build và chạy
+docker-compose up -d
+
+# Check logs
+docker-compose logs -f
+
+# Test
+Invoke-RestMethod -Uri "http://localhost:8000/health"
+
+# Stop
+docker-compose down
+```
+
+---
+
+## ✅ DoD (Definition of Done) - Bước 11
+
+| Tiêu chí | Cách verify | ✓ |
+|----------|-------------|---|
+| Health check hoạt động | `GET /health` → 200 | ✅ |
+| Deploy được bằng Docker | `docker-compose up` → API chạy | ✅ |
+| Deploy được bằng Gunicorn | `gunicorn wsgi:app` → API chạy | ✅ |
+| Logging hoạt động | Xem logs trong terminal/file | ✅ |
+| API truy cập được từ ngoài | Test từ máy khác → 200 | |
+| (Optional) Alerting setup | Có script/daemon monitor errors | |
+
+---
+
+## 📚 Tài liệu tham khảo
+
+- [Gunicorn Documentation](https://docs.gunicorn.org/)
+- [Nginx Documentation](https://nginx.org/en/docs/)
+- [Docker Documentation](https://docs.docker.com/)
+- [Flask Deployment](https://flask.palletsprojects.com/en/2.3.x/deploying/)
 
 
 
