@@ -319,4 +319,20 @@
   - **Hoặc WSL** nếu muốn test Gunicorn trên Windows
   - **Auto-detect OS** trong deploy script và dùng server phù hợp
 
+---
+
+## 25) Missing `secrets` import trong app/__init__.py
+
+- **Hiện tượng**: Chạy `python run.py` báo lỗi: `NameError: name 'secrets' is not defined` tại dòng 26 trong `app/__init__.py`
+- **Nguyên nhân**: 
+  - Code sử dụng `secrets.token_hex(32)` để generate session secret key nhưng thiếu import `secrets` module
+  - Import `secrets` bị thiếu khi refactor code
+- **Cách xử lý**: 
+  - Thêm `import secrets` vào đầu file `app/__init__.py`
+  - Đảm bảo import đặt trước khi sử dụng `secrets.token_hex()`
+- **Cách tránh lần sau**: Khi refactor code:
+  - Luôn kiểm tra tất cả imports cần thiết
+  - Chạy `python run.py` hoặc test import sau khi refactor
+  - Dùng linter/IDE để phát hiện missing imports
+
 
