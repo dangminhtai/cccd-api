@@ -242,12 +242,16 @@
   - ✅ Different tiers concurrent: Mỗi tier có rate limit riêng, hoạt động độc lập
 
 #### 7. Admin Endpoint Security
-- ⚠️ **Test 7.3: SQL Injection trong Admin Endpoints** - Chưa test
-  - Test SQL injection trong `key_prefix` parameter
-  - Test SQL injection trong `create_key` endpoint (email, tier)
-- ⚠️ **Test 7.4: IDOR (Insecure Direct Object Reference)** - Chưa test
-  - Test truy cập key của người khác (admin có thể - đúng)
-  - Test user thường có thể truy cập key của người khác không
+- ✅ **Test 7.3: SQL Injection trong Admin Endpoints** - ✅ PASS (11/11 tests)
+  - ✅ SQL injection trong `key_prefix` parameter: Tất cả payload bị reject (404 hoặc validation error)
+  - ✅ SQL injection trong `create_key` email: Tất cả payload bị reject (400 validation error)
+  - ✅ SQL injection trong `create_key` tier: Tất cả payload bị reject (400 validation error)
+  - ✅ Không có SQL error leakage trong response
+  - ✅ Parameterized queries hoạt động đúng
+- ✅ **Test 7.4: IDOR (Insecure Direct Object Reference)** - ✅ PASS (3/3 tests)
+  - ✅ Admin có thể truy cập key của người khác (đúng - admin có quyền)
+  - ✅ User thường không thể truy cập admin endpoint (403)
+  - ✅ User thường không thể truy cập key info của người khác (403)
 
 #### 8. API Key Enumeration & Brute Force
 - ⚠️ **Test 8.1: API Key Format Discovery** - Chưa test
