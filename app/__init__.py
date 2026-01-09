@@ -27,7 +27,9 @@ def create_app() -> Flask:
     app.secret_key = os.getenv("FLASK_SECRET_KEY", secrets.token_hex(32))
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-    app.config["PERMANENT_SESSION_LIFETIME"] = 86400  # 24 hours
+    app.config["PERMANENT_SESSION_LIFETIME"] = 86400  # 24 hours (for remember me)
+    # Note: Regular sessions (without remember me) expire when browser closes
+    # Permanent sessions (with remember me) last 24 hours
 
     # Allow Vietnamese characters in JSON responses (no Unicode escape)
     app.json.ensure_ascii = False

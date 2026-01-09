@@ -321,6 +321,24 @@
 
 ---
 
+## 26) "Ghi nhớ đăng nhập" không hoạt động đúng
+
+- **Hiện tượng**: Checkbox "Ghi nhớ đăng nhập" có trong form nhưng lần sau vào trang vẫn phải login lại
+- **Nguyên nhân**: 
+  - Code có set `session.permanent = remember_me` nhưng Flask session cookie mặc định là session cookie (expires khi đóng browser)
+  - Cần set `session.permanent = True` khi remember_me = True để Flask sử dụng `PERMANENT_SESSION_LIFETIME`
+  - Flask chỉ set cookie với max_age khi `session.permanent = True`
+- **Cách xử lý**: 
+  - Set `session.permanent = True` khi user check "Remember me"
+  - Set `session.permanent = False` khi không check (regular session)
+  - Flask sẽ tự động set cookie với max_age = `PERMANENT_SESSION_LIFETIME` (24h) khi permanent = True
+- **Cách tránh lần sau**: Khi implement "Remember Me":
+  - Luôn set `session.permanent = True/False` rõ ràng dựa trên user choice
+  - Đảm bảo `PERMANENT_SESSION_LIFETIME` được config trong app
+  - Test bằng cách: login với remember me → đóng browser → mở lại → vẫn login được (trong 24h)
+
+---
+
 ## 25) Missing `secrets` import trong app/__init__.py
 
 - **Hiện tượng**: Chạy `python run.py` báo lỗi: `NameError: name 'secrets' is not defined` tại dòng 26 trong `app/__init__.py`
