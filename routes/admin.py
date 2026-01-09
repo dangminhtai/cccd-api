@@ -14,7 +14,11 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 @admin_bp.get("/")
 def admin_dashboard():
     """Trang admin dashboard"""
-    return render_template("admin.html")
+    from services.billing_service import get_pending_payments
+    
+    pending_payments = get_pending_payments(limit=50)
+    
+    return render_template("admin.html", pending_payments=pending_payments)
 
 
 def _get_request_id() -> str:
