@@ -79,7 +79,18 @@ def login():
             session["user_id"] = user_data["id"]
             session["user_email"] = user_data["email"]
             session["user_name"] = user_data["full_name"]
-            session.permanent = remember_me
+            
+            # Remember me: set permanent session (24h) if checked
+            if remember_me:
+                session.permanent = True
+                # Flask will use PERMANENT_SESSION_LIFETIME from app config (24h)
+                # Cookie will have max_age set and persist after browser closes
+            else:
+                session.permanent = False
+                # Regular session cookie (expires when browser closes)
+            
+            # Force session to be saved (mark as modified)
+            session.modified = True
             
             flash(f"Chào mừng, {user_data['full_name']}!", "success")
             return redirect(url_for("portal.dashboard"))
