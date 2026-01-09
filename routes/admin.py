@@ -267,7 +267,6 @@ def get_stats():
 
 
 @admin_bp.get("/payments")
-@check_admin_auth
 def admin_payments():
     """Admin: Xem danh sách pending payments"""
     from services.billing_service import get_pending_payments
@@ -278,7 +277,6 @@ def admin_payments():
 
 
 @admin_bp.post("/payments/<int:payment_id>/approve")
-@check_admin_auth
 def admin_approve_payment(payment_id: int):
     """Admin: Approve payment và extend API keys"""
     from services.billing_service import approve_payment_admin

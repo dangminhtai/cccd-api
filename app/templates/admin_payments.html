@@ -90,8 +90,9 @@
                             <td>{{ payment.payment_gateway or 'N/A' }}</td>
                             <td>{{ payment.notes or '-' }}</td>
                             <td>
-                                <form method="POST" action="{{ url_for('admin.admin_approve_payment', payment_id=payment.id) }}" style="display: inline;">
-                                    <button type="submit" class="btn-approve" onclick="return confirm('Xác nhận approve payment này? API keys của user sẽ được extend 30 ngày.');">
+                                <form method="POST" action="{{ url_for('admin.admin_approve_payment', payment_id=payment.id) }}" style="display: inline;" id="approve-form-{{ payment.id }}">
+                                    <input type="hidden" name="X-Admin-Key" id="admin-key-{{ payment.id }}" />
+                                    <button type="button" class="btn-approve" onclick="approvePayment({{ payment.id }})">
                                         ✅ Approve
                                     </button>
                                 </form>
