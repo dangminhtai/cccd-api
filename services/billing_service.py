@@ -63,10 +63,60 @@ def get_user_payments(user_id: int, limit: int = 50) -> list[dict]:
         return []
 
 
+def get_pending_payments(limit: int = 100) -> list[dict]:
+    """Lấy danh sách payments đang pending (cho admin)"""
+    try:
+        conn = _get_db_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT 
+                        p.id,
+                        p.user_id,
+                        u.email,
+                        u.full_name,
+                        p.amount,
+                        p.currency,
+                        p.payment_gateway,
+                        p.transaction_id,
+                        p.notes,
+                        p.created_at
+                    FROM payments p
+                    JOIN users u ON p.user_id = u.id
+                    WHERE p.status = 'pending'
+                    ORDER BY p.created_at ASC
+                    LIMIT %s
+                    """,
+                    (limit,),
+                )
+                rows = cursor.fetchall()
+        finally:
+            conn.close()
+        
+        return [
+            {
+                "id": row["id"],
+                "user_id": row["user_id"],
+                "user_email": row["email"],
+                "user_name": row["full_name"],
+                "amount": float(row["amount"]),
+                "currency": row["currency"],
+                "payment_gateway": row["payment_gateway"],
+                "transaction_id": row["transaction_id"],
+                "notes": row["notes"],
+                "created_at": row["created_at"],
+            }
+            for row in rows
+        ]
+    except Exception:
+        return []
+
+
 def create_payment(
     user_id: int,
     amount: float,
-    currency: str = "USD",
+    currency: str = "VND",
     payment_gateway: str = "manual",
     transaction_id: Optional[str] = None,
     notes: Optional[str] = None,
@@ -166,6 +216,109 @@ def approve_payment(payment_id: int, user_id: int) -> bool:
             conn.close()
     except Exception:
         return False
+
+
+def approve_payment_admin(payment_id: int) -> tuple[bool, Optional[str]]:
+    """
+    Approve payment từ admin (không cần user_id check)
+    Returns: (success, error_message)
+    """
+    try:
+        conn = _get_db_connection()
+        try:
+            with conn.cursor() as cursor:
+                # Get payment info với user info
+                cursor.execute(
+                    """
+                    SELECT 
+                        p.id,
+                        p.user_id,
+                        p.amount,
+                        p.currency,
+                        p.payment_gateway,
+                        p.transaction_id,
+                        p.notes,
+                        u.email,
+                        u.full_name
+                    FROM payments p
+                    JOIN users u ON p.user_id = u.id
+                    WHERE p.id = %s AND p.status = 'pending'
+                    """,
+                    (payment_id,),
+                )
+                payment = cursor.fetchone()
+                
+                if not payment:
+                    return False, "Payment không tồn tại hoặc đã được xử lý"
+                
+                user_id = payment["user_id"]
+                amount = float(payment["amount"])
+                
+                # Determine tier from amount
+                if amount == 0:
+                    tier = "free"
+                elif amount < 1000000:  # < 1,000,000 VND = Premium
+                    tier = "premium"
+                else:  # >= 1,000,000 VND = Ultra
+                    tier = "ultra"
+                
+                # Deactivate old subscription
+                cursor.execute(
+                    """
+                    UPDATE subscriptions
+                    SET status = 'expired'
+                    WHERE user_id = %s AND status = 'active'
+                    """,
+                    (user_id,),
+                )
+                
+                # Create new subscription (1 month default)
+                from datetime import datetime, timedelta
+                expires_at = datetime.now() + timedelta(days=30)
+                
+                cursor.execute(
+                    """
+                    INSERT INTO subscriptions (user_id, tier, status, payment_method, amount, currency, expires_at)
+                    VALUES (%s, %s, 'active', %s, %s, %s, %s)
+                    """,
+                    (user_id, tier, payment["payment_gateway"], amount, payment["currency"], expires_at),
+                )
+                subscription_id = cursor.lastrowid
+                
+                # Update payment status
+                cursor.execute(
+                    """
+                    UPDATE payments
+                    SET status = 'success', paid_at = NOW(), subscription_id = %s
+                    WHERE id = %s
+                    """,
+                    (subscription_id, payment_id),
+                )
+                
+                # Extend API keys expiration cho user này
+                # Lấy subscription duration từ amount (1 month = 30 days)
+                # Premium/Ultra: extend 30 days từ ngày hết hạn hiện tại hoặc từ bây giờ
+                cursor.execute(
+                    """
+                    UPDATE api_keys
+                    SET expires_at = DATE_ADD(
+                        COALESCE(expires_at, NOW()),
+                        INTERVAL 30 DAY
+                    )
+                    WHERE user_id = %s 
+                    AND status = 'active'
+                    AND (expires_at IS NULL OR expires_at > NOW())
+                    """,
+                    (user_id,),
+                )
+                keys_extended = cursor.rowcount
+                
+            conn.commit()
+            return True, f"Đã approve payment và extend {keys_extended} API key(s)"
+        finally:
+            conn.close()
+    except Exception as e:
+        return False, f"Lỗi: {str(e)}"
 
 
 def get_tier_pricing() -> dict:

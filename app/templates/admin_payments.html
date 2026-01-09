@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Admin - Pending Payments</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: #f5f5f5; }
+        .header { background: white; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .header-content { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 24px; font-weight: 600; color: #667eea; }
+        .nav-links { display: flex; gap: 12px; }
+        .nav-link { padding: 8px 16px; background: #f0f0f0; color: #333; text-decoration: none; border-radius: 6px; font-size: 14px; }
+        .nav-link:hover { background: #e0e0e0; }
+        .nav-link.active { background: #667eea; color: white; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 0 20px 40px; }
+        .section { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .section h2 { color: #333; margin-bottom: 20px; }
+        .payments-table { width: 100%; border-collapse: collapse; }
+        .payments-table th { text-align: left; padding: 12px; background: #f8f9fa; border-bottom: 2px solid #dee2e6; color: #495057; font-weight: 600; }
+        .payments-table td { padding: 12px; border-bottom: 1px solid #dee2e6; }
+        .payments-table tr:hover { background: #f8f9fa; }
+        .btn-approve { padding: 6px 16px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; }
+        .btn-approve:hover { background: #218838; }
+        .amount { font-weight: 600; color: #28a745; }
+        .flash-messages { margin-bottom: 20px; }
+        .flash { padding: 12px; border-radius: 8px; margin-bottom: 10px; }
+        .flash-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .flash-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .empty-state { text-align: center; padding: 60px 20px; color: #6c757d; }
+        .empty-state-icon { font-size: 48px; margin-bottom: 16px; }
+        .user-info { color: #495057; }
+        .user-email { color: #667eea; font-weight: 500; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">🔐 Admin Dashboard</div>
+            <div class="nav-links">
+                <a href="{{ url_for('admin.dashboard') }}" class="nav-link">Dashboard</a>
+                <a href="{{ url_for('admin.stats') }}" class="nav-link">Stats</a>
+                <a href="{{ url_for('admin.admin_payments') }}" class="nav-link active">Pending Payments</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        <div class="section">
+            <h2>💰 Pending Payments - Chờ Xác Nhận</h2>
+            
+            {% if payments %}
+                <table class="payments-table">
+                    <thead>
+                        <tr>
+                            <th>Ngày</th>
+                            <th>Khách hàng</th>
+                            <th>Số tiền</th>
+                            <th>Phương thức</th>
+                            <th>Ghi chú</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payments %}
+                        <tr>
+                            <td>{{ payment.created_at.strftime('%d/%m/%Y %H:%M') if payment.created_at else 'N/A' }}</td>
+                            <td class="user-info">
+                                <div class="user-email">{{ payment.user_email }}</div>
+                                <div style="font-size: 12px; color: #6c757d;">{{ payment.user_name }}</div>
+                            </td>
+                            <td class="amount">
+                                {% if payment.currency == 'VND' %}
+                                    {{ "{:,.0f}".format(payment.amount).replace(",", ".") }} {{ payment.currency }}
+                                {% else %}
+                                    ${{ "%.2f"|format(payment.amount) }} {{ payment.currency }}
+                                {% endif %}
+                            </td>
+                            <td>{{ payment.payment_gateway or 'N/A' }}</td>
+                            <td>{{ payment.notes or '-' }}</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('admin.admin_approve_payment', payment_id=payment.id) }}" style="display: inline;">
+                                    <button type="submit" class="btn-approve" onclick="return confirm('Xác nhận approve payment này? API keys của user sẽ được extend 30 ngày.');">
+                                        ✅ Approve
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">✅</div>
+                    <p>Không có payment nào đang chờ xử lý</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
