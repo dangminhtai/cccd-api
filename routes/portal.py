@@ -386,9 +386,15 @@ def upgrade():
             )
             
             if payment_id:
+                # Format amount with VND
+                if currency == "VND":
+                    amount_formatted = f"{amount:,.0f}".replace(",", ".")
+                else:
+                    amount_formatted = f"${amount:.2f}"
+                
                 flash(
                     f"Đã tạo yêu cầu nâng cấp lên {pricing[target_tier]['name']}. "
-                    f"Admin sẽ xử lý thanh toán ${amount:.2f} và kích hoạt tier mới.",
+                    f"Admin sẽ xử lý thanh toán {amount_formatted} {currency} và kích hoạt tier mới.",
                     "success"
                 )
             else:
