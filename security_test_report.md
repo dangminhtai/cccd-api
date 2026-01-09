@@ -72,14 +72,24 @@
 | Test Case | Kết Quả | Ghi Chú |
 |-----------|---------|---------|
 | Rate Limit Test (35 requests) | ✅ PASS | Rate limit hoạt động đúng (429 ở request thứ 6) |
+| API Key Switching Bypass | ✅ PASS | Mỗi key có limit riêng, không thể bypass |
+| X-Forwarded-For Manipulation | ✅ PASS | Không bypass được (rate limit dựa trên API key) |
+| Case Sensitivity in API Key | ✅ PASS | API key case-sensitive, tất cả biến thể bị reject |
+| Concurrent Requests | ✅ PASS | Rate limit hoạt động đúng với concurrent requests |
+| Different Tiers Concurrent | ✅ PASS | Mỗi tier có rate limit riêng, hoạt động độc lập |
 
 **Đánh giá:** ✅ **TỐT** - Rate limiting hoạt động đúng:
 
-- ✅ Free tier có rate limit (khoảng 10 requests/minute dựa trên test)
+- ✅ Free tier có rate limit (~10 requests/minute)
+- ✅ Premium/Ultra tier có rate limit riêng (100/1000 req/min)
 - ✅ Trả 429 khi vượt limit
 - ✅ Response là JSON (không phải HTML)
+- ✅ Không thể bypass bằng cách đổi API key (mỗi key có limit riêng)
+- ✅ Không thể bypass bằng X-Forwarded-For manipulation (rate limit dựa trên API key)
+- ✅ API key case-sensitive (bảo mật tốt)
+- ✅ Rate limit hoạt động đúng với concurrent requests
 
-**Khuyến nghị:** Không có vấn đề. Rate limiting đã được cấu hình đúng.
+**Khuyến nghị:** Không có vấn đề. Rate limiting đã được cấu hình đúng và không có cách bypass.
 
 ---
 
