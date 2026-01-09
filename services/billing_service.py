@@ -121,13 +121,13 @@ def approve_payment(payment_id: int, user_id: int) -> bool:
                     return False
                 
                 # Determine tier from amount (simplified - có thể config riêng)
-                # Free = $0, Premium = $X, Ultra = $Y
+                # Free = 0 VND, Premium = 500,000 VND, Ultra = 2,000,000 VND
                 amount = float(payment["amount"])
                 if amount == 0:
                     tier = "free"
-                elif amount < 50:
+                elif amount < 1000000:  # < 1,000,000 VND = Premium
                     tier = "premium"
-                else:
+                else:  # >= 1,000,000 VND = Ultra
                     tier = "ultra"
                 
                 # Deactivate old subscription
