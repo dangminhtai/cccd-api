@@ -182,13 +182,22 @@ def keys():
                 flash(f"Bạn chỉ có thể tạo API key tier {current_tier}. Vui lòng nâng cấp để sử dụng tier {tier}.", "error")
                 return redirect(url_for("portal.keys"))
             
-            # Parse days_valid
+            # Parse days_valid - ĐỪNG TIN USER INPUT (Lesson #20)
             days_valid = None
             if days_valid_str:
+                # Check length first (prevent DoS)
+                if len(days_valid_str) > 10:
+                    flash("Số ngày hợp lệ quá dài", "error")
+                    return redirect(url_for("portal.keys"))
+                
                 try:
                     days_valid_int = int(days_valid_str)
+                    # Validate range
                     if days_valid_int < 1:
                         flash("Số ngày hợp lệ phải lớn hơn 0", "error")
+                        return redirect(url_for("portal.keys"))
+                    if days_valid_int > 3650:  # Max 10 years
+                        flash("Số ngày hợp lệ không được vượt quá 3650 ngày (10 năm)", "error")
                         return redirect(url_for("portal.keys"))
                     days_valid = days_valid_int
                 except ValueError:
