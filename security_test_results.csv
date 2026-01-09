@@ -1,1 +1,8 @@
-﻿
+﻿"Category","Tier","Test","Status","Expected","Pass","Details","Severity","Timestamp"
+"Rate Limiting","ultra","Rate Limit Test - ultra tier (1000 req/min)","200","429","False","No rate limit detected (may be too fast - 1000 req/min is very high)","INFO","2026-01-09 09:53:59"
+"Rate Limiting","free","Rate Limit Test - free tier (10 req/min)","429","429","True","Rate limit working correctly (429 at request 11)","INFO","2026-01-09 09:54:06"
+"Rate Limiting","premium","Rate Limit Test - premium tier (100 req/min)","429","429","True","Rate limit working correctly (429 at request 101)","INFO","2026-01-09 09:54:26"
+"Input Validation","free","SQL Injection in CCCD","429","400","False","Unexpected status","INFO","2026-01-09 09:54:36"
+"DoS Protection","free","DoS - Very Long CCCD (10000 chars)","429","400","False","Timeout or error","INFO","2026-01-09 09:54:37"
+"Authentication","","No API Key","401","401","True","Correctly rejected","INFO","2026-01-09 09:54:37"
+"Authentication","","Wrong API Key","401","401","True","Correctly rejected","INFO","2026-01-09 09:54:37"
