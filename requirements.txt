@@ -1,6 +1,7 @@
 Flask==3.0.0
 python-dotenv==1.0.1
-gunicorn==21.2.0
+gunicorn==21.2.0  # Linux/Mac only - không chạy trên Windows
+waitress==2.1.2   # Windows alternative to Gunicorn
 Flask-Limiter==3.5.0
 pytest==8.0.0
 PyMySQL==1.1.0

@@ -22,13 +22,22 @@ pip install -r requirements.txt
 # Write-Host "🧪 Running tests..." -ForegroundColor Cyan
 # python -m pytest tests/ -v
 
-# Start with gunicorn
-Write-Host "✅ Starting server with gunicorn..." -ForegroundColor Green
-gunicorn -w 4 -b 0.0.0.0:8000 `
-    --access-logfile - `
-    --error-logfile - `
-    --log-level info `
-    --timeout 120 `
-    --graceful-timeout 30 `
-    --keep-alive 5 `
-    wsgi:app
+# Start with waitress (Windows) or gunicorn (Linux)
+Write-Host "✅ Starting server..." -ForegroundColor Green
+
+# Check if running on Windows
+if ($env:OS -eq "Windows_NT" -or $IsWindows) {
+    Write-Host "Detected Windows - using Waitress (Gunicorn không chạy trên Windows)" -ForegroundColor Yellow
+    pip install waitress
+    waitress-serve --host=0.0.0.0 --port=8000 wsgi:app
+} else {
+    Write-Host "Detected Linux/Mac - using Gunicorn" -ForegroundColor Green
+    gunicorn -w 4 -b 0.0.0.0:8000 `
+        --access-logfile - `
+        --error-logfile - `
+        --log-level info `
+        --timeout 120 `
+        --graceful-timeout 30 `
+        --keep-alive 5 `
+        wsgi:app
+}

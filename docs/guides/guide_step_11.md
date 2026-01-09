@@ -67,9 +67,21 @@ docker pull python:3.11-slim
 # Sau đó sửa Dockerfile: FROM python:3.11-slim
 ```
 
-**Option 3: Dùng Gunicorn trực tiếp (Không cần Docker)**
-Nếu Docker có vấn đề network, có thể deploy bằng Gunicorn trực tiếp:
+**Option 3: Dùng Waitress (Windows) hoặc Gunicorn (Linux)**
+
+⚠️ **Lưu ý:** Gunicorn **KHÔNG chạy được trên Windows** (thiếu module `fcntl`).
+
+**Trên Windows:**
 ```powershell
+# Cài waitress (WSGI server cho Windows)
+pip install waitress
+
+# Chạy
+waitress-serve --host=0.0.0.0 --port=8000 wsgi:app
+```
+
+**Trên Linux/Mac:**
+```bash
 # Cài gunicorn
 pip install gunicorn
 
