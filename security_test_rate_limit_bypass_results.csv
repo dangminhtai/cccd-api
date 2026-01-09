@@ -1,0 +1,7 @@
+﻿"Category","Test","Status","Expected","Pass","Details","Severity","Timestamp"
+"Rate Limiting","Rate Limit - Free Key (10 req/min)","PASS","PASS","True","Free key rate limit works: 10 success, 5 rate limited (expected ~10 req/min)","INFO","2026-01-09 11:00:13"
+"Rate Limiting","Rate Limit Bypass - Switch Keys","PASS","PASS","True","CORRECT: Each key has separate rate limit (premium key works after free key is limited)","INFO","2026-01-09 11:00:13"
+"Rate Limiting","Rate Limit - X-Forwarded-For Manipulation","PASS","PASS","True","CORRECT: Rate limit based on API key, X-Forwarded-For manipulation does not bypass (15 rate limited)","INFO","2026-01-09 11:00:15"
+"Rate Limiting","Rate Limit - Case Sensitivity in API Key","PASS","PASS","True","CORRECT: API key is case-sensitive, all variations rejected","INFO","2026-01-09 11:00:15"
+"Rate Limiting","Rate Limit - Concurrent Requests (Free Tier)","PASS","PASS","True","CORRECT: Rate limit works with concurrent requests - 0 success, 15 rate limited","INFO","2026-01-09 11:00:18"
+"Rate Limiting","Rate Limit - Different Tiers Concurrent","PASS","PASS","True","Concurrent requests by tier: Ultra (5 success, 0 rate limited); Free (0 success, 5 rate limited); Premium (5 success, 0 rate limited)","INFO","2026-01-09 11:00:21"

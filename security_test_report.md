@@ -9,8 +9,8 @@
 
 ## 📊 Tổng Quan
 
-- **Tổng số test:** 19
-- **PASS:** 19
+- **Tổng số test:** 25
+- **PASS:** 25
 - **FAIL:** 0
 - **SKIP:** 0
 - **Vấn đề bảo mật phát hiện:** 1 (LOW severity - Server header leak trong dev, accepted risk)
@@ -222,12 +222,14 @@
   - Không có command injection vulnerability
 
 #### 5. Rate Limiting Bypass
-- ⚠️ **Test 5.2: Rate Limit Bypass Techniques** - Chưa test
-  - Test đổi API key để bypass (mỗi key có limit riêng - đúng)
-  - Test `X-Forwarded-For` header manipulation
-  - Test case sensitivity trong API key
-- ⚠️ **Test 5.3: Distributed Rate Limiting** - Chưa test
-  - Test concurrent requests để xác nhận rate limit chính xác
+- ✅ **Test 5.2: Rate Limit Bypass Techniques** - ✅ PASS (4/4 tests)
+  - ✅ Đổi API key để bypass: Mỗi key có limit riêng (đúng) - không thể bypass bằng cách đổi key
+  - ✅ `X-Forwarded-For` header manipulation: Không bypass được (rate limit dựa trên API key, không phải IP)
+  - ✅ Case sensitivity trong API key: API key case-sensitive, tất cả biến thể bị reject
+  - ✅ Free tier rate limit: Hoạt động đúng (~10 req/min)
+- ✅ **Test 5.3: Distributed Rate Limiting** - ✅ PASS (2/2 tests)
+  - ✅ Concurrent requests: Rate limit hoạt động đúng với concurrent requests
+  - ✅ Different tiers concurrent: Mỗi tier có rate limit riêng, hoạt động độc lập
 
 #### 7. Admin Endpoint Security
 - ⚠️ **Test 7.3: SQL Injection trong Admin Endpoints** - Chưa test
