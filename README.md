@@ -10,6 +10,14 @@ API parse thông tin từ số CCCD (Căn cước công dân) Việt Nam.
 - ✅ Rate limiting, API key authentication
 - ✅ Log an toàn (che CCCD)
 
+## 📚 Tài liệu
+
+- **Quick Start:** Xem phần "Chạy Local" bên dưới
+- **API Reference:** Xem [`docs/project/requirement.md`](docs/project/requirement.md)
+- **Development Guides:** Xem [`docs/guides/`](docs/guides/)
+- **Security Testing:** Xem [`docs/security/`](docs/security/)
+- **Project Docs:** Xem [`docs/project/`](docs/project/)
+
 ---
 
 ## Chạy Local (5 phút)
