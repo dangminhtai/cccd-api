@@ -123,8 +123,19 @@
 |-----------|---------|---------|
 | Admin Stats Without Key | ✅ PASS | Correctly protected (403) |
 | Admin Stats With Wrong Key | ✅ PASS | Correctly rejected (403) |
+| SQL Injection in key_prefix | ✅ PASS | Tất cả payload bị reject (404/validation) |
+| SQL Injection in create_key email | ✅ PASS | Tất cả payload bị reject (400 validation) |
+| SQL Injection in create_key tier | ✅ PASS | Tất cả payload bị reject (400 validation) |
+| IDOR - Admin access | ✅ PASS | Admin có thể truy cập key (đúng) |
+| IDOR - Non-admin access | ✅ PASS | User thường không thể truy cập (403) |
 
-**Đánh giá:** ✅ **TỐT** - Admin endpoints được bảo vệ đúng cách.
+**Đánh giá:** ✅ **TỐT** - Admin endpoints được bảo vệ đúng cách:
+
+- ✅ SQL injection payloads bị reject (parameterized queries hoạt động đúng)
+- ✅ Không có SQL error leakage trong response
+- ✅ Admin có quyền truy cập key (đúng behavior)
+- ✅ User thường không thể truy cập admin endpoints (403)
+- ✅ User thường không thể truy cập key của người khác (403)
 
 ---
 
