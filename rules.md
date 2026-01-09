@@ -80,12 +80,24 @@ git push
 
 ---
 
-## 7) Checklist “trước khi push”
+## 7) Checklist "trước khi push"
 
 - [ ] Chạy test (ít nhất `py -m unittest discover -s tests -p "test_*.py"`)
 - [ ] Mở `/demo` và test nhanh 2 case (đúng/sai)
 - [ ] Không log dữ liệu nhạy cảm (không log CCCD full)
 - [ ] Commit message đúng step + nội dung
 - [ ] Push thành công
+
+---
+
+## 8) Checklist "sau khi push"
+
+- [ ] **Kiểm tra có lỗi mới gặp không?**
+  - Nếu có lỗi PowerShell/command → ghi vào `issues_list.md`
+  - Nếu có lesson learned → ghi vào `lession_learn.md`
+- [ ] **Kiểm tra có vấn đề cần document không?**
+  - Cách fix mới, workaround, limitation
+  - Best practice mới phát hiện
+- [ ] **Cập nhật ngay sau khi push**, không để quên
 
 

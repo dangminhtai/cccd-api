@@ -235,6 +235,26 @@
 
 ---
 
+## 22) PowerShell biến trong catch block bị parse sai khi dùng trong one-liner
+
+- **Hiện tượng**: Chạy lệnh PowerShell one-liner có `catch { $status = [int]$_.Exception.Response.StatusCode }` báo lỗi: `The term '=' is not recognized as the name of a cmdlet, function, script file, or operable program.`
+- **Nguyên nhân**: 
+  - PowerShell one-liner với `try/catch` phức tạp bị parse sai khi có biến assignment trong catch block
+  - Command được wrap trong `powershell -Command "..."` hoặc có nhiều dấu ngoặc kép/nháy đơn lồng nhau
+  - Biến `$status` bị mất hoặc bị parse thành command riêng
+- **Cách xử lý**: 
+  - Tránh one-liner phức tạp với `try/catch` và biến assignment
+  - Tách thành script file riêng hoặc nhiều dòng
+  - Hoặc dùng cách đơn giản hơn: `try { ... } catch { Write-Host "Error: $($_.Exception.Message)" }`
+  - Ví dụ đúng: Viết script file `.ps1` thay vì one-liner
+- **Cách tránh lần sau**: Khi viết lệnh PowerShell:
+  - **Tránh one-liner phức tạp** với `try/catch` + biến assignment
+  - **Ưu tiên script file** (`.ps1`) cho logic phức tạp
+  - Nếu bắt buộc dùng one-liner, đơn giản hóa logic (không assign biến trong catch)
+  - Test lệnh trước khi dùng trong automation
+
+---
+
 ## 22) WSGI middleware không có method `run()` khi wrap Flask app
 
 - **Hiện tượng**: Sau khi wrap Flask app với WSGI middleware, gọi `app.run()` báo lỗi: `AttributeError: 'RemoveServerHeaderMiddleware' object has no attribute 'run'`
