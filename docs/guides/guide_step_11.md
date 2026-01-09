@@ -346,8 +346,11 @@ curl http://127.0.0.1:8000/health
 pip install waitress
 waitress-serve --host=0.0.0.0 --port=8000 wsgi:app
 
-# Test từ terminal khác
+# ⚠️ LƯU Ý: Server sẽ chạy mãi và "đứng yên" - đây là bình thường!
+# Server đang chờ requests. Để test, mở terminal PowerShell KHÁC và chạy:
 Invoke-RestMethod -Uri "http://127.0.0.1:8000/health"
+
+# Để dừng server: Nhấn Ctrl+C trong terminal đang chạy waitress
 ```
 
 ### Test 4: Docker

@@ -33,4 +33,13 @@ pip install waitress
 
 # Run with Waitress
 # Waitress là WSGI server tốt cho Windows, tương đương Gunicorn trên Linux
+Write-Host ""
+Write-Host "🚀 Server đang chạy tại: http://0.0.0.0:8000" -ForegroundColor Green
+Write-Host "📝 Để test, mở terminal khác và chạy:" -ForegroundColor Cyan
+Write-Host "   Invoke-RestMethod -Uri 'http://127.0.0.1:8000/health'" -ForegroundColor Yellow
+Write-Host ""
+Write-Host "⏹️  Nhấn Ctrl+C để dừng server" -ForegroundColor Gray
+Write-Host ""
+
+# Run Waitress (sẽ chạy mãi cho đến khi Ctrl+C)
 waitress-serve --host=0.0.0.0 --port=8000 wsgi:app
