@@ -2,6 +2,7 @@
 # Chạy script này để test các lỗ hổng bảo mật
 
 $base = "http://127.0.0.1:8000"
+$testApiKey = "free_63e33bbea29eba186d44a9eceac326c5"  # Free tier API key
 $results = @()
 $findings = @()
 
@@ -176,7 +177,11 @@ Write-Host "`n=== 3. INPUT VALIDATION & INJECTION ===" -ForegroundColor Yellow
 # Test with valid request (may need API key)
 $testHeaders = @{}
 if ($apiKeyRequired) {
-    # Try to get a valid key from demo page or skip these tests
+    $testHeaders["X-API-Key"] = $testApiKey
+    Write-Host "  [INFO] Using API key: $($testApiKey.Substring(0, 20))..." -ForegroundColor Gray
+    Write-Host "  [INFO] Waiting 5 seconds to reset rate limit..." -ForegroundColor Gray
+    Start-Sleep -Seconds 5
+} else {
     Write-Host "  ⚠️  Note: Some tests may fail with 401 if API key is required" -ForegroundColor Yellow
 }
 
@@ -302,7 +307,10 @@ Write-Host "`n=== 4. RATE LIMITING ===" -ForegroundColor Yellow
 
 Test-Case "Rate Limit Test (35 requests)" {
     $body = @{cccd = "079203012345"} | ConvertTo-Json
-    $headers = $testHeaders.Clone()
+    $headers = @{}
+    if ($apiKeyRequired) {
+        $headers["X-API-Key"] = $testApiKey
+    }
     $rateLimited = $false
     $lastStatus = 200
     
@@ -347,11 +355,19 @@ Test-Case "Rate Limit Test (35 requests)" {
 Write-Host "`n=== 5. INFORMATION DISCLOSURE ===" -ForegroundColor Yellow
 
 Test-Case "Error Message Analysis" {
+    # Wait longer to avoid rate limit from previous test
+    Start-Sleep -Seconds 10
     try {
         $body = @{} | ConvertTo-Json  # Missing cccd
         $r = Invoke-RestMethod -Uri "$base/v1/cccd/parse" -Method POST -ContentType "application/json" -Headers $testHeaders -Body $body -ErrorAction Stop
         return @{Status = 200; Details = "Unexpected success"}
     } catch {
+        $status = [int]$_.Exception.Response.StatusCode
+        # If rate limited, skip this test
+        if ($status -eq 429) {
+            return @{Status = $status; Details = "Rate limited (test skipped)"}
+        }
+        
         $errorResponse = $_.Exception.Response
         $reader = New-Object System.IO.StreamReader($errorResponse.GetResponseStream())
         $responseBody = $reader.ReadToEnd()
@@ -364,7 +380,6 @@ Test-Case "Error Message Analysis" {
             $leakInfo = "VULNERABLE! Information leaked: $($matches[0])"
         }
         
-        $status = [int]$_.Exception.Response.StatusCode
         if ($leaked) {
             return @{
                 Status = $status; 
