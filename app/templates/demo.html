@@ -115,13 +115,25 @@
           statusEl.textContent = resp.status;
           const text = await resp.text();
           try {
-            out.textContent = JSON.stringify(JSON.parse(text), null, 2);
+            const json = JSON.parse(text);
+            out.textContent = JSON.stringify(json, null, 2);
+            
+            // Highlight status code
+            if (resp.status === 200) {
+              statusEl.className = "ok";
+            } else if (resp.status === 401 || resp.status === 400) {
+              statusEl.className = "bad";
+            } else {
+              statusEl.className = "";
+            }
           } catch {
             out.textContent = text;
           }
         } catch (e) {
           statusEl.textContent = "error";
+          statusEl.className = "bad";
           out.textContent = String(e);
+          console.error("Request error:", e);
         } finally {
           btn.disabled = false;
         }

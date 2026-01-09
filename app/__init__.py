@@ -54,8 +54,9 @@ def create_app() -> Flask:
         response.headers["X-XSS-Protection"] = "1; mode=block"
         
         # Content-Security-Policy: restrict resources to same origin
-        # Note: Adjust this based on your needs (e.g., if you need to load external scripts)
-        response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self';"
+        # Note: Allow inline scripts/styles for demo.html (needed for the demo page)
+        # In production, consider removing 'unsafe-inline' and using nonces/hashes
+        response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self';"
         
         # Strict-Transport-Security: only add if using HTTPS
         # For local development (HTTP), we skip this header

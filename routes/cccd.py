@@ -37,6 +37,14 @@ def demo():
         bool(getattr(settings, "api_key", None))
     )
     configured_key = getattr(settings, "api_key", "") or ""
+    
+    # Debug: Log để kiểm tra
+    current_app.logger.info(
+        f"demo_page | api_key_mode={api_key_mode} | "
+        f"api_key_required={api_key_required} | "
+        f"configured_key_length={len(configured_key)}"
+    )
+    
     return render_template(
         "demo.html",
         api_key_required=api_key_required,
@@ -54,11 +62,20 @@ def _check_api_key():
     api_key_mode = getattr(settings, "api_key_mode", "simple")
     provided_api_key = request.headers.get("X-API-Key")
     
+    # Debug log
+    current_app.logger.debug(
+        f"api_key_check | mode={api_key_mode} | "
+        f"provided_key_length={len(provided_api_key) if provided_api_key else 0}"
+    )
+    
     if api_key_mode == "tiered":
         # Tiered mode: validate với MySQL
         from services.api_key_service import validate_api_key, log_request
         is_valid, error_msg, key_info = validate_api_key(provided_api_key)
         if not is_valid:
+            current_app.logger.warning(
+                f"api_key_check_failed | mode=tiered | reason={error_msg}"
+            )
             return False, (
                 jsonify({
                     "success": False,
@@ -75,7 +92,25 @@ def _check_api_key():
         # Simple mode: so sánh với API_KEY trong .env
         required_api_key = getattr(settings, "api_key", None)
         if required_api_key:
+            if not provided_api_key:
+                current_app.logger.warning(
+                    f"api_key_check_failed | mode=simple | reason=missing_key"
+                )
+                return False, (
+                    jsonify({
+                        "success": False,
+                        "is_valid_format": False,
+                        "data": None,
+                        "message": "API key không hợp lệ hoặc thiếu.",
+                    }),
+                    401,
+                ), None
             if provided_api_key != required_api_key:
+                current_app.logger.warning(
+                    f"api_key_check_failed | mode=simple | "
+                    f"provided_length={len(provided_api_key)} | "
+                    f"required_length={len(required_api_key)}"
+                )
                 return False, (
                     jsonify({
                         "success": False,
