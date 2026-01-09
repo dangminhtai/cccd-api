@@ -22,8 +22,10 @@ pip install -r requirements.txt
 # echo "🧪 Running tests..."
 # python -m pytest tests/ -v
 
-# Start with gunicorn
+# Start with gunicorn (Linux/Mac production server)
 echo "✅ Starting server with gunicorn..."
+echo "   (Note: Gunicorn không chạy trên Windows, dùng deploy.ps1 với Waitress)"
+
 gunicorn -w 4 -b 0.0.0.0:8000 \
     --access-logfile - \
     --error-logfile - \

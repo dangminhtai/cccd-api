@@ -22,22 +22,15 @@ pip install -r requirements.txt
 # Write-Host "🧪 Running tests..." -ForegroundColor Cyan
 # python -m pytest tests/ -v
 
-# Start with waitress (Windows) or gunicorn (Linux)
-Write-Host "✅ Starting server..." -ForegroundColor Green
+# Start with Waitress (Windows production server)
+# Note: Gunicorn không chạy được trên Windows (thiếu module fcntl)
+# Xem issue #24 trong docs/project/issues_list.md
+Write-Host "✅ Starting server with Waitress..." -ForegroundColor Green
+Write-Host "   (Gunicorn không chạy trên Windows, dùng Waitress thay thế)" -ForegroundColor Yellow
 
-# Check if running on Windows
-if ($env:OS -eq "Windows_NT" -or $IsWindows) {
-    Write-Host "Detected Windows - using Waitress (Gunicorn không chạy trên Windows)" -ForegroundColor Yellow
-    pip install waitress
-    waitress-serve --host=0.0.0.0 --port=8000 wsgi:app
-} else {
-    Write-Host "Detected Linux/Mac - using Gunicorn" -ForegroundColor Green
-    gunicorn -w 4 -b 0.0.0.0:8000 `
-        --access-logfile - `
-        --error-logfile - `
-        --log-level info `
-        --timeout 120 `
-        --graceful-timeout 30 `
-        --keep-alive 5 `
-        wsgi:app
-}
+# Install waitress if not already installed
+pip install waitress
+
+# Run with Waitress
+# Waitress là WSGI server tốt cho Windows, tương đương Gunicorn trên Linux
+waitress-serve --host=0.0.0.0 --port=8000 wsgi:app
