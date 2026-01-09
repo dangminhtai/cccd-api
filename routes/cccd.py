@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from datetime import date
 
 from flask import Blueprint, current_app, g, jsonify, render_template, request
@@ -169,7 +170,24 @@ def cccd_parse():
         )
 
     if not isinstance(cccd, str):
-        current_app.logger.warning(f"validation_failed | request_id={_get_request_id()} | reason=cccd_not_string")
+        current_app.logger.warning(f"validation_failed | request_id={req_id} | reason=cccd_not_string")
+        status_code = 400
+        error_msg = "CCCD không hợp lệ (cần là chuỗi số, độ dài 12)."
+        is_valid_format = False
+        
+        _log_to_database_if_enabled(
+            request_id=req_id,
+            api_key_id=api_key_id,
+            api_key_prefix=api_key_prefix,
+            ip_address=ip_address,
+            method="POST",
+            endpoint="/v1/cccd/parse",
+            status_code=status_code,
+            response_time_ms=int((time.time() - start_time) * 1000),
+            is_valid_format=is_valid_format,
+            error_message=error_msg,
+        )
+        
         return (
             jsonify(
                 {
@@ -185,8 +203,25 @@ def cccd_parse():
     # Early length check to prevent DoS (reject before processing long strings)
     if len(cccd) > 20:  # 12 digits + buffer for whitespace
         current_app.logger.warning(
-            f"validation_failed | request_id={_get_request_id()} | reason=cccd_too_long | length={len(cccd)}"
+            f"validation_failed | request_id={req_id} | reason=cccd_too_long | length={len(cccd)}"
         )
+        status_code = 400
+        error_msg = "CCCD không hợp lệ (cần là chuỗi số, độ dài 12)."
+        is_valid_format = False
+        
+        _log_to_database_if_enabled(
+            request_id=req_id,
+            api_key_id=api_key_id,
+            api_key_prefix=api_key_prefix,
+            ip_address=ip_address,
+            method="POST",
+            endpoint="/v1/cccd/parse",
+            status_code=status_code,
+            response_time_ms=int((time.time() - start_time) * 1000),
+            is_valid_format=is_valid_format,
+            error_message=error_msg,
+        )
+        
         return (
             jsonify(
                 {
@@ -202,8 +237,26 @@ def cccd_parse():
     cccd = cccd.strip()
     if (not cccd.isdigit()) or (len(cccd) != 12):
         current_app.logger.warning(
-            f"validation_failed | request_id={_get_request_id()} | reason=invalid_cccd_format | length={len(cccd)}"
+            f"validation_failed | request_id={req_id} | reason=invalid_cccd_format | length={len(cccd)}"
         )
+        status_code = 400
+        error_msg = "CCCD không hợp lệ (cần là chuỗi số, độ dài 12)."
+        is_valid_format = False
+        
+        _log_to_database_if_enabled(
+            request_id=req_id,
+            api_key_id=api_key_id,
+            api_key_prefix=api_key_prefix,
+            ip_address=ip_address,
+            method="POST",
+            endpoint="/v1/cccd/parse",
+            status_code=status_code,
+            response_time_ms=int((time.time() - start_time) * 1000),
+            cccd_masked=_mask_cccd(cccd) if cccd else None,
+            is_valid_format=is_valid_format,
+            error_message=error_msg,
+        )
+        
         return (
             jsonify(
                 {
