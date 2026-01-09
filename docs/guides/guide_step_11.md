@@ -45,27 +45,47 @@ docker-compose down
 
 **⚠️ Troubleshooting:**
 
-Nếu gặp lỗi `failed to resolve source metadata` khi build:
-1. **Kiểm tra Docker Desktop đang chạy:**
-   ```powershell
-   docker ps
-   ```
+Nếu gặp lỗi network khi build Docker (`failed to resolve source metadata` hoặc `EOF`):
 
-2. **Kiểm tra kết nối internet:**
-   - Docker cần kết nối Docker Hub để pull image
-   - Nếu đằng sau proxy/firewall, cấu hình Docker proxy settings
+**Option 1: Retry với timeout dài hơn**
+```powershell
+# Set timeout dài hơn
+$env:DOCKER_CLIENT_TIMEOUT=300
+$env:COMPOSE_HTTP_TIMEOUT=300
+docker-compose build --no-cache
+docker-compose up -d
+```
 
-3. **Retry build:**
-   ```powershell
-   docker-compose build --no-cache
-   docker-compose up -d
-   ```
+**Option 2: Pull image từng bước**
+```powershell
+# Pull base image trước
+docker pull python:3.12-slim
 
-4. **Nếu vẫn lỗi, thử pull image trước:**
-   ```powershell
-   docker pull python:3.12-slim
-   docker-compose up -d
-   ```
+# Nếu vẫn lỗi, thử với tag khác
+docker pull python:3.11-slim
+
+# Sau đó sửa Dockerfile: FROM python:3.11-slim
+```
+
+**Option 3: Dùng Gunicorn trực tiếp (Không cần Docker)**
+Nếu Docker có vấn đề network, có thể deploy bằng Gunicorn trực tiếp:
+```powershell
+# Cài gunicorn
+pip install gunicorn
+
+# Chạy
+gunicorn -w 4 -b 0.0.0.0:8000 wsgi:app
+```
+
+**Option 4: Kiểm tra Docker Desktop settings**
+1. Mở Docker Desktop → Settings → Resources → Network
+2. Thử disable/enable "Use kernel networking"
+3. Restart Docker Desktop
+
+**Option 5: Dùng mirror registry (nếu ở VN)**
+Cấu hình Docker daemon để dùng mirror (nếu có):
+- Docker Desktop → Settings → Docker Engine
+- Thêm registry mirrors (tùy vào provider)
 
 **Verify:**
 ```powershell

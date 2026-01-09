@@ -1,4 +1,5 @@
 # Dockerfile cho CCCD API
+# Nếu python:3.12-slim không pull được, thử python:3.11-slim hoặc python:3.10-slim
 FROM python:3.12-slim
 
 # Set working directory
