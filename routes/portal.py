@@ -116,3 +116,83 @@ def dashboard():
         user=user,
         subscription=subscription,
     )
+
+
+@portal_bp.route("/keys", methods=["GET", "POST"])
+@require_login
+def keys():
+    """Quản lý API keys"""
+    user_id = session.get("user_id")
+    user = get_user_by_id(user_id)
+    
+    if not user:
+        session.clear()
+        flash("Phiên đăng nhập đã hết hạn", "warning")
+        return redirect(url_for("portal.login"))
+    
+    subscription = get_user_subscription(user_id)
+    current_tier = subscription["tier"] if subscription else "free"
+    
+    # POST: Create new key
+    if request.method == "POST":
+        action = request.form.get("action")
+        
+        if action == "create":
+            tier = request.form.get("tier", current_tier)
+            
+            # Validate tier matches subscription
+            if tier not in ("free", "premium", "ultra"):
+                flash("Tier không hợp lệ", "error")
+                return redirect(url_for("portal.keys"))
+            
+            # Check if user can create this tier (must match subscription)
+            if tier != current_tier:
+                flash(f"Bạn chỉ có thể tạo API key tier {current_tier}. Vui lòng nâng cấp để sử dụng tier {tier}.", "error")
+                return redirect(url_for("portal.keys"))
+            
+            # Create key
+            from services.api_key_service import create_api_key
+            try:
+                api_key = create_api_key(
+                    tier=tier,
+                    owner_email=user["email"],
+                    user_id=user_id,
+                )
+                # Store in session to show once
+                session["new_api_key"] = api_key
+                flash("Tạo API key thành công! Vui lòng lưu lại ngay.", "success")
+            except Exception as e:
+                flash(f"Lỗi khi tạo API key: {str(e)}", "error")
+            
+            return redirect(url_for("portal.keys"))
+        
+        elif action == "delete":
+            key_id = request.form.get("key_id")
+            if key_id:
+                try:
+                    key_id_int = int(key_id)
+                    from services.api_key_service import deactivate_key_by_id
+                    if deactivate_key_by_id(key_id_int, user_id):
+                        flash("Đã xóa API key thành công", "success")
+                    else:
+                        flash("Không tìm thấy API key hoặc bạn không có quyền xóa", "error")
+                except (ValueError, Exception) as e:
+                    flash(f"Lỗi khi xóa API key: {str(e)}", "error")
+            
+            return redirect(url_for("portal.keys"))
+    
+    # GET: List keys
+    from services.api_key_service import get_user_api_keys
+    api_keys = get_user_api_keys(user_id)
+    
+    # Get new key from session (show once)
+    new_api_key = session.pop("new_api_key", None)
+    
+    return render_template(
+        "portal/keys.html",
+        user=user,
+        subscription=subscription,
+        api_keys=api_keys,
+        new_api_key=new_api_key,
+        current_tier=current_tier,
+    )

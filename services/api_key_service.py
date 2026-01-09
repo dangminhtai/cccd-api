@@ -65,6 +65,7 @@ def create_api_key(
     tier: TierType,
     owner_email: str,
     days_valid: int | None = None,
+    user_id: int | None = None,
 ) -> str:
     """
     Tạo và lưu API key mới vào database
@@ -84,10 +85,10 @@ def create_api_key(
         with conn.cursor() as cursor:
             cursor.execute(
                 """
-                INSERT INTO api_keys (key_hash, key_prefix, tier, owner_email, expires_at)
-                VALUES (%s, %s, %s, %s, %s)
+                INSERT INTO api_keys (key_hash, key_prefix, tier, owner_email, expires_at, user_id)
+                VALUES (%s, %s, %s, %s, %s, %s)
                 """,
-                (key_hash, key_prefix, tier, owner_email, expires_at),
+                (key_hash, key_prefix, tier, owner_email, expires_at, user_id),
             )
         conn.commit()
     finally:
@@ -184,6 +185,61 @@ def deactivate_key(api_key: str) -> bool:
         conn.close()
     
     return affected > 0
+
+
+def deactivate_key_by_id(key_id: int, user_id: int) -> bool:
+    """Vô hiệu hóa key theo ID (chỉ user sở hữu mới được)"""
+    conn = _get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                "UPDATE api_keys SET active = FALSE WHERE id = %s AND user_id = %s",
+                (key_id, user_id),
+            )
+            affected = cursor.rowcount
+        conn.commit()
+    finally:
+        conn.close()
+    
+    return affected > 0
+
+
+def get_user_api_keys(user_id: int) -> list[dict]:
+    """Lấy danh sách API keys của user"""
+    conn = _get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT id, key_prefix, tier, owner_email, active, created_at, expires_at
+                FROM api_keys
+                WHERE user_id = %s
+                ORDER BY created_at DESC
+                """,
+                (user_id,),
+            )
+            rows = cursor.fetchall()
+    finally:
+        conn.close()
+    
+    result = []
+    for row in rows:
+        expired = False
+        if row["expires_at"]:
+            expired = datetime.now() > row["expires_at"]
+        
+        result.append({
+            "id": row["id"],
+            "key_prefix": row["key_prefix"],
+            "tier": row["tier"],
+            "owner_email": row["owner_email"],
+            "active": row["active"],
+            "expired": expired,
+            "created_at": row["created_at"],
+            "expires_at": row["expires_at"],
+        })
+    
+    return result
 
 
 def log_request(api_key: str):

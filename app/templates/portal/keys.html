@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>API Keys - CCCD API</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: #f5f5f5; }
+        .header { background: white; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .header-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 24px; font-weight: 600; color: #667eea; }
+        .user-info { display: flex; align-items: center; gap: 20px; }
+        .user-name { color: #333; font-weight: 500; }
+        .btn-logout { padding: 8px 16px; background: #f0f0f0; color: #333; text-decoration: none; border-radius: 6px; font-size: 14px; }
+        .btn-logout:hover { background: #e0e0e0; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px 40px; }
+        .flash-messages { margin-bottom: 20px; }
+        .flash { padding: 12px; border-radius: 8px; margin-bottom: 10px; }
+        .flash-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .flash-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .flash-warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .section { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .section h2 { color: #333; margin-bottom: 20px; }
+        .create-form { display: flex; gap: 12px; align-items: flex-end; }
+        .form-group { flex: 1; }
+        .form-group label { display: block; margin-bottom: 8px; color: #333; font-weight: 500; font-size: 14px; }
+        .form-group select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
+        .btn { padding: 12px 24px; border: 0; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; background: #667eea; color: white; transition: background 0.2s; }
+        .btn:hover { background: #5568d3; }
+        .btn-danger { background: #dc3545; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-secondary { background: #6c757d; }
+        .btn-secondary:hover { background: #5a6268; }
+        .keys-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .keys-table th, .keys-table td { padding: 12px; text-align: left; border-bottom: 1px solid #e0e0e0; }
+        .keys-table th { background: #f8f9fa; font-weight: 600; color: #333; }
+        .keys-table tr:hover { background: #f8f9fa; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .badge-free { background: #e3f2fd; color: #1976d2; }
+        .badge-premium { background: #fff3e0; color: #f57c00; }
+        .badge-ultra { background: #f3e5f5; color: #7b1fa2; }
+        .badge-active { background: #d4edda; color: #155724; }
+        .badge-inactive { background: #f8d7da; color: #721c24; }
+        .badge-expired { background: #fff3cd; color: #856404; }
+        .new-key-modal { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); max-width: 600px; margin: 40px auto; }
+        .new-key-modal h3 { color: #333; margin-bottom: 20px; }
+        .new-key-box { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; font-family: monospace; word-break: break-all; border: 2px dashed #667eea; }
+        .copy-btn { margin-top: 10px; }
+        .empty-state { text-align: center; padding: 60px 20px; color: #666; }
+        .empty-state h3 { color: #333; margin-bottom: 10px; }
+        .nav-menu { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .nav-links { display: flex; gap: 12px; flex-wrap: wrap; }
+        .nav-link { padding: 12px 20px; background: #f8f9fa; border-radius: 8px; text-decoration: none; color: #333; transition: background 0.2s; }
+        .nav-link:hover { background: #e9ecef; }
+        .nav-link.active { background: #667eea; color: white; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">🚀 CCCD API</div>
+            <div class="user-info">
+                <span class="user-name">{{ user.full_name }}</span>
+                <a href="{{ url_for('portal.logout') }}" class="btn-logout">Đăng xuất</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="nav-menu">
+            <div class="nav-links">
+                <a href="{{ url_for('portal.dashboard') }}" class="nav-link">📊 Dashboard</a>
+                <a href="{{ url_for('portal.keys') }}" class="nav-link active">🔑 API Keys</a>
+                <a href="#" class="nav-link">📈 Usage Stats</a>
+                <a href="#" class="nav-link">💳 Billing</a>
+                <a href="#" class="nav-link">⬆️ Upgrade Tier</a>
+            </div>
+        </div>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        {% if new_api_key %}
+        <div class="section new-key-modal">
+            <h3>🎉 API Key mới đã được tạo!</h3>
+            <p style="color: #dc3545; font-weight: 600; margin-bottom: 10px;">⚠️ Lưu ý: Key này chỉ hiển thị 1 lần. Vui lòng copy và lưu lại ngay!</p>
+            <div class="new-key-box" id="new-key-box">{{ new_api_key }}</div>
+            <button class="btn copy-btn" onclick="copyKey()">📋 Copy Key</button>
+            <a href="{{ url_for('portal.keys') }}" class="btn btn-secondary" style="margin-left: 10px;">Đóng</a>
+        </div>
+        {% endif %}
+        
+        <div class="section">
+            <h2>Tạo API Key mới</h2>
+            <form method="POST" action="{{ url_for('portal.keys') }}" class="create-form">
+                <input type="hidden" name="action" value="create">
+                <div class="form-group">
+                    <label for="tier">Tier</label>
+                    <select id="tier" name="tier" required>
+                        <option value="free" {% if current_tier == 'free' %}selected{% endif %}>Free (10 req/min)</option>
+                        <option value="premium" {% if current_tier == 'premium' %}selected{% endif %} {% if current_tier != 'premium' and current_tier != 'ultra' %}disabled{% endif %}>Premium (100 req/min)</option>
+                        <option value="ultra" {% if current_tier == 'ultra' %}selected{% endif %} {% if current_tier != 'ultra' %}disabled{% endif %}>Ultra (1000 req/min)</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn">Tạo API Key</button>
+            </form>
+            {% if current_tier == 'free' %}
+            <p style="margin-top: 12px; color: #666; font-size: 14px;">
+                💡 Bạn đang ở tier Free. <a href="#" style="color: #667eea;">Nâng cấp</a> để tạo Premium/Ultra keys.
+            </p>
+            {% endif %}
+        </div>
+        
+        <div class="section">
+            <h2>Danh sách API Keys</h2>
+            {% if api_keys %}
+            <table class="keys-table">
+                <thead>
+                    <tr>
+                        <th>Key Prefix</th>
+                        <th>Tier</th>
+                        <th>Trạng thái</th>
+                        <th>Ngày tạo</th>
+                        <th>Hết hạn</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for key in api_keys %}
+                    <tr>
+                        <td><code>{{ key.key_prefix }}...</code></td>
+                        <td><span class="badge badge-{{ key.tier }}">{{ key.tier|upper }}</span></td>
+                        <td>
+                            {% if key.expired %}
+                                <span class="badge badge-expired">Hết hạn</span>
+                            {% elif key.active %}
+                                <span class="badge badge-active">Hoạt động</span>
+                            {% else %}
+                                <span class="badge badge-inactive">Đã vô hiệu hóa</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ key.created_at.strftime('%d/%m/%Y') if key.created_at else 'N/A' }}</td>
+                        <td>{{ key.expires_at.strftime('%d/%m/%Y') if key.expires_at else 'Vĩnh viễn' }}</td>
+                        <td>
+                            {% if key.active %}
+                            <form method="POST" action="{{ url_for('portal.keys') }}" style="display: inline;">
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="key_id" value="{{ key.id }}">
+                                <button type="submit" class="btn btn-danger" onclick="return confirm('Bạn có chắc muốn xóa key này?')">Xóa</button>
+                            </form>
+                            {% else %}
+                            <span style="color: #999;">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <h3>Chưa có API Key nào</h3>
+                <p>Tạo API key đầu tiên của bạn ở trên để bắt đầu sử dụng API.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <script>
+        function copyKey() {
+            const keyBox = document.getElementById('new-key-box');
+            const text = keyBox.textContent.trim();
+            navigator.clipboard.writeText(text).then(() => {
+                alert('✅ Đã copy API key vào clipboard!');
+            }).catch(() => {
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('✅ Đã copy API key vào clipboard!');
+            });
+        }
+    </script>
+</body>
+</html>
