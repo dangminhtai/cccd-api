@@ -154,6 +154,20 @@ Tạo trang web để khách hàng có thể:
 3. Thanh toán (manual hoặc Stripe)
 4. ✅ Tier được update, rate limit thay đổi
 
+### 5. Migration USD → VND (nếu có dữ liệu cũ)
+1. Nếu có payment records cũ với currency = 'USD':
+   ```bash
+   # Option 1: Dùng Python script (khuyến nghị)
+   python scripts/migrate_usd_to_vnd.py
+   
+   # Option 2: Dùng SQL trực tiếp
+   mysql -u root -p cccd_api < scripts/migrate_usd_to_vnd.sql
+   ```
+2. Verify migration:
+   - Kiểm tra payments table không còn USD
+   - Kiểm tra subscriptions table (nếu có currency column)
+3. ✅ Tất cả payments hiển thị VND
+
 ---
 
 ## ✅ DoD (Definition of Done) - Bước 12
