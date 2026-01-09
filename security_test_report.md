@@ -9,8 +9,8 @@
 
 ## 📊 Tổng Quan
 
-- **Tổng số test:** 25
-- **PASS:** 25
+- **Tổng số test:** 39
+- **PASS:** 39
 - **FAIL:** 0
 - **SKIP:** 0
 - **Vấn đề bảo mật phát hiện:** 1 (LOW severity - Server header leak trong dev, accepted risk)
