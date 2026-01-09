@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import os
 
-from flask import Blueprint, g, jsonify, render_template, request
+from flask import Blueprint, flash, g, jsonify, redirect, render_template, request, url_for
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -264,4 +264,31 @@ def get_stats():
         },
         "requests_today": today_row["total"] or 0,
     })
+
+
+@admin_bp.get("/payments")
+@check_admin_auth
+def admin_payments():
+    """Admin: Xem danh sách pending payments"""
+    from services.billing_service import get_pending_payments
+    
+    pending_payments = get_pending_payments(limit=100)
+    
+    return render_template("admin_payments.html", payments=pending_payments)
+
+
+@admin_bp.post("/payments/<int:payment_id>/approve")
+@check_admin_auth
+def admin_approve_payment(payment_id: int):
+    """Admin: Approve payment và extend API keys"""
+    from services.billing_service import approve_payment_admin
+    
+    success, message = approve_payment_admin(payment_id)
+    
+    if success:
+        flash(f"✅ {message}", "success")
+    else:
+        flash(f"❌ {message}", "error")
+    
+    return redirect(url_for("admin.admin_payments"))
 
