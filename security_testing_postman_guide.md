@@ -100,8 +100,24 @@
      "cccd": "079203012345"
    }
    ```
-4. **Quan sát:** Xem thời gian response (ở tab "Time" trong Postman)
-5. **Ghi lại:** Thời gian response (ví dụ: 150ms)
+4. **Tab "Tests"** (dưới Body) - Thêm script này:
+   ```javascript
+   // Tự động ghi lại thời gian response
+   const responseTime = pm.response.responseTime;
+   console.log("✅ Valid Key Response Time: " + responseTime + "ms");
+   
+   // Lưu vào environment variable để so sánh
+   pm.environment.set("valid_key_time", responseTime);
+   
+   // Test tự động
+   pm.test("Response time < 1000ms", function () {
+       pm.expect(responseTime).to.be.below(1000);
+   });
+   ```
+5. **Xem kết quả:** 
+   - Tab "Test Results" (bên dưới) sẽ hiển thị thời gian
+   - Tab "Console" (View → Show Postman Console) sẽ log thời gian
+   - Thời gian cũng hiển thị ở tab "Time" (màu xanh lá)
 
 #### Request 2: Test với key sai
 1. **POST** `{{base_url}}/v1/cccd/parse`
@@ -109,13 +125,38 @@
    - `Content-Type`: `application/json`
    - `X-API-Key`: `wrong_key_12345`
 3. **Body:** Giống như trên
-4. **Quan sát:** Thời gian response
-5. **Ghi lại:** Thời gian response (ví dụ: 145ms)
+4. **Tab "Tests"** - Thêm script này:
+   ```javascript
+   // Tự động ghi lại và so sánh thời gian
+   const responseTime = pm.response.responseTime;
+   const validKeyTime = pm.environment.get("valid_key_time");
+   
+   console.log("❌ Invalid Key Response Time: " + responseTime + "ms");
+   
+   if (validKeyTime) {
+       const diff = Math.abs(responseTime - validKeyTime);
+       console.log("⏱️ Time Difference: " + diff + "ms");
+       
+       if (diff > 100) {
+           console.log("⚠️ WARNING: Large time difference! Possible timing attack vulnerability.");
+       } else {
+           console.log("✅ OK: Time difference is acceptable (< 100ms)");
+       }
+   }
+   
+   // Test tự động
+   pm.test("Response time < 1000ms", function () {
+       pm.expect(responseTime).to.be.below(1000);
+   });
+   ```
 
 **✅ Kết quả mong đợi:** Thời gian tương đương (chênh lệch < 50ms)
 - Nếu chênh lệch lớn (> 100ms) → Có thể bị timing attack
 
-**💡 Tip:** Chạy mỗi request 5-10 lần và tính trung bình để chính xác hơn.
+**💡 Tips:**
+1. **Xem Console:** View → Show Postman Console (Ctrl+Alt+C) để xem tất cả logs
+2. **Chạy nhiều lần:** Dùng Collection Runner với iterations = 10 để tính trung bình
+3. **Tự động so sánh:** Script trên sẽ tự động so sánh và cảnh báo nếu chênh lệch lớn
 
 ---
 
