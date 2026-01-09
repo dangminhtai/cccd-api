@@ -103,10 +103,12 @@ Tạo trang web để khách hàng có thể:
 - **Chart.js**: Thư viện JavaScript chạy trên browser, không phải backend
 
 ### Phase 4: Billing & Payment
-- [ ] Subscription management
-- [ ] Payment gateway integration (Stripe recommended)
-- [ ] Invoice generation
-- [ ] Upgrade/downgrade flow
+- [X] Backend: Billing service (`services/billing_service.py`)
+- [X] Backend: Routes `/portal/billing` và `/portal/upgrade`
+- [ ] Frontend: Billing history page (`billing.html`)
+- [ ] Frontend: Upgrade tier page (`upgrade.html`)
+- [ ] Manual payment flow (admin approve)
+- [ ] (Optional) Payment gateway integration (Stripe) - sau MVP
 
 ## Tech Stack
 
