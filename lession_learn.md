@@ -211,3 +211,26 @@
   - Commit + Push phải đi đôi với nhau (theo lesson #7)
   - Push ngay để có backup trên remote, tránh mất code nếu máy hỏng
   - Nếu có nhiều commits chưa push, dùng `git push` để push tất cả
+
+---
+
+## 19) Werkzeug development server tự động thêm Server header sau WSGI middleware
+
+- **Issue**: Thêm WSGI middleware để xóa Server header nhưng vẫn bị leak `Werkzeug/3.1.3 Python/3.12.4` trong development server.
+- **Nguyên nhân**: 
+  - Werkzeug development server (`app.run()`) tự động thêm Server header **sau khi** WSGI middleware chạy
+  - WSGI middleware wrap toàn bộ app không hoạt động với `app.run()` vì Werkzeug thêm header ở mức thấp hơn
+  - `@app.after_request` cũng không đủ vì Werkzeug thêm header sau đó
+- **Giải pháp đã thử nhưng KHÔNG thành công**:
+  - ❌ `@app.after_request` - Werkzeug thêm header sau
+  - ❌ WSGI middleware wrap toàn bộ app trong `run.py` - không hoạt động với `app.run()`
+  - ❌ WSGI middleware trong `wsgi.py` - chỉ hoạt động với gunicorn, không với dev server
+- **Giải pháp đúng**:
+  - ✅ Wrap `app.wsgi_app` trong `create_app()` thay vì wrap toàn bộ app
+  - ✅ Dùng `app.wsgi_app = RemoveServerHeaderMiddleware(app.wsgi_app)` trong `app/__init__.py`
+  - ✅ Cách này hoạt động với cả development server và production (gunicorn)
+- **Bài học**: 
+  - Khi cần xóa/modify headers, wrap `app.wsgi_app` trong `create_app()`, không wrap toàn bộ app
+  - Development server (Werkzeug) và production server (gunicorn) xử lý headers khác nhau
+  - Test cả development và production để đảm bảo fix hoạt động ở cả hai môi trường
+  - Nếu một giải pháp không hoạt động, ghi lại vào `lession_learn.md` để tránh lặp lại

@@ -9,23 +9,8 @@ from app import create_app
 load_dotenv()
 
 flask_app = create_app()
-
-# WSGI middleware to remove Server header (works for development server too)
-class RemoveServerHeaderMiddleware:
-    """WSGI middleware to remove Server header from all responses"""
-    def __init__(self, app):
-        self.app = app
-    
-    def __call__(self, environ, start_response):
-        def custom_start_response(status, headers, exc_info=None):
-            # Remove Server header from response headers
-            headers = [(name, value) for name, value in headers if name.lower() != 'server']
-            return start_response(status, headers, exc_info)
-        
-        return self.app(environ, custom_start_response)
-
-# Wrap app with middleware for WSGI servers (gunicorn, etc.)
-app = RemoveServerHeaderMiddleware(flask_app)
+# Note: Server header removal is handled in app/__init__.py via wsgi_app wrapper
+app = flask_app  # For compatibility with wsgi.py
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", "8000"))
