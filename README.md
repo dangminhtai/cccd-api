@@ -185,6 +185,11 @@ CCCD-API/
 ├── data/                   # Data files
 │   ├── provinces_legacy_63.json
 │   └── provinces_current_34.json
+├── docs/                   # Documentation
+│   ├── guides/             # Step-by-step guides
+│   ├── security/           # Security testing docs & results
+│   └── project/            # Project docs (requirement, rules, etc.)
+├── scripts/                # Utility scripts
 ├── tests/                  # Unit tests
 ├── run.py                  # Entry point
 ├── requirements.txt        # Dependencies

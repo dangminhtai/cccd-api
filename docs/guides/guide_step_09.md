@@ -6,7 +6,7 @@ Người khác đọc là triển khai/tích hợp được ngay, không cần h
 
 ## Việc cần làm
 
-- [x] Cập nhật `requirement.md` nếu thực tế implement có thay đổi
+- [x] Cập nhật `docs/project/requirement.md` nếu thực tế implement có thay đổi
 - [x] Viết `README.md` hướng dẫn chạy local
 - [x] Ghi rõ các quy ước (CCCD 12 số, gender Nam/Nữ, province_version)
 - [x] Ví dụ gọi API bằng PowerShell/curl/Python
@@ -21,9 +21,11 @@ Người khác đọc là triển khai/tích hợp được ngay, không cần h
 | File | Nội dung |
 |------|----------|
 | `README.md` | Quick start, API reference, ví dụ code |
-| `requirement.md` | Yêu cầu chi tiết, API contract |
+| `docs/project/requirement.md` | Yêu cầu chi tiết, API contract |
 | `env.example` | Template cấu hình |
-| `guide_step_00.md` → `guide_step_10.md` | Hướng dẫn từng bước |
+| `docs/guides/guide_step_00.md` → `guide_step_11.md` | Hướng dẫn từng bước |
+| `docs/security/` | Security testing guides và reports |
+| `docs/project/` | Project docs (rules, checklist, issues, lessons) |
 
 ## Tự test (Self-check)
 
@@ -63,7 +65,7 @@ Invoke-RestMethod -Uri "http://127.0.0.1:8000/v1/cccd/parse" -Method POST -Conte
 
 | Câu hỏi | Trả lời được từ doc? |
 |---------|---------------------|
-| CCCD cần bao nhiêu số? | ✅ 12 số (README + requirement.md) |
+| CCCD cần bao nhiêu số? | ✅ 12 số (README + docs/project/requirement.md) |
 | Gender format là gì? | ✅ Nam/Nữ |
 | Province version hỗ trợ gì? | ✅ legacy_63, current_34 |
 | Cách bật API key? | ✅ Sửa .env, set API_KEY=... |
@@ -87,7 +89,7 @@ Gửi link repo cho 1 người chưa biết project:
 | README.md có Quick Start | ✅ |
 | README.md có API Reference | ✅ |
 | README.md có ví dụ PowerShell/curl/Python | ✅ |
-| requirement.md đã cập nhật | ✅ |
+| docs/project/requirement.md đã cập nhật | ✅ |
 | Quy ước ghi rõ ràng | ✅ |
 
 
