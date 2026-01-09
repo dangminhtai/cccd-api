@@ -8,7 +8,7 @@ from app import create_app
 
 load_dotenv()
 
-app = create_app()
+flask_app = create_app()
 
 # WSGI middleware to remove Server header (works for development server too)
 class RemoveServerHeaderMiddleware:
@@ -24,8 +24,8 @@ class RemoveServerHeaderMiddleware:
         
         return self.app(environ, custom_start_response)
 
-# Wrap app with middleware
-app = RemoveServerHeaderMiddleware(app)
+# Wrap app with middleware for WSGI servers (gunicorn, etc.)
+app = RemoveServerHeaderMiddleware(flask_app)
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", "8000"))
@@ -45,6 +45,7 @@ if __name__ == "__main__":
     if (is_debug_env and is_reloader_child) or (not is_debug_env and not is_reloader_child):
         threading.Timer(0.8, open_demo).start()
 
-    app.run(host="0.0.0.0", port=port, debug=True)
+    # Use flask_app (not wrapped middleware) for .run() method
+    flask_app.run(host="0.0.0.0", port=port, debug=True)
 
 

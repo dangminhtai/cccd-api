@@ -233,4 +233,21 @@
   - Test lệnh trước khi chạy trong script
   - Khi test CSV export, dùng script block hoặc function thay vì one-liner
 
+---
+
+## 22) WSGI middleware không có method `run()` khi wrap Flask app
+
+- **Hiện tượng**: Sau khi wrap Flask app với WSGI middleware, gọi `app.run()` báo lỗi: `AttributeError: 'RemoveServerHeaderMiddleware' object has no attribute 'run'`
+- **Nguyên nhân**: 
+  - WSGI middleware chỉ implement `__call__()`, không có method `run()` của Flask
+  - Trong `run.py`, wrap app với middleware rồi gọi `app.run()` → middleware không có method này
+- **Cách xử lý**: 
+  - Tách Flask app gốc (`flask_app`) và WSGI app (`app`)
+  - Gọi `flask_app.run()` thay vì `app.run()`
+  - WSGI app (`app`) chỉ dùng cho production servers (gunicorn, etc.)
+- **Cách tránh lần sau**: Khi wrap Flask app với WSGI middleware:
+  - Luôn giữ reference đến Flask app gốc để gọi `.run()`
+  - WSGI middleware chỉ dùng cho production, không cần cho development server
+  - Hoặc chỉ wrap khi dùng với WSGI server (gunicorn), không wrap trong `run.py`
+
 
