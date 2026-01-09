@@ -35,7 +35,7 @@ Tạo hệ thống bán API theo 3 gói: Free, Premium, Ultra với rate limit k
 
 - [X] Đã set `API_KEY_MODE=tiered`
 - [X] Đã điền thông tin MySQL
-- [ ] Đã đặt `ADMIN_SECRET`
+- [X] Đã đặt `ADMIN_SECRET`
 
 **Cách làm:**
 
