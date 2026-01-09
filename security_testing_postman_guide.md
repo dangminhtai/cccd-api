@@ -355,14 +355,20 @@ try {
 | Header | Kỳ vọng | Mô tả |
 |--------|---------|-------|
 | `X-Content-Type-Options` | `nosniff` | Ngăn MIME type sniffing |
-| `X-Frame-Options` | `DENY` hoặc `SAMEORIGIN` | Ngăn clickjacking |
+| `X-Frame-Options` | `DENY` | Ngăn clickjacking |
 | `X-XSS-Protection` | `1; mode=block` | Bảo vệ XSS (legacy) |
-| `Strict-Transport-Security` | `max-age=31536000` | Chỉ dùng HTTPS (nếu có HTTPS) |
 | `Content-Security-Policy` | Có giá trị | Ngăn XSS, injection |
-| `Server` | Không có | Đã fix (hoặc chỉ có trong dev) |
+| `Strict-Transport-Security` | Không có (dev) | Chỉ có khi dùng HTTPS (production) |
+| `Server` | Không có | Đã fix (hoặc chỉ có trong dev - accepted) |
+
+**⚠️ Lưu ý:**
+- `Strict-Transport-Security` **KHÔNG có** trong local development (HTTP)
+- Header này chỉ được thêm khi deploy với HTTPS (production)
+- Đây là behavior đúng - không nên thêm HSTS cho HTTP
 
 **✅ Kết quả mong đợi:**
-- Có các security headers (tốt)
+- Có các security headers: `X-Content-Type-Options`, `X-Frame-Options`, `X-XSS-Protection`, `Content-Security-Policy`
+- Không có `Strict-Transport-Security` (đúng cho HTTP/local dev)
 - Không có `Server` header (hoặc chỉ có trong dev - accepted)
 
 ---

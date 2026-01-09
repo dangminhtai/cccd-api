@@ -41,11 +41,27 @@ def create_app() -> Flask:
     # - Development: Accept Server header leak (low risk for local/dev)
     # - Production: Use Gunicorn + Nginx (Server header automatically removed by Nginx)
     @app.after_request
-    def remove_server_header(response):
-        """Remove Server header to prevent leaking framework/version information"""
+    def add_security_headers(response):
+        """Add security headers and remove Server header"""
+        # Remove Server header to prevent leaking framework/version information
         # This works for production (Gunicorn), but not for Werkzeug dev server
         # Werkzeug dev server adds Server header after this handler runs
         response.headers.pop("Server", None)
+        
+        # Add security headers
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        
+        # Content-Security-Policy: restrict resources to same origin
+        # Note: Adjust this based on your needs (e.g., if you need to load external scripts)
+        response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self';"
+        
+        # Strict-Transport-Security: only add if using HTTPS
+        # For local development (HTTP), we skip this header
+        # In production with HTTPS, uncomment the line below:
+        # response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        
         return response
 
     # Custom 429 handler to return JSON instead of HTML
