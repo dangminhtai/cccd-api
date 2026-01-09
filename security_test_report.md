@@ -49,6 +49,7 @@
 |-----------|---------|---------|
 | SQL Injection in CCCD | ✅ PASS | Correctly rejected với 400 (not digits) |
 | XSS in CCCD | ✅ PASS | Correctly rejected với 400 |
+| Command Injection in CCCD | ✅ PASS | Correctly rejected với 400 (not digits) |
 | DoS - Very Long CCCD (10000 chars) | ✅ PASS | Correctly rejected early với 400 |
 | Type Confusion (Number) | ✅ PASS | Correctly rejected với 400 |
 | Path Traversal in Province Version | ✅ PASS | Correctly rejected với 400 |
@@ -57,6 +58,7 @@
 
 - ✅ SQL injection payload bị reject (không phải số)
 - ✅ XSS payload bị reject
+- ✅ Command injection payload (`; ls`, `| cat`) bị reject (không phải số)
 - ✅ CCCD > 20 ký tự bị reject sớm (DoS protection)
 - ✅ Type confusion (number thay vì string) bị reject
 - ✅ Path traversal trong `province_version` bị reject
@@ -208,15 +210,16 @@
   - ⚠️ Một số test trả 401/500 thay vì 400 (do API key requirement), nhưng error messages vẫn an toàn
 
 #### 3. Authentication Bypass
-- ⚠️ **Test 3.3: Header Injection & Parameter Pollution** - Chưa test
-  - Test nhiều `X-API-Key` headers (cần dùng curl hoặc Burp)
-  - Test `Authorization` header fallback
-  - Kỳ vọng: Chỉ `X-API-Key` được chấp nhận
+- ✅ **Test 3.3: Header Injection & Parameter Pollution** - ✅ PASS
+  - Test nhiều `X-API-Key` headers: ✅ Chỉ header đầu tiên được chấp nhận
+  - Test `Authorization` header fallback: ✅ Không được chấp nhận (chỉ `X-API-Key`)
+  - Kết quả: Chỉ `X-API-Key` được chấp nhận, không có cách bypass
 
 #### 4. Input Validation & Injection
-- ⚠️ **Test 4.3: Command Injection** - Chưa test
+- ✅ **Test 4.3: Command Injection** - ✅ PASS
   - Test payload: `079203012345; ls`, `079203012345 | cat /etc/passwd`
-  - Kỳ vọng: Tất cả trả 400 (invalid format)
+  - Kết quả: Tất cả trả 400 (invalid format - không phải số)
+  - Không có command injection vulnerability
 
 #### 5. Rate Limiting Bypass
 - ⚠️ **Test 5.2: Rate Limit Bypass Techniques** - Chưa test
