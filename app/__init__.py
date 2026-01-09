@@ -34,6 +34,13 @@ def create_app() -> Flask:
     def assign_request_id():
         g.request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())[:8]
 
+    # Remove Server header to prevent information disclosure
+    @app.after_request
+    def remove_server_header(response):
+        """Remove Server header to prevent leaking framework/version information"""
+        response.headers.pop("Server", None)
+        return response
+
     # Custom 429 handler to return JSON instead of HTML
     @app.errorhandler(429)
     def ratelimit_handler(e):
