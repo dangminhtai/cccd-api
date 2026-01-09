@@ -184,16 +184,98 @@
 
 ## 📌 Next Steps
 
-1. **Fix ngay:**
-   - Không có vấn đề cần fix ngay
+### 1. Fix ngay:
+- Không có vấn đề cần fix ngay
 
-2. **Cải thiện:**
-   - Xóa Server header trong production (LOW priority)
-   - Test lại error messages khi không bị rate limit (optional)
+### 2. Cải thiện (LOW priority):
+- Xóa Server header trong production
+- Test lại error messages khi không bị rate limit
 
-3. **Monitoring:**
-   - Tiếp tục monitor rate limiting behavior
-   - Review logs để đảm bảo không có thông tin nhạy cảm bị leak
+### 3. Test Cases Chưa Được Test (từ `security_testing_guide.md`):
+
+#### 2. Reconnaissance - Thu Thập Thông Tin
+- ⚠️ **Test 2.2: HTTP Methods Enumeration** - Chưa test
+  - Test các HTTP methods (GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD) trên `/v1/cccd/parse`
+  - Kỳ vọng: Chỉ POST được phép, các method khác trả 405
+- ⚠️ **Test 2.3: Error Messages Analysis** - Đã test nhưng bị rate limit
+  - Cần test lại với API key để xác nhận error messages không leak thông tin
+
+#### 3. Authentication Bypass
+- ⚠️ **Test 3.3: Header Injection & Parameter Pollution** - Chưa test
+  - Test nhiều `X-API-Key` headers (cần dùng curl hoặc Burp)
+  - Test `Authorization` header fallback
+  - Kỳ vọng: Chỉ `X-API-Key` được chấp nhận
+
+#### 4. Input Validation & Injection
+- ⚠️ **Test 4.3: Command Injection** - Chưa test
+  - Test payload: `079203012345; ls`, `079203012345 | cat /etc/passwd`
+  - Kỳ vọng: Tất cả trả 400 (invalid format)
+
+#### 5. Rate Limiting Bypass
+- ⚠️ **Test 5.2: Rate Limit Bypass Techniques** - Chưa test
+  - Test đổi API key để bypass (mỗi key có limit riêng - đúng)
+  - Test `X-Forwarded-For` header manipulation
+  - Test case sensitivity trong API key
+- ⚠️ **Test 5.3: Distributed Rate Limiting** - Chưa test
+  - Test concurrent requests để xác nhận rate limit chính xác
+
+#### 7. Admin Endpoint Security
+- ⚠️ **Test 7.3: SQL Injection trong Admin Endpoints** - Chưa test
+  - Test SQL injection trong `key_prefix` parameter
+  - Test SQL injection trong `create_key` endpoint (email, tier)
+- ⚠️ **Test 7.4: IDOR (Insecure Direct Object Reference)** - Chưa test
+  - Test truy cập key của người khác (admin có thể - đúng)
+  - Test user thường có thể truy cập key của người khác không
+
+#### 8. API Key Enumeration & Brute Force
+- ⚠️ **Test 8.1: API Key Format Discovery** - Chưa test
+  - Test các format key có thể có
+  - Kỳ vọng: Tất cả trả 401 (invalid)
+- ⚠️ **Test 8.2: Timing Attack** - Chưa test
+  - Đo thời gian response giữa key đúng/sai
+  - Kỳ vọng: Thời gian tương đương (không leak thông tin)
+- ⚠️ **Test 8.3: Brute Force Protection** - Chưa test
+  - Test rate limit cho authentication failures
+  - Kỳ vọng: Có rate limit cho failed auth (trả 429 sau vài lần)
+
+#### 9. Denial of Service (DoS)
+- ⚠️ **Test 9.1: Resource Exhaustion** - Chưa test đầy đủ
+  - Test với payload lớn và nhiều requests đồng thời
+  - Kỳ vọng: Server vẫn hoạt động, rate limit ngăn chặn
+- ⚠️ **Test 9.2: Slowloris Attack** - Chưa test
+  - Test gửi request nhưng không gửi hết body (giữ connection mở)
+  - Kỳ vọng: Server có timeout cho connection
+
+#### 10. CORS & Headers Security
+- ⚠️ **Test 10.1: CORS Configuration** - Chưa test
+  - Test CORS với origin khác (`https://evil.com`)
+  - Kỳ vọng: Không có CORS headers hoặc chỉ cho phép domain cụ thể
+- ⚠️ **Test 10.2: Security Headers** - Chưa test đầy đủ
+  - Test các security headers: `X-Content-Type-Options`, `X-Frame-Options`, `X-XSS-Protection`, `Strict-Transport-Security`, `Content-Security-Policy`
+  - Hiện tại chỉ test Server header
+
+#### 11. SQL Injection (Tiered Mode)
+- ⚠️ **Test 11.1: SQL Injection trong API Key Validation** - Chưa test
+  - Test SQL injection trong API key khi validate
+  - Kỳ vọng: Tất cả trả 401, không có SQL error
+- ⚠️ **Test 11.2: SQL Injection trong Admin Endpoints** - Chưa test (trùng với 7.3)
+  - Test SQL injection trong `create_key` endpoint
+
+#### 12. Logging & Data Leakage
+- ⚠️ **Test 12.1: Kiểm Tra Logging CCCD** - Chưa test
+  - Kiểm tra log files (nếu có quyền)
+  - Kỳ vọng: Log chỉ chứa CCCD dạng mask: `079******345`
+- ⚠️ **Test 12.2: API Key trong Logs** - Chưa test
+  - Kiểm tra logs (nếu có quyền)
+  - Kỳ vọng: API key không được log đầy đủ (chỉ log prefix hoặc hash)
+- ⚠️ **Test 12.3: Error Logs Leakage** - Chưa test
+  - Test error response có leak thông tin không
+  - Kỳ vọng: Error response generic, không có stacktrace
+
+### 4. Monitoring:
+- Tiếp tục monitor rate limiting behavior
+- Review logs để đảm bảo không có thông tin nhạy cảm bị leak
+- Định kỳ chạy lại security tests sau mỗi lần thay đổi code
 
 ---
 
