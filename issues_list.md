@@ -255,6 +255,27 @@
 
 ---
 
+## 23) PowerShell `curl` alias không hỗ trợ backslash `\` để tiếp tục dòng
+
+- **Hiện tượng**: Chạy lệnh `curl` với backslash `\` để tiếp tục dòng báo lỗi: `Missing expression after unary operator '--'` hoặc `Unexpected token 'max-time'`
+- **Nguyên nhân**: 
+  - Trong PowerShell, `curl` là alias của `Invoke-WebRequest`, không phải curl thật
+  - PowerShell không dùng backslash `\` để tiếp tục dòng như bash
+  - PowerShell dùng backtick `` ` `` để tiếp tục dòng, hoặc viết trên một dòng
+- **Cách xử lý**: 
+  - **Option 1:** Dùng `curl.exe` thay vì `curl` (curl thật từ Windows 10+)
+  - **Option 2:** Viết command trên một dòng (không dùng backslash)
+  - **Option 3:** Dùng backtick `` ` `` để tiếp tục dòng trong PowerShell
+  - **Option 4:** Dùng `Invoke-WebRequest` hoặc `Invoke-RestMethod` thay vì curl
+- **Cách tránh lần sau**: Khi viết hướng dẫn cho Windows/PowerShell:
+  - **Luôn nhớ** `curl` trong PowerShell là alias, không phải curl thật
+  - Dùng `curl.exe` nếu muốn dùng curl thật
+  - Hoặc viết command trên một dòng
+  - Hoặc dùng PowerShell cmdlets (`Invoke-WebRequest`, `Invoke-RestMethod`)
+  - Không dùng backslash `\` để tiếp tục dòng trong PowerShell
+
+---
+
 ## 22) WSGI middleware không có method `run()` khi wrap Flask app
 
 - **Hiện tượng**: Sau khi wrap Flask app với WSGI middleware, gọi `app.run()` báo lỗi: `AttributeError: 'RemoveServerHeaderMiddleware' object has no attribute 'run'`

@@ -236,14 +236,38 @@
 **⚠️ Lưu ý:** Test này khó thực hiện bằng Postman vì Postman tự động gửi hết body. Có thể bỏ qua hoặc dùng tool khác (curl, Burp Suite).
 
 **Cách test thủ công:**
-1. Dùng `curl` với timeout:
-   ```bash
-   curl -X POST http://127.0.0.1:8000/v1/cccd/parse \
-     -H "Content-Type: application/json" \
-     -H "X-API-Key: free_a1c6062d52bdbff5762e07ec391dfb81" \
-     -d '{"cccd":"079203012345"}' \
-     --max-time 5
-   ```
+
+**⚠️ Lưu ý:** Trong PowerShell, `curl` là alias của `Invoke-WebRequest`, không phải curl thật. Cần dùng `curl.exe` hoặc viết command trên một dòng.
+
+**Option 1: Dùng curl.exe (khuyến nghị)**
+```powershell
+curl.exe -X POST http://127.0.0.1:8000/v1/cccd/parse -H "Content-Type: application/json" -H "X-API-Key: free_a1c6062d52bdbff5762e07ec391dfb81" -d "{\"cccd\":\"079203012345\"}" --max-time 5
+```
+
+**Option 2: Dùng PowerShell Invoke-WebRequest với timeout**
+```powershell
+$body = '{"cccd":"079203012345"}' | ConvertTo-Json
+$headers = @{
+    "Content-Type" = "application/json"
+    "X-API-Key" = "free_a1c6062d52bdbff5762e07ec391dfb81"
+}
+try {
+    $response = Invoke-WebRequest -Uri "http://127.0.0.1:8000/v1/cccd/parse" -Method POST -Headers $headers -Body $body -TimeoutSec 5 -ErrorAction Stop
+    Write-Host "Status: $($response.StatusCode)" -ForegroundColor Green
+} catch {
+    if ($_.Exception.Response) {
+        $status = [int]$_.Exception.Response.StatusCode
+        Write-Host "Status: $status" -ForegroundColor Yellow
+    } else {
+        Write-Host "Timeout or connection error (expected for slowloris test)" -ForegroundColor Yellow
+    }
+}
+```
+
+**Option 3: Bỏ qua test này (khuyến nghị)**
+- Test Slowloris khó thực hiện bằng Postman hoặc curl đơn giản
+- Cần tool chuyên dụng như Burp Suite hoặc script Python
+- Có thể bỏ qua nếu không có tool chuyên dụng
 
 **✅ Kết quả mong đợi:** Server có timeout cho connection (không bị hang)
 
