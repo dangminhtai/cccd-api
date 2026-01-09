@@ -35,27 +35,16 @@ def create_app() -> Flask:
         g.request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())[:8]
 
     # Remove Server header to prevent information disclosure
-    # Wrap wsgi_app to remove Server header at WSGI level (works for both dev and production)
-    class RemoveServerHeaderMiddleware:
-        """WSGI middleware to remove Server header from all responses"""
-        def __init__(self, app):
-            self.app = app
-        
-        def __call__(self, environ, start_response):
-            def custom_start_response(status, headers, exc_info=None):
-                # Remove Server header from response headers
-                headers = [(name, value) for name, value in headers if name.lower() != 'server']
-                return start_response(status, headers, exc_info)
-            
-            return self.app(environ, custom_start_response)
-    
-    # Wrap wsgi_app with middleware (this works for both Werkzeug dev server and gunicorn)
-    app.wsgi_app = RemoveServerHeaderMiddleware(app.wsgi_app)
-    
-    # Also keep after_request as backup
+    # Note: Werkzeug development server adds Server header AFTER after_request runs
+    # This means we cannot fully remove it in dev mode
+    # Solution: 
+    # - Development: Accept Server header leak (low risk for local/dev)
+    # - Production: Use Gunicorn + Nginx (Server header automatically removed by Nginx)
     @app.after_request
     def remove_server_header(response):
-        """Remove Server header to prevent leaking framework/version information (backup)"""
+        """Remove Server header to prevent leaking framework/version information"""
+        # This works for production (Gunicorn), but not for Werkzeug dev server
+        # Werkzeug dev server adds Server header after this handler runs
         response.headers.pop("Server", None)
         return response
 

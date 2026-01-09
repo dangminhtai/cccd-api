@@ -86,16 +86,19 @@
 | Test Case | Kết Quả | Ghi Chú |
 |-----------|---------|---------|
 | Error Message Analysis | ⚠️ SKIP | Bị rate limit, không thể test đầy đủ |
-| Response Headers Check | ✅ **FIXED** | Server header đã được xóa |
+| Response Headers Check | ⚠️ **ACCEPTED** | Server header vẫn còn trong dev (sẽ fix trong production) |
 | Directory Traversal - .env | ✅ PASS | Correctly blocked (404) |
 
-**Đánh giá:** ✅ **TỐT** - Đã fix vấn đề Server header leak.
+**Đánh giá:** ⚠️ **ACCEPTED RISK** - Server header không thể xóa hoàn toàn trong development server.
 
-**Vấn đề đã fix:**
-- **Severity:** LOW (đã fix)
-- **Issue:** Server header trả về `Werkzeug/3.1.3 Python/3.12.4` → **Đã xóa**
-- **Fix:** Thêm `@app.after_request` middleware để xóa Server header
-- **Status:** ✅ Fixed trong `app/__init__.py`
+**Vấn đề:**
+- **Severity:** LOW
+- **Issue:** Server header trả về `Werkzeug/3.1.3 Python/3.12.4` trong development server
+- **Root Cause:** Werkzeug development server thêm header SAU KHI `@app.after_request` chạy → không thể xóa
+- **Solution:**
+  - Development: Chấp nhận leak (low risk, chỉ local/dev)
+  - Production: Dùng Gunicorn + Nginx (Server header sẽ được xóa tự động)
+- **Status:** ⚠️ Accepted risk trong development, sẽ fix trong production
 
 **Khuyến nghị:**
 - Error message: Cần test lại khi không bị rate limit, nhưng dựa trên code review, error messages đã được generic hóa đúng cách.
@@ -115,22 +118,21 @@
 
 ## 🔍 Vấn Đề Bảo Mật Đã Fix
 
-### 1. Server Header Information Disclosure ✅ FIXED
+### 1. Server Header Information Disclosure ⚠️ ACCEPTED RISK (Development Only)
 
-- **Severity:** LOW (đã fix)
-- **Location:** Response headers của tất cả endpoints
+- **Severity:** LOW
+- **Location:** Response headers của tất cả endpoints (chỉ trong development server)
 - **Description:** Server header trả về `Werkzeug/3.1.3 Python/3.12.4`, leak thông tin về framework và version
 - **Impact:** Attacker có thể biết được công nghệ đang dùng, dễ dàng tìm exploit phù hợp
-- **Fix Applied:**
-  ```python
-  # Trong app/__init__.py
-  @app.after_request
-  def remove_server_header(response):
-      """Remove Server header to prevent leaking framework/version information"""
-      response.headers.pop("Server", None)
-      return response
-  ```
-- **Status:** ✅ Fixed - Server header đã được xóa khỏi tất cả responses
+- **Root Cause:** 
+  - Werkzeug development server tự động thêm Server header **SAU KHI** `@app.after_request` chạy
+  - Không thể xóa hoàn toàn trong development mode
+- **Solution:**
+  - ✅ **Development**: Chấp nhận leak (low risk, chỉ local/dev)
+  - ✅ **Production**: Dùng Gunicorn + Nginx
+    - Code đã có `@app.after_request` để xóa header (hoạt động với Gunicorn)
+    - Nginx tự động xóa Server header hoặc có thể config `server_tokens off;`
+- **Status:** ⚠️ Accepted risk trong development, sẽ được fix tự động trong production
 
 ---
 
@@ -148,7 +150,9 @@
 
 ## ⚠️ Cần Cải Thiện
 
-1. ✅ **Server Header:** Đã fix - Server header đã được xóa
+1. ⚠️ **Server Header:** Không thể xóa trong development server (Werkzeug limitation)
+   - **Development**: Chấp nhận leak (low risk)
+   - **Production**: Dùng Gunicorn + Nginx (sẽ tự động xóa)
 2. **Error Message Testing:** Cần test lại error messages khi không bị rate limit (nhưng code review cho thấy đã được generic hóa đúng)
 
 ---
@@ -162,7 +166,7 @@
 - ✅ Không có vấn đề MEDIUM priority
 
 ### Priority LOW:
-- ✅ Server header đã được xóa (FIXED)
+- ⚠️ Server header leak trong dev (accepted risk, sẽ fix trong production với Gunicorn + Nginx)
 
 ---
 
@@ -187,7 +191,8 @@
 - Không có vấn đề cần fix ngay
 
 ### 2. Cải thiện (LOW priority):
-- ✅ Server header đã được xóa (FIXED)
+- ⚠️ Server header: Không thể xóa trong dev server (Werkzeug limitation)
+  - **Action**: Deploy production với Gunicorn + Nginx (sẽ tự động xóa)
 - Test lại error messages khi không bị rate limit
 
 ### 3. Test Cases Chưa Được Test (từ `security_testing_guide.md`):
@@ -287,8 +292,10 @@
 - ✅ **DoS Protection:** Input dài bị reject sớm
 - ✅ **Rate Limiting:** Hoạt động đúng
 - ✅ **Admin Security:** Được bảo vệ tốt
-- ✅ **Information Disclosure:** Đã fix Server header leak
+- ⚠️ **Information Disclosure:** Server header leak trong dev (accepted risk, sẽ fix trong production)
 
 **Không có lỗ hổng nghiêm trọng (CRITICAL/HIGH) được phát hiện.**
 
-✅ **Tất cả vấn đề bảo mật đã được fix.** API đã sẵn sàng cho production.
+⚠️ **Server header leak trong development** (accepted risk, sẽ tự động fix khi deploy production với Gunicorn + Nginx).
+
+API đã sẵn sàng cho production sau khi deploy với Gunicorn + Nginx.

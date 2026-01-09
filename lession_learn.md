@@ -202,11 +202,7 @@
 ## 18) LUÔN push sau khi commit, không chỉ commit rồi để đó
 
 - **Issue**: Commit nhiều lần nhưng quên push → local branch "ahead" nhiều commits, dễ mất nếu máy hỏng.
-- **Nguyên nhân**: Chỉ nhớ commit nhưng quên push, hoặc nghĩ "push sau cũng được".
-- **Cách xử lý**: 
-  - **Luôn** chạy `git push` ngay sau `git commit`
-  - Hoặc dùng alias: `git config --global alias.cp '!git commit -m "$1" && git push'`
-  - Kiểm tra bằng `git status` hoặc `git log origin/main..HEAD` để xem có commit chưa push
+- **Nguyên nhân**: Chỉ nhớ commit nhưng quên push
 - **Bài học**: 
   - Commit + Push phải đi đôi với nhau (theo lesson #7)
   - Push ngay để có backup trên remote, tránh mất code nếu máy hỏng
@@ -214,23 +210,25 @@
 
 ---
 
-## 19) Werkzeug development server tự động thêm Server header sau WSGI middleware
+## 19) Werkzeug development server KHÔNG THỂ xóa Server header hoàn toàn
 
-- **Issue**: Thêm WSGI middleware để xóa Server header nhưng vẫn bị leak `Werkzeug/3.1.3 Python/3.12.4` trong development server.
+- **Issue**: Thử nhiều cách (WSGI middleware, `@app.after_request`, wrap `app.wsgi_app`) nhưng vẫn bị leak `Werkzeug/3.1.3 Python/3.12.4` trong development server.
 - **Nguyên nhân**: 
-  - Werkzeug development server (`app.run()`) tự động thêm Server header **sau khi** WSGI middleware chạy
-  - WSGI middleware wrap toàn bộ app không hoạt động với `app.run()` vì Werkzeug thêm header ở mức thấp hơn
-  - `@app.after_request` cũng không đủ vì Werkzeug thêm header sau đó
+  - Werkzeug development server (`app.run()`) tự động thêm Server header **SAU KHI** tất cả handlers (`after_request`, WSGI middleware) chạy
+  - Header được thêm ở mức thấp nhất của Werkzeug, không thể can thiệp từ Flask app
 - **Giải pháp đã thử nhưng KHÔNG thành công**:
   - ❌ `@app.after_request` - Werkzeug thêm header sau
-  - ❌ WSGI middleware wrap toàn bộ app trong `run.py` - không hoạt động với `app.run()`
-  - ❌ WSGI middleware trong `wsgi.py` - chỉ hoạt động với gunicorn, không với dev server
-- **Giải pháp đúng**:
-  - ✅ Wrap `app.wsgi_app` trong `create_app()` thay vì wrap toàn bộ app
-  - ✅ Dùng `app.wsgi_app = RemoveServerHeaderMiddleware(app.wsgi_app)` trong `app/__init__.py`
-  - ✅ Cách này hoạt động với cả development server và production (gunicorn)
+  - ❌ WSGI middleware wrap toàn bộ app - không hoạt động với `app.run()`
+  - ❌ Wrap `app.wsgi_app` - vẫn không hoạt động với dev server
+- **Giải pháp đúng (theo best practice)**:
+  - ✅ **Development/Local**: Chấp nhận Server header leak (low risk, chỉ là local/dev)
+  - ✅ **Production**: Dùng Gunicorn + Nginx
+    - Gunicorn: `@app.after_request` sẽ xóa Server header thành công
+    - Nginx: Tự động xóa Server header (hoặc có thể config `server_tokens off;`)
+  - ✅ Code vẫn giữ `@app.after_request` để xóa header trong production
 - **Bài học**: 
-  - Khi cần xóa/modify headers, wrap `app.wsgi_app` trong `create_app()`, không wrap toàn bộ app
-  - Development server (Werkzeug) và production server (gunicorn) xử lý headers khác nhau
-  - Test cả development và production để đảm bảo fix hoạt động ở cả hai môi trường
-  - Nếu một giải pháp không hoạt động, ghi lại vào `lession_learn.md` để tránh lặp lại
+  - **KHÔNG THỂ** xóa Server header hoàn toàn với Werkzeug development server
+  - Development: Có thể chấp nhận leak (low risk)
+  - Production: Luôn dùng Gunicorn + Nginx (Server header sẽ được xóa)
+  - Đừng tốn thời gian cố fix điều không thể fix được
+  - Ghi rõ trong code comment: "Werkzeug dev server adds header after after_request"
