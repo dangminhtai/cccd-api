@@ -225,3 +225,56 @@ def keys():
         new_api_key=new_api_key,
         current_tier=current_tier,
     )
+
+
+@portal_bp.route("/usage")
+@require_login
+def usage():
+    """Usage statistics dashboard"""
+    user_id = session.get("user_id")
+    user = get_user_by_id(user_id)
+    
+    if not user:
+        session.clear()
+        flash("Phiên đăng nhập đã hết hạn", "warning")
+        return redirect(url_for("portal.login"))
+    
+    # Get days parameter (default 30)
+    days = request.args.get("days", "30", type=int)
+    if days not in (7, 30, 90, 365):
+        days = 30
+    
+    # Get usage stats
+    from services.usage_service import get_user_usage_stats
+    stats = get_user_usage_stats(user_id, days=days)
+    
+    return render_template(
+        "portal/usage.html",
+        user=user,
+        stats=stats,
+        days=days,
+    )
+
+
+@portal_bp.route("/usage/api")
+@require_login
+def usage_api():
+    """API endpoint để lấy usage stats (JSON) - dùng cho AJAX/Chart.js"""
+    user_id = session.get("user_id")
+    
+    if not user_id:
+        from flask import jsonify
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    # Get days parameter (default 30)
+    days = request.args.get("days", "30", type=int)
+    if days not in (7, 30, 90, 365):
+        days = 30
+    
+    # Get usage stats
+    from services.usage_service import get_user_usage_stats
+    stats = get_user_usage_stats(user_id, days=days)
+    
+    from flask import jsonify
+    return jsonify(stats)
+

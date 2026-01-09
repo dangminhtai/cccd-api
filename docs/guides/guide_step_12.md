@@ -79,20 +79,28 @@ Tạo trang web để khách hàng có thể:
 ## Implementation Plan
 
 ### Phase 1: Database & Auth (Core)
-- [ ] Tạo database schema (`users`, `subscriptions`, `payments`)
-- [ ] Implement user registration/login
-- [ ] Session management
-- [ ] Password hashing
-
+- [X] Tạo database schema (`users`, `subscriptions`, `payments`)
+- [X] Implement user registration/login
+- [X] Session management
+- [X] Password hashing
+- [X]  Ghi nhớ đăng nhập hoạt động đúng
 ### Phase 2: API Key Management
-- [ ] Portal UI để tạo API keys
-- [ ] Link với existing `api_keys` table
-- [ ] List/delete keys từ portal
+- [X] Portal UI để tạo API keys
+- [X] Link với existing `api_keys` table
+- [X] List/delete keys từ portal
 
 ### Phase 3: Dashboard & Stats
-- [ ] Dashboard UI với usage stats
-- [ ] Query từ `request_logs` table
-- [ ] Charts/graphs (có thể dùng Chart.js)
+- [ ] Backend: Query từ `request_logs` table (Python/SQL)
+- [ ] Backend: Aggregate data (requests per day, status codes, response times)
+- [ ] Backend: Trả về JSON API endpoint `/portal/usage`
+- [ ] Frontend: Dashboard UI hiển thị stats
+- [ ] Frontend: Charts/graphs với Chart.js (JavaScript chạy trên browser)
+
+**Lưu ý về kiến trúc:**
+- **Backend (Python)**: Query database → aggregate data → trả JSON
+- **Frontend (HTML/JS)**: Nhận JSON → render chart với Chart.js
+- **Không cần pandas**: Data đơn giản, SQL query đủ (SUM, COUNT, GROUP BY)
+- **Chart.js**: Thư viện JavaScript chạy trên browser, không phải backend
 
 ### Phase 4: Billing & Payment
 - [ ] Subscription management
