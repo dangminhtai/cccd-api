@@ -174,22 +174,25 @@ def get_tier_pricing() -> dict:
         "free": {
             "name": "Free",
             "price": 0,
+            "currency": "VND",
             "rate_limit_per_min": 10,
             "rate_limit_per_day": 1000,
-            "features": ["10 requests/min", "1000 requests/day", "Basic support"],
+            "features": ["10 requests/phút", "1000 requests/ngày", "Hỗ trợ cơ bản"],
         },
         "premium": {
             "name": "Premium",
-            "price": 29.99,  # USD/month
+            "price": 500000,  # VND/tháng (~$20 USD)
+            "currency": "VND",
             "rate_limit_per_min": 100,
             "rate_limit_per_day": None,  # Unlimited
-            "features": ["100 requests/min", "Unlimited/day", "Priority support"],
+            "features": ["100 requests/phút", "Không giới hạn/ngày", "Hỗ trợ ưu tiên"],
         },
         "ultra": {
             "name": "Ultra",
-            "price": 99.99,  # USD/month
+            "price": 2000000,  # VND/tháng (~$80 USD)
+            "currency": "VND",
             "rate_limit_per_min": 1000,
             "rate_limit_per_day": None,  # Unlimited
-            "features": ["1000 requests/min", "Unlimited/day", "24/7 support"],
+            "features": ["1000 requests/phút", "Không giới hạn/ngày", "Hỗ trợ 24/7"],
         },
     }

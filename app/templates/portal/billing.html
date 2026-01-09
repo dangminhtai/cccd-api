@@ -118,7 +118,13 @@
                         {% for payment in payments %}
                         <tr>
                             <td>{{ payment.created_at.strftime('%d/%m/%Y %H:%M') if payment.created_at else 'N/A' }}</td>
-                            <td class="amount">${{ "%.2f"|format(payment.amount) }} {{ payment.currency }}</td>
+                            <td class="amount">
+                                {% if payment.currency == 'VND' %}
+                                    {{ "{:,.0f}".format(payment.amount).replace(",", ".") }} {{ payment.currency }}
+                                {% else %}
+                                    ${{ "%.2f"|format(payment.amount) }} {{ payment.currency }}
+                                {% endif %}
+                            </td>
                             <td>{{ payment.payment_gateway or 'N/A' }}</td>
                             <td>
                                 <span class="status-badge status-{{ payment.status }}">

@@ -376,10 +376,11 @@ def upgrade():
             
             # Create payment request
             amount = pricing[target_tier]["price"]
+            currency = pricing[target_tier].get("currency", "VND")
             payment_id = create_payment(
                 user_id=user_id,
                 amount=amount,
-                currency="USD",
+                currency=currency,
                 payment_gateway="manual",
                 notes=f"Upgrade from {current_tier} to {target_tier}",
             )

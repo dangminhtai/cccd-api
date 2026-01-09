@@ -88,7 +88,13 @@
                 {% for tier_key, tier_info in pricing.items() %}
                 <div class="pricing-card {% if tier_key == current_tier %}current{% endif %}">
                     <h3>{{ tier_info.name }}</h3>
-                    <div class="price">${{ "%.2f"|format(tier_info.price) }}</div>
+                    <div class="price">
+                        {% if tier_info.currency == 'VND' %}
+                            {{ "{:,.0f}".format(tier_info.price).replace(",", ".") }} {{ tier_info.currency }}
+                        {% else %}
+                            ${{ "%.2f"|format(tier_info.price) }} {{ tier_info.currency }}
+                        {% endif %}
+                    </div>
                     <div class="price-unit">/ tháng</div>
                     <ul class="features">
                         {% for feature in tier_info.features %}
