@@ -213,4 +213,24 @@
   - Backend: Luôn validate lại, không tin frontend
   - HTML: Dùng `type="number"` + `step="1"` + `pattern` để hạn chế input sai
 
+---
+
+## 21) Lỗi cú pháp PowerShell khi test CSV export (empty pipe element)
+
+- **Hiện tượng**: Chạy lệnh test CSV export báo lỗi: `An empty pipe element is not allowed.` tại dòng có `$results = @(); $results += ... | Export-Csv ...`
+- **Nguyên nhân**: 
+  - PowerShell không cho phép pipe rỗng (empty pipe)
+  - Lệnh one-liner bị parse sai do thiếu dấu `;` hoặc format sai
+  - Môi trường là Windows PowerShell, không phải Linux/bash
+- **Cách xử lý**: 
+  - Tách lệnh thành nhiều dòng hoặc dùng `;` để ngăn cách
+  - Ví dụ đúng: `$results = @(); $results += [PSCustomObject]@{Test='test1'}; $results | Export-Csv ...`
+  - Hoặc chạy từng lệnh riêng biệt
+- **Cách tránh lần sau**: Khi viết lệnh PowerShell:
+  - Luôn nhớ môi trường là **Windows PowerShell**, không phải Linux/bash
+  - Tránh one-liner phức tạp, ưu tiên tách nhiều dòng
+  - Dùng `;` để ngăn cách lệnh trong cùng một dòng
+  - Test lệnh trước khi chạy trong script
+  - Khi test CSV export, dùng script block hoặc function thay vì one-liner
+
 
