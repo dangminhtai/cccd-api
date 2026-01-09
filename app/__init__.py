@@ -135,9 +135,11 @@ def create_app() -> Flask:
     # Routes
     from routes.health import health_bp
     from routes.cccd import cccd_bp
+    from routes.portal import portal_bp
 
     app.register_blueprint(health_bp)
     app.register_blueprint(cccd_bp)
+    app.register_blueprint(portal_bp)
 
     # Admin routes (only if tiered mode is enabled)
     import os
