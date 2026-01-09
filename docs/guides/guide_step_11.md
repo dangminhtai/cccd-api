@@ -43,6 +43,30 @@ docker-compose logs -f
 docker-compose down
 ```
 
+**⚠️ Troubleshooting:**
+
+Nếu gặp lỗi `failed to resolve source metadata` khi build:
+1. **Kiểm tra Docker Desktop đang chạy:**
+   ```powershell
+   docker ps
+   ```
+
+2. **Kiểm tra kết nối internet:**
+   - Docker cần kết nối Docker Hub để pull image
+   - Nếu đằng sau proxy/firewall, cấu hình Docker proxy settings
+
+3. **Retry build:**
+   ```powershell
+   docker-compose build --no-cache
+   docker-compose up -d
+   ```
+
+4. **Nếu vẫn lỗi, thử pull image trước:**
+   ```powershell
+   docker pull python:3.12-slim
+   docker-compose up -d
+   ```
+
 **Verify:**
 ```powershell
 Invoke-RestMethod -Uri "http://localhost:8000/health"
