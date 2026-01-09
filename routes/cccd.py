@@ -21,6 +21,12 @@ def _mask_cccd(cccd: str) -> str:
     return f"{cccd[:3]}******{cccd[-3:]}"
 
 
+@cccd_bp.route("/v1/cccd/parse", methods=["OPTIONS"])
+def cccd_parse_options():
+    """Reject OPTIONS method - only POST is allowed"""
+    return jsonify({"error": "Method not allowed"}), 405
+
+
 @cccd_bp.get("/demo")
 def demo():
     settings = current_app.config.get("SETTINGS")
@@ -96,7 +102,7 @@ def _get_rate_limit():
     return "30 per minute"
 
 
-@cccd_bp.post("/v1/cccd/parse")
+@cccd_bp.route("/v1/cccd/parse", methods=["POST"])
 @limiter.limit(_get_rate_limit)
 def cccd_parse():
     payload = request.get_json(silent=True) or {}

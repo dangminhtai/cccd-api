@@ -199,10 +199,10 @@
   - API endpoint: ✅ Correctly requires auth (401)
   - Admin stats: ✅ Correctly protected (403)
   - Potential endpoints (/debug, /test, etc.): ✅ All return 404 (OK)
-- ⚠️ **Test 2.2: HTTP Methods Enumeration** - ⚠️ PARTIAL (6/7 tests)
-  - ✅ GET, PUT, DELETE, PATCH, HEAD: Correctly rejected (405)
-  - ⚠️ OPTIONS: Trả 200 thay vì 405 (có thể là vấn đề nhỏ, cần review)
+- ✅ **Test 2.2: HTTP Methods Enumeration** - ✅ PASS (7/7 tests)
+  - ✅ GET, PUT, DELETE, PATCH, HEAD, OPTIONS: Correctly rejected (405)
   - ✅ POST: Trả 401 (cần API key) - đúng
+  - **Fix applied:** Thêm handler cho OPTIONS method để trả về 405 thay vì 200
 - ✅ **Test 2.3: Error Messages Analysis** - ✅ PASS (3/3 tests)
   - ✅ Error messages không leak thông tin (không có stacktrace, file paths, database info)
   - ⚠️ Một số test trả 401/500 thay vì 400 (do API key requirement), nhưng error messages vẫn an toàn
