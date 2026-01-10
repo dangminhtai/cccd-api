@@ -280,6 +280,7 @@ def keys():
         api_keys=api_keys,
         new_api_key=new_api_key,
         current_tier=current_tier,
+        email_verified=user.get("email_verified", False) if user else False,
     )
 
 
