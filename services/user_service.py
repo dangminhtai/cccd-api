@@ -116,14 +116,27 @@ def authenticate_user(email: str, password: str) -> Tuple[bool, Optional[str], O
         conn = _get_db_connection()
         try:
             with conn.cursor() as cursor:
-                cursor.execute(
-                    """
-                    SELECT id, email, password_hash, full_name, status, email_verified
-                    FROM users
-                    WHERE email = %s
-                    """,
-                    (email,),
-                )
+                # Try to query with email_verified first (if column exists)
+                try:
+                    cursor.execute(
+                        """
+                        SELECT id, email, password_hash, full_name, status, email_verified
+                        FROM users
+                        WHERE email = %s
+                        """,
+                        (email,),
+                    )
+                except Exception:
+                    # Column doesn't exist, query without email_verified
+                    cursor.execute(
+                        """
+                        SELECT id, email, password_hash, full_name, status
+                        FROM users
+                        WHERE email = %s
+                        """,
+                        (email,),
+                    )
+                
                 user = cursor.fetchone()
                 
                 if not user:
