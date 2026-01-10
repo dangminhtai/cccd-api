@@ -100,7 +100,23 @@
         
         <div class="section">
             <h2>Tạo API Key mới</h2>
-            <form method="POST" action="{{ url_for('portal.keys') }}" class="create-form">
+            
+            {% if not email_verified %}
+            <div style="padding: 16px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 6px; margin-bottom: 20px;">
+                <strong>⚠️ Email chưa được xác thực</strong>
+                <p style="margin: 8px 0 0; color: #856404;">
+                    Vui lòng xác thực email trước khi tạo API key. 
+                    Kiểm tra email hoặc 
+                    <form method="POST" action="{{ url_for('portal.resend_verification') }}" style="display: inline;">
+                        <button type="submit" style="background: none; border: none; color: #0b57d0; text-decoration: underline; cursor: pointer; padding: 0;">
+                            gửi lại email xác thực
+                        </button>
+                    </form>
+                </p>
+            </div>
+            {% endif %}
+            
+            <form method="POST" action="{{ url_for('portal.keys') }}" class="create-form" {% if not email_verified %}onsubmit="alert('Vui lòng xác thực email trước khi tạo API key'); return false;"{% endif %}>
                 <input type="hidden" name="action" value="create">
                 <div class="form-group">
                     <label for="tier">Tier</label>
@@ -114,7 +130,7 @@
                     <label for="days_valid">Số ngày hợp lệ (để trống = vĩnh viễn)</label>
                     <input type="number" id="days_valid" name="days_valid" min="1" step="1" placeholder="Ví dụ: 30" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px;">
                 </div>
-                <button type="submit" class="btn">Tạo API Key</button>
+                <button type="submit" class="btn" {% if not email_verified %}disabled style="opacity: 0.6; cursor: not-allowed;"{% endif %}>Tạo API Key</button>
             </form>
             {% if current_tier == 'free' %}
             <p style="margin-top: 12px; color: #666; font-size: 14px;">

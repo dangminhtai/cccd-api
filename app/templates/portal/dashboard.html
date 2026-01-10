@@ -63,6 +63,21 @@
         <div class="welcome">
             <h2>Chào mừng trở lại!</h2>
             <p>Quản lý API keys, xem usage statistics và nâng cấp tier của bạn.</p>
+            
+            {% if not user.email_verified %}
+            <div style="margin-top: 20px; padding: 16px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 6px;">
+                <strong>⚠️ Email chưa được xác thực</strong>
+                <p style="margin: 8px 0 0; color: #856404;">
+                    Vui lòng xác thực email để có thể tạo API key. 
+                    Kiểm tra email hoặc 
+                    <form method="POST" action="{{ url_for('portal.resend_verification') }}" style="display: inline;">
+                        <button type="submit" style="background: none; border: none; color: #0b57d0; text-decoration: underline; cursor: pointer; padding: 0;">
+                            gửi lại email xác thực
+                        </button>
+                    </form>
+                </p>
+            </div>
+            {% endif %}
         </div>
         
         <div class="stats-grid">
