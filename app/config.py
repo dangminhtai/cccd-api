@@ -27,11 +27,19 @@ class Settings:
         except ValueError:
             port = 8000
 
+        # Email settings
+        email_provider = os.getenv("EMAIL_PROVIDER", "sendgrid")
+        email_from = os.getenv("EMAIL_FROM", "noreply@cccd-api.com")
+        email_from_name = os.getenv("EMAIL_FROM_NAME", "CCCD API")
+        
         return Settings(
             port=port,
             default_province_version=default_province_version,
             api_key=api_key,
             api_key_mode=api_key_mode,
+            email_provider=email_provider,
+            email_from=email_from,
+            email_from_name=email_from_name,
         )
 
 

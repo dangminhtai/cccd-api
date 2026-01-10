@@ -1,0 +1,31 @@
+{% extends "emails/base.html" %}
+
+{% block title %}Xác thực email - CCCD API{% endblock %}
+
+{% block content %}
+<h2>Xác thực email của bạn</h2>
+
+<p>Xin chào {{ user_name }},</p>
+
+<p>Bạn đã đăng ký tài khoản CCCD API với email này. Vui lòng click vào nút bên dưới để xác thực email của bạn.</p>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ verification_url }}" class="button">Xác thực email</a>
+</div>
+
+<div class="warning">
+    <p><strong>Lưu ý:</strong></p>
+    <ul style="margin: 10px 0; padding-left: 20px;">
+        <li>Link này sẽ hết hạn sau <strong>24 giờ</strong></li>
+        <li>Nếu bạn không yêu cầu xác thực email này, vui lòng bỏ qua</li>
+        <li>Bạn cần xác thực email để có thể tạo API keys</li>
+    </ul>
+</div>
+
+<p style="font-size: 12px; color: #666; margin-top: 20px;">
+    Nếu nút không hoạt động, copy link sau vào trình duyệt:<br>
+    <code style="word-break: break-all; display: block; margin-top: 5px;">{{ verification_url }}</code>
+</p>
+
+<p>Trân trọng,<br>Đội ngũ CCCD API</p>
+{% endblock %}

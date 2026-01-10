@@ -1,0 +1,35 @@
+{% extends "emails/base.html" %}
+
+{% block title %}Chào mừng đến với CCCD API{% endblock %}
+
+{% block content %}
+<h2>Chào mừng {{ user_name }}!</h2>
+
+<p>Cảm ơn bạn đã đăng ký tài khoản CCCD API. Chúng tôi rất vui được chào đón bạn.</p>
+
+{% if verification_url %}
+<div class="info">
+    <p><strong>Bước tiếp theo:</strong> Vui lòng xác thực email của bạn để bắt đầu sử dụng dịch vụ.</p>
+    <p style="text-align: center;">
+        <a href="{{ verification_url }}" class="button">Xác thực email</a>
+    </p>
+    <p style="font-size: 12px; color: #666; margin-top: 10px;">
+        Hoặc copy link sau vào trình duyệt:<br>
+        <code style="word-break: break-all;">{{ verification_url }}</code>
+    </p>
+</div>
+{% endif %}
+
+<h3>Bạn có thể làm gì với CCCD API?</h3>
+<ul>
+    <li>Parse và validate số CCCD/CMND</li>
+    <li>Lấy thông tin tỉnh/thành từ mã CCCD</li>
+    <li>Sử dụng API với các tier khác nhau (Free, Premium, Ultra)</li>
+    <li>Theo dõi usage statistics</li>
+    <li>Quản lý API keys</li>
+</ul>
+
+<p>Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua email hoặc trang hỗ trợ.</p>
+
+<p>Trân trọng,<br>Đội ngũ CCCD API</p>
+{% endblock %}
