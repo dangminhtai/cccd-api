@@ -250,3 +250,24 @@
   - **Validate độ dài đầu vào** để tránh DoS với string cực dài
   - **Reject sớm** = tiết kiệm tài nguyên server
   - **Defense in depth**: Validate nhiều lớp (frontend + backend + database constraints)
+
+---
+
+## 21) Markdown files: Viết ngắn gọn, đừng giải thích dài dòng, đừng tạo quá nhiều file
+
+- **Issue**: Tạo quá nhiều file markdown với nội dung dài dòng, giải thích chi tiết không cần thiết. User đọc mệt mỏi, khó tìm thông tin.
+- **Nguyên nhân**: 
+  - Giải thích quá nhiều thay vì làm luôn
+  - Viết code/giải thích dài trong markdown
+  - Tạo quá nhiều file riêng lẻ thay vì gom lại
+- **Cách xử lý**:
+  - **Markdown chỉ để document**, không phải để giải thích chi tiết
+  - **Ngắn gọn**, đủ để người đọc hiểu được
+  - **Gom các nội dung liên quan** vào 1 file thay vì tách nhiều file
+  - **Không cần code examples dài** trong markdown (code thì để trong code files)
+  - **Không giải thích "tại sao" quá nhiều** - chỉ ghi "làm gì" và "như thế nào"
+- **Bài học**: 
+  - **Ngắn gọn > Dài dòng**: Người đọc chỉ cần biết làm gì, không cần biết tại sao
+  - **Ít file > Nhiều file**: Dễ tìm hơn, ít duplicate hơn
+  - **Markdown là documentation**, không phải tutorial dài
+  - **Lần sau đọc là hiểu** - đó là mục tiêu của documentation
