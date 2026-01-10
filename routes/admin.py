@@ -13,12 +13,11 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
 @admin_bp.get("/")
 def admin_dashboard():
-    """Trang admin dashboard"""
-    from services.billing_service import get_pending_payments
-    
-    pending_payments = get_pending_payments(limit=50)
-    
-    return render_template("admin.html", pending_payments=pending_payments)
+    """Trang admin dashboard - chỉ hiển thị form, không load data nhạy cảm"""
+    # KHÔNG load pending_payments ở đây vì chưa verify admin key
+    # Pending payments sẽ được load qua JavaScript khi user nhập key và gọi API
+    # Bảo mật: Không expose sensitive data trong initial render
+    return render_template("admin.html", pending_payments=None)
 
 
 def _get_request_id() -> str:
@@ -27,15 +26,22 @@ def _get_request_id() -> str:
 
 @admin_bp.before_request
 def check_admin_auth():
-    """Kiểm tra Admin key trước mọi request (trừ GET /admin/ để hiển thị HTML)"""
-    # Không check auth cho route GET /admin/ (hiển thị HTML)
+    """Kiểm tra Admin key trước mọi request"""
+    admin_secret = os.getenv("ADMIN_SECRET")
+    if not admin_secret:
+        # Nếu chưa config ADMIN_SECRET, vẫn cho phép GET /admin/ để hiển thị form nhập key
+        # Nhưng không cho phép các action khác (API endpoints)
+        if request.method == "GET" and request.endpoint == "admin.admin_dashboard":
+            return None
+        return jsonify({"error": "Admin API chưa được cấu hình (ADMIN_SECRET)"}), 503
+    
+    # Cho GET /admin/, KHÔNG yêu cầu admin key (template sẽ yêu cầu user nhập)
+    # Template sẽ chỉ hiển thị form, không load data nhạy cảm
+    # Data sẽ được load qua API khi user nhập key
     if request.method == "GET" and request.endpoint == "admin.admin_dashboard":
         return None
     
-    admin_secret = os.getenv("ADMIN_SECRET")
-    if not admin_secret:
-        return jsonify({"error": "Admin API chưa được cấu hình (ADMIN_SECRET)"}), 503
-    
+    # Cho TẤT CẢ routes khác (API endpoints), yêu cầu admin key trong header
     provided_key = request.headers.get("X-Admin-Key")
     if provided_key != admin_secret:
         return jsonify({"error": "Unauthorized - Admin key không hợp lệ"}), 403
@@ -272,12 +278,12 @@ def get_stats():
 
 @admin_bp.get("/payments")
 def admin_payments():
-    """Admin: Xem danh sách pending payments"""
+    """Admin API: Lấy danh sách pending payments (JSON)"""
     from services.billing_service import get_pending_payments
     
     pending_payments = get_pending_payments(limit=100)
     
-    return render_template("admin_payments.html", payments=pending_payments)
+    return jsonify({"payments": pending_payments})
 
 
 @admin_bp.post("/payments/<int:payment_id>/approve")
