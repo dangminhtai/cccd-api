@@ -378,21 +378,19 @@
 
 - **Hiện tượng**: Sau khi admin approve payment cho user, status trong database vẫn còn là "pending", không được update thành "success"
 - **Nguyên nhân**: 
-  - Code có update payment status nhưng có thể transaction không commit đúng cách
-  - Hoặc có exception xảy ra sau UPDATE payment nhưng trước commit, làm transaction bị rollback
-  - Hoặc UPDATE payment không match WHERE condition (payment đã được approve rồi)
-  - PyMySQL mặc định auto-commit = False, cần explicit commit để lưu thay đổi
+  - **CHÍNH**: Exception xảy ra khi UPDATE API keys do dùng sai tên cột: `WHERE status = 'active'` nhưng bảng `api_keys` có cột `active BOOLEAN` (không phải `status ENUM`)
+  - Exception xảy ra sau UPDATE payment nhưng trước commit → transaction bị rollback → payment status không được lưu
+  - Code UPDATE payment đã đúng (rowcount=1), nhưng exception ở bước sau làm toàn bộ transaction rollback
 - **Cách xử lý**: 
-  - Thêm check `WHERE id = %s AND status = 'pending'` trong UPDATE để tránh double approve
-  - Check `cursor.rowcount == 0` để đảm bảo update thành công
-  - Rollback nếu update không thành công
-  - Verify payment status sau khi commit để đảm bảo transaction thành công
-  - Thêm error handling tốt hơn với logging chi tiết
-- **Cách tránh lần sau**: Khi làm việc với database transactions:
-  - **Luôn check** `rowcount` sau UPDATE/INSERT để đảm bảo operation thành công
-  - **Luôn verify** data sau khi commit để đảm bảo transaction thực sự được lưu
-  - **Luôn rollback** nếu có lỗi trước khi commit
-  - **Thêm logging** chi tiết để debug khi có vấn đề
-  - **Test** với transaction thực tế để đảm bảo commit/rollback hoạt động đúng
+  - Sửa query UPDATE api_keys từ `WHERE status = 'active'` thành `WHERE active = TRUE`
+  - Bảng `api_keys` dùng cột `active BOOLEAN`, không phải `status ENUM`
+  - Thêm logging chi tiết để phát hiện exception sớm
+  - Verify payment status sau UPDATE và sau COMMIT
+- **Cách tránh lần sau**: Khi làm việc với database:
+  - **Luôn kiểm tra schema** trước khi viết query (column name, type)
+  - **Không giả định** tên cột giống nhau giữa các table (ví dụ: `status` vs `active`)
+  - **Thêm logging** chi tiết để phát hiện exception sớm
+  - **Test** với database thực tế để đảm bảo query đúng schema
+  - **Transaction handling**: Exception ở bất kỳ đâu trong transaction sẽ rollback toàn bộ
 
 

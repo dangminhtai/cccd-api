@@ -362,6 +362,7 @@ def approve_payment_admin(payment_id: int) -> tuple[bool, Optional[str]]:
                 return False, f"Payment status không được update (vẫn là '{verify_payment['status']}')"
             
             # Extend API keys expiration cho user này
+            # NOTE: api_keys table có cột 'active' (BOOLEAN), không phải 'status'
             _log_debug(f"[APPROVE PAYMENT] Extend API keys cho user_id={user_id}")
             cursor.execute(
                 """
@@ -371,7 +372,7 @@ def approve_payment_admin(payment_id: int) -> tuple[bool, Optional[str]]:
                     INTERVAL 30 DAY
                 )
                 WHERE user_id = %s 
-                AND status = 'active'
+                AND active = TRUE
                 AND (expires_at IS NULL OR expires_at > NOW())
                 """,
                 (user_id,),
