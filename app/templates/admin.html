@@ -186,9 +186,84 @@
 
           document.getElementById("loading").style.display = "none";
           document.getElementById("stats").style.display = "block";
+          
+          // Load pending payments sau khi load stats thành công
+          loadPendingPayments(adminKey);
         } catch (e) {
           document.getElementById("loading").style.display = "none";
           showError("Lỗi: " + e.message);
+        }
+      }
+      
+      async function loadPendingPayments(adminKey) {
+        if (!adminKey) {
+          return;
+        }
+        
+        try {
+          const resp = await fetch("/admin/payments", {
+            headers: { "X-Admin-Key": adminKey }
+          });
+          
+          if (!resp.ok) {
+            if (resp.status === 403) {
+              document.getElementById("paymentsContainer").innerHTML = 
+                '<p style="text-align: center; color: #d32f2f; padding: 40px;">❌ Admin key không hợp lệ. Vui lòng kiểm tra lại.</p>';
+            } else {
+              throw new Error(`HTTP ${resp.status}`);
+            }
+            return;
+          }
+          
+          const data = await resp.json();
+          const payments = data.payments || [];
+          
+          if (payments.length === 0) {
+            document.getElementById("paymentsContainer").innerHTML = 
+              '<p style="text-align: center; color: #666; padding: 40px;">Không có payment nào đang chờ xử lý</p>';
+            return;
+          }
+          
+          // Render payments table
+          let html = '<table class="payments-table"><thead><tr><th>Ngày</th><th>Khách hàng</th><th>Số tiền</th><th>Phương thức</th><th>Ghi chú</th><th>Thao tác</th></tr></thead><tbody>';
+          
+          payments.forEach(payment => {
+            const dateStr = payment.created_at ? new Date(payment.created_at).toLocaleString('vi-VN', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            }) : 'N/A';
+            
+            const amountStr = payment.currency === 'VND' 
+              ? new Intl.NumberFormat('vi-VN').format(payment.amount) + ' ' + payment.currency
+              : '$' + payment.amount.toFixed(2) + ' ' + payment.currency;
+            
+            html += `
+              <tr id="payment-row-${payment.id}">
+                <td>${dateStr}</td>
+                <td class="user-info">
+                  <div class="user-email">${payment.user_email || 'N/A'}</div>
+                  <div style="font-size: 12px; color: #666;">${payment.user_name || 'N/A'}</div>
+                </td>
+                <td class="amount">${amountStr}</td>
+                <td>${payment.payment_gateway || 'N/A'}</td>
+                <td>${payment.notes || '-'}</td>
+                <td>
+                  <button class="btn-approve" onclick="approvePayment(${payment.id})">
+                    ✅ Approve
+                  </button>
+                </td>
+              </tr>
+            `;
+          });
+          
+          html += '</tbody></table>';
+          document.getElementById("paymentsContainer").innerHTML = html;
+        } catch (e) {
+          document.getElementById("paymentsContainer").innerHTML = 
+            '<p style="text-align: center; color: #d32f2f; padding: 40px;">❌ Lỗi khi tải pending payments: ' + e.message + '</p>';
         }
       }
 
