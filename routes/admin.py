@@ -14,10 +14,28 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 @admin_bp.get("/")
 def admin_dashboard():
     """Trang admin dashboard - chỉ hiển thị form, không load data nhạy cảm"""
+    from flask import current_app
+    
     # KHÔNG load pending_payments ở đây vì chưa verify admin key
     # Pending payments sẽ được load qua JavaScript khi user nhập key và gọi API
     # Bảo mật: Không expose sensitive data trong initial render
-    return render_template("admin.html", pending_payments=None)
+    
+    # Lấy thông tin API settings để hiển thị trong demo section
+    settings = current_app.config.get("SETTINGS")
+    api_key_mode = getattr(settings, "api_key_mode", "simple")
+    api_key_required = (
+        api_key_mode == "tiered" or 
+        bool(getattr(settings, "api_key", None))
+    )
+    configured_key = getattr(settings, "api_key", "") or ""
+    
+    return render_template(
+        "admin.html", 
+        pending_payments=None,
+        api_key_required=api_key_required,
+        configured_key=configured_key,
+        api_key_mode=api_key_mode,
+    )
 
 
 def _get_request_id() -> str:

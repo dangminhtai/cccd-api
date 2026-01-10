@@ -329,6 +329,56 @@
         if (e.key === "Enter") loadStats();
       });
       
+      // Test API function
+      async function testApi() {
+        const cccd = document.getElementById("demoCccd").value.trim();
+        const provinceVersion = document.getElementById("demoProvinceVersion").value;
+        const apiKey = document.getElementById("demoApiKey").value.trim();
+        
+        document.getElementById("demoError").style.display = "none";
+        document.getElementById("demoResult").style.display = "none";
+        
+        const payload = {};
+        if (cccd) payload.cccd = cccd;
+        if (provinceVersion) payload.province_version = provinceVersion;
+        
+        try {
+          const headers = { "Content-Type": "application/json" };
+          if (apiKey) headers["X-API-Key"] = apiKey;
+          
+          const resp = await fetch("/v1/cccd/parse", {
+            method: "POST",
+            headers,
+            body: JSON.stringify(payload),
+          });
+          
+          const statusEl = document.getElementById("demoStatus");
+          statusEl.textContent = resp.status;
+          
+          const text = await resp.text();
+          try {
+            const json = JSON.parse(text);
+            document.getElementById("demoOutput").textContent = JSON.stringify(json, null, 2);
+            
+            if (resp.status === 200) {
+              statusEl.className = "ok";
+            } else if (resp.status === 401 || resp.status === 400) {
+              statusEl.className = "bad";
+            } else {
+              statusEl.className = "";
+            }
+          } catch {
+            document.getElementById("demoOutput").textContent = text;
+            statusEl.className = "bad";
+          }
+          
+          document.getElementById("demoResult").style.display = "block";
+        } catch (e) {
+          document.getElementById("demoError").textContent = "Lỗi: " + e.message;
+          document.getElementById("demoError").style.display = "block";
+        }
+      }
+      
       // Update demo link when admin key changes
       document.getElementById("adminKey").addEventListener("input", (e) => {
         const adminKey = e.target.value.trim();
