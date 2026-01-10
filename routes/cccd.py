@@ -79,29 +79,6 @@ def cccd_parse_options():
     return jsonify({"error": "Method not allowed"}), 405
 
 
-@cccd_bp.get("/demo")
-def demo():
-    settings = current_app.config.get("SETTINGS")
-    api_key_mode = getattr(settings, "api_key_mode", "simple")
-    api_key_required = (
-        api_key_mode == "tiered" or 
-        bool(getattr(settings, "api_key", None))
-    )
-    configured_key = getattr(settings, "api_key", "") or ""
-    
-    # Debug: Log để kiểm tra
-    current_app.logger.info(
-        f"demo_page | api_key_mode={api_key_mode} | "
-        f"api_key_required={api_key_required} | "
-        f"configured_key_length={len(configured_key)}"
-    )
-    
-    return render_template(
-        "demo.html",
-        api_key_required=api_key_required,
-        configured_key=configured_key,
-        api_key_mode=api_key_mode,
-    )
 
 
 def _check_api_key():

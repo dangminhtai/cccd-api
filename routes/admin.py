@@ -41,6 +41,13 @@ def check_admin_auth():
     if request.method == "GET" and request.endpoint == "admin.admin_dashboard":
         return None
     
+    # Cho GET /admin/demo, yêu cầu admin key từ query parameter hoặc header
+    if request.method == "GET" and request.endpoint == "admin.admin_demo":
+        provided_key = request.args.get("admin_key") or request.headers.get("X-Admin-Key")
+        if not provided_key or provided_key != admin_secret:
+            return jsonify({"error": "Unauthorized - Admin key không hợp lệ. Truy cập /admin/demo?admin_key=YOUR_KEY"}), 403
+        return None
+    
     # Cho TẤT CẢ routes khác (API endpoints), yêu cầu admin key trong header
     provided_key = request.headers.get("X-Admin-Key")
     if provided_key != admin_secret:
@@ -306,6 +313,27 @@ def admin_approve_payment(payment_id: int):
         current_app.logger.error(f"Failed to approve payment {payment_id}: {message}")
     
     return redirect(url_for("admin.admin_dashboard"))
+
+
+@admin_bp.get("/demo")
+def admin_demo():
+    """Trang demo để test API (chỉ dành cho Admin)"""
+    from flask import current_app
+    
+    settings = current_app.config.get("SETTINGS")
+    api_key_mode = getattr(settings, "api_key_mode", "simple")
+    api_key_required = (
+        api_key_mode == "tiered" or 
+        bool(getattr(settings, "api_key", None))
+    )
+    configured_key = getattr(settings, "api_key", "") or ""
+    
+    return render_template(
+        "demo.html",
+        api_key_required=api_key_required,
+        configured_key=configured_key,
+        api_key_mode=api_key_mode,
+    )
 
 
 @admin_bp.get("/demo")
