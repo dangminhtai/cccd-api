@@ -279,6 +279,21 @@
       document.getElementById("adminKey").addEventListener("keypress", (e) => {
         if (e.key === "Enter") loadStats();
       });
+      
+      // Update demo link when admin key changes
+      document.getElementById("adminKey").addEventListener("input", (e) => {
+        const adminKey = e.target.value.trim();
+        const demoLink = document.getElementById("demoLink");
+        if (adminKey) {
+          demoLink.href = `/admin/demo?admin_key=${encodeURIComponent(adminKey)}`;
+          demoLink.style.color = "#0b57d0";
+          demoLink.style.textDecoration = "underline";
+        } else {
+          demoLink.href = "/admin/demo?admin_key=";
+          demoLink.style.color = "#999";
+          demoLink.style.textDecoration = "none";
+        }
+      });
 
       // Chỉ cho phép nhập số 0-9 vào ô "Số ngày"
       document.getElementById("createDays").addEventListener("keypress", (e) => {
