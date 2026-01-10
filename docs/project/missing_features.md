@@ -9,14 +9,39 @@ Tài liệu này liệt kê các tính năng và cải tiến còn thiếu để
 ### 1. Payment Gateway Integration
 **Hiện tại:** Chỉ có manual payment (admin phải approve thủ công)
 **Cần có:**
-- [ ] Tích hợp **Stripe** hoặc **PayPal** cho automatic payment
+- [ ] Tích hợp payment gateway phù hợp với thị trường Việt Nam:
+  - **VNPay** (khuyến nghị) - Hỗ trợ nhiều ngân hàng, thẻ ATM, thẻ tín dụng, ví điện tử
+  - **Momo** - Ví điện tử phổ biến, dễ tích hợp
+  - **ZaloPay** - Ví điện tử, tích hợp với Zalo
+  - **OnePay** - Payment gateway, hỗ trợ nhiều ngân hàng
+  - **Payoo** - Payment gateway
+  - **Stripe** (tùy chọn) - Có hỗ trợ Việt Nam nhưng ít người dùng
 - [ ] Webhook handler để xử lý payment confirmation từ gateway
 - [ ] Auto-activate subscription khi payment thành công
 - [ ] Refund handling khi payment failed
 - [ ] Invoice generation (PDF) cho mỗi payment
-- [ ] Email notification khi payment thành công/thất bại
+- [ ] Email/SMS notification khi payment thành công/thất bại
+- [ ] Payment status tracking (pending → processing → success/failed)
 
 **Priority:** 🔴 CRITICAL - Không thể scale nếu phải approve thủ công
+
+**Ghi chú về Payment Gateway Việt Nam:**
+- **VNPay**: 
+  - Phổ biến nhất, hỗ trợ đa dạng phương thức thanh toán
+  - Có sandbox environment để test
+  - Tài liệu: https://sandbox.vnpayment.vn/apis/
+  - Phí: ~2-3% mỗi giao dịch
+- **Momo**:
+  - Ví điện tử phổ biến, dễ sử dụng
+  - Tích hợp qua MoMo API
+  - Phí: ~1-2% mỗi giao dịch
+- **ZaloPay**:
+  - Tích hợp với Zalo ecosystem
+  - Phí: ~1-2% mỗi giao dịch
+- **OnePay**:
+  - Payment gateway chuyên nghiệp
+  - Hỗ trợ nhiều ngân hàng
+  - Phí: ~2-3% mỗi giao dịch
 
 ---
 
