@@ -11,6 +11,10 @@ class Settings:
     default_province_version: str = "current_34"
     api_key: str | None = None
     api_key_mode: Literal["simple", "tiered"] = "simple"
+    # Email settings
+    email_provider: str = "sendgrid"  # "sendgrid" or "smtp"
+    email_from: str = "noreply@cccd-api.com"
+    email_from_name: str = "CCCD API"
 
     @staticmethod
     def from_env() -> "Settings":
