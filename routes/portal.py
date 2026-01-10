@@ -25,8 +25,12 @@ def require_login(f):
 
 @portal_bp.route("/")
 def index():
-    """Landing page"""
-    return render_template("portal/index.html")
+    """Landing page - redirect to login or dashboard"""
+    # Nếu đã đăng nhập, redirect đến dashboard
+    if "user_id" in session:
+        return redirect(url_for("portal.dashboard"))
+    # Nếu chưa đăng nhập, redirect đến login
+    return redirect(url_for("portal.login"))
 
 
 @portal_bp.route("/register", methods=["GET", "POST"])
