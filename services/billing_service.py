@@ -361,24 +361,21 @@ def approve_payment_admin(payment_id: int) -> tuple[bool, Optional[str]]:
                 conn.rollback()
                 return False, f"Payment status không được update (vẫn là '{verify_payment['status']}')"
             
-            # Extend API keys expiration cho user này
+            # Đồng bộ API keys expiration với subscription expiration
+            # API keys sẽ có expires_at = subscription.expires_at (đồng bộ với subscription)
             # NOTE: api_keys table có cột 'active' (BOOLEAN), không phải 'status'
-            _log_debug(f"[APPROVE PAYMENT] Extend API keys cho user_id={user_id}")
+            _log_debug(f"[APPROVE PAYMENT] Đồng bộ API keys expiration với subscription expires_at={expires_at}")
             cursor.execute(
                 """
                 UPDATE api_keys
-                SET expires_at = DATE_ADD(
-                    COALESCE(expires_at, NOW()),
-                    INTERVAL 30 DAY
-                )
+                SET expires_at = %s
                 WHERE user_id = %s 
                 AND active = TRUE
-                AND (expires_at IS NULL OR expires_at > NOW())
                 """,
-                (user_id,),
+                (expires_at, user_id),
             )
-            keys_extended = cursor.rowcount
-            _log_debug(f"[APPROVE PAYMENT] Extended {keys_extended} API key(s)")
+            keys_updated = cursor.rowcount
+            _log_debug(f"[APPROVE PAYMENT] Đã đồng bộ {keys_updated} API key(s) với subscription expiration")
             
             # Commit transaction - QUAN TRỌNG: Phải commit để lưu thay đổi
             _log_debug(f"[APPROVE PAYMENT] 🔄 COMMIT transaction...")
