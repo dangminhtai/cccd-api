@@ -87,9 +87,58 @@
       <div class="section">
         <h2>🧪 Test API</h2>
         <p style="color: #666; margin-bottom: 16px;">
-          Trang demo để test API key: <a href="/admin/demo?admin_key=" id="demoLink" target="_blank">/admin/demo</a>
-          <br><small style="color: #999;">(Link sẽ được cập nhật tự động khi bạn nhập Admin Key ở trên)</small>
+          Test API key trực tiếp tại đây:
         </p>
+        
+        <!-- Security status -->
+        <div style="margin-bottom: 16px; padding: 12px; border-radius: 8px; background: {% if api_key_required %}#e8f5e9{% else %}#fff3e0{% endif %};">
+          {% if api_key_required %}
+            <strong style="color:#2e7d32;">🔐 API Key đang BẬT</strong>
+            <p style="margin:6px 0 0; font-size:13px; color:#555;">
+              Server yêu cầu API key. Mode: <code>{{ api_key_mode }}</code>
+              {% if api_key_mode == 'simple' %}
+                <br>Key hiện tại: <code>{{ configured_key }}</code>
+              {% endif %}
+            </p>
+          {% else %}
+            <strong style="color:#e65100;">🔓 API Key đang TẮT</strong>
+            <p style="margin:6px 0 0; font-size:13px; color:#555;">
+              Server chưa yêu cầu API key (mọi request đều được chấp nhận).
+            </p>
+          {% endif %}
+        </div>
+        
+        <!-- Demo form -->
+        <div class="form-group">
+          <div class="form-row">
+            <div>
+              <label>CCCD (12 số)</label>
+              <input id="demoCccd" value="079203012345" maxlength="12" pattern="[0-9]{12}" inputmode="numeric" style="min-width: 200px;" />
+            </div>
+            <div>
+              <label>province_version (tuỳ chọn)</label>
+              <select id="demoProvinceVersion" style="min-width: 200px;">
+                <option value="">(mặc định)</option>
+                <option value="legacy_63">legacy_63</option>
+                <option value="current_34">current_34</option>
+              </select>
+            </div>
+            <div>
+              <label>API Key để test</label>
+              <input id="demoApiKey" type="password" placeholder="Nhập API Key để test" style="min-width: 200px;" />
+            </div>
+            <div>
+              <button onclick="testApi()" style="margin-top: 24px;">Test Parse</button>
+            </div>
+          </div>
+        </div>
+        
+        <div id="demoError" class="error" style="display:none;"></div>
+        <div id="demoResult" style="display:none;">
+          <h3 style="margin-top: 16px;">Kết quả</h3>
+          <div class="hint">Status: <span id="demoStatus">-</span></div>
+          <pre id="demoOutput" style="background: #0b1020; color: #e7e7e7; padding: 14px; border-radius: 10px; overflow: auto; max-height: 400px;">{}</pre>
+        </div>
       </div>
 
       <div class="section">
