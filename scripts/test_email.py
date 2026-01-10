@@ -132,27 +132,27 @@ if __name__ == "__main__":
     print("CCCD API - Email Service Test")
     print("=" * 60)
     
-    # Check email provider
-    email_provider = os.getenv("EMAIL_PROVIDER", "sendgrid")
-    print(f"\nEmail Provider: {email_provider}")
+    # Check SMTP configuration
+    print(f"\nEmail Provider: SMTP")
     
-    if email_provider == "sendgrid":
-        api_key = os.getenv("SENDGRID_API_KEY")
-        if not api_key:
-            print("❌ SENDGRID_API_KEY not found in .env file")
-            print("   Please set SENDGRID_API_KEY in .env file")
-            sys.exit(1)
-        else:
-            print("✅ SENDGRID_API_KEY found")
-    elif email_provider == "smtp":
-        smtp_username = os.getenv("SMTP_USERNAME")
-        smtp_password = os.getenv("SMTP_PASSWORD")
-        if not smtp_username or not smtp_password:
-            print("❌ SMTP_USERNAME or SMTP_PASSWORD not found in .env file")
-            print("   Please set SMTP credentials in .env file")
-            sys.exit(1)
-        else:
-            print("✅ SMTP credentials found")
+    smtp_username = os.getenv("SMTP_USERNAME")
+    smtp_password = os.getenv("SMTP_PASSWORD")
+    smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
+    smtp_port = os.getenv("SMTP_PORT", "587")
+    
+    if not smtp_username or not smtp_password:
+        print("❌ SMTP_USERNAME or SMTP_PASSWORD not found in .env file")
+        print("   Please set SMTP credentials in .env file")
+        print("   Example:")
+        print("   SMTP_HOST=smtp.gmail.com")
+        print("   SMTP_PORT=587")
+        print("   SMTP_USERNAME=your_email@gmail.com")
+        print("   SMTP_PASSWORD=your_app_password")
+        sys.exit(1)
+    else:
+        print(f"✅ SMTP credentials found")
+        print(f"   Host: {smtp_host}:{smtp_port}")
+        print(f"   Username: {smtp_username}")
     
     print("\n" + "=" * 60)
     
