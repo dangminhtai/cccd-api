@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CCCD API Documentation</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+            min-height: 100vh;
+        }
+        header {
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        h1 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+        }
+        nav {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        nav a {
+            color: #1976d2;
+            text-decoration: none;
+            margin-right: 20px;
+            font-weight: 500;
+        }
+        nav a:hover {
+            text-decoration: underline;
+        }
+        section {
+            margin-bottom: 40px;
+        }
+        h2 {
+            color: #1976d2;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            margin-top: 30px;
+        }
+        h3 {
+            color: #424242;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+        .endpoint {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border-left: 4px solid #1976d2;
+        }
+        .method {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        .method.post {
+            background: #49cc90;
+            color: white;
+        }
+        .method.get {
+            background: #61affe;
+            color: white;
+        }
+        .path {
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            color: #333;
+            font-weight: 600;
+        }
+        .description {
+            margin: 15px 0;
+            color: #555;
+        }
+        .params {
+            margin: 20px 0;
+        }
+        .params table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .params th, .params td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .params th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #424242;
+        }
+        .code-block {
+            background: #263238;
+            color: #aed581;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .code-block pre {
+            margin: 0;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 16px;
+            color: #666;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+        }
+        .tab.active {
+            color: #1976d2;
+            border-bottom-color: #1976d2;
+            font-weight: 600;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .response {
+            margin: 20px 0;
+        }
+        .status-code {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 12px;
+            margin-right: 10px;
+        }
+        .status-code.success {
+            background: #4caf50;
+            color: white;
+        }
+        .status-code.error {
+            background: #f44336;
+            color: white;
+        }
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .warning-box {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        .badge.required {
+            background: #f44336;
+            color: white;
+        }
+        .badge.optional {
+            background: #9e9e9e;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>CCCD API Documentation</h1>
+            <p class="subtitle">API để parse thông tin từ số CCCD (Căn cước công dân) 12 chữ số của Việt Nam</p>
+        </header>
+
+        <nav>
+            <a href="#overview">Overview</a>
+            <a href="#authentication">Authentication</a>
+            <a href="#endpoints">Endpoints</a>
+            <a href="#rate-limits">Rate Limits</a>
+            <a href="#error-codes">Error Codes</a>
+            <a href="#examples">Code Examples</a>
+        </nav>
+
+        <section id="overview">
+            <h2>Overview</h2>
+            <p>CCCD API cung cấp endpoint để parse số CCCD 12 chữ số và lấy thông tin:</p>
+            <ul style="margin-left: 30px; margin-top: 10px;">
+                <li><strong>Mã tỉnh/thành phố</strong> (province_code)</li>
+                <li><strong>Tên tỉnh/thành phố</strong> (province_name)</li>
+                <li><strong>Giới tính</strong> (gender)</li>
+                <li><strong>Năm sinh</strong> (birth_year)</li>
+                <li><strong>Thế kỷ</strong> (century)</li>
+                <li><strong>Tuổi</strong> (age)</li>
+            </ul>
+
+            <div class="info-box">
+                <strong>Base URL:</strong><br>
+                Development: <code>http://127.0.0.1:8000</code><br>
+                Production: <code>https://api.cccd-api.com</code>
+            </div>
+        </section>
+
+        <section id="authentication">
+            <h2>Authentication</h2>
+            <p>API sử dụng API key authentication qua header <code>X-API-Key</code>.</p>
+            
+            <h3>Lấy API Key</h3>
+            <ol style="margin-left: 30px;">
+                <li>Đăng ký tài khoản tại <a href="/portal/register">Customer Portal</a></li>
+                <li>Đăng nhập và tạo API key tại <a href="/portal/keys">Keys Management</a></li>
+                <li>Copy API key và sử dụng trong requests</li>
+            </ol>
+
+            <div class="code-block">
+<pre>X-API-Key: your-api-key-here</pre>
+            </div>
+        </section>
+
+        <section id="endpoints">
+            <h2>API Endpoints</h2>
+
+            <!-- Health Check -->
+            <div class="endpoint">
+                <h3>
+                    <span class="method get">GET</span>
+                    <span class="path">/health</span>
+                </h3>
+                <p class="description">Kiểm tra trạng thái API server</p>
+
+                <h4>Request</h4>
+                <div class="code-block">
+<pre>GET /health
+Content-Type: application/json</pre>
+                </div>
+
+                <h4>Response (200 OK)</h4>
+                <div class="code-block">
+<pre>{
+  "status": "ok"
+}</pre>
+                </div>
+            </div>
+
+            <!-- Parse CCCD -->
+            <div class="endpoint">
+                <h3>
+                    <span class="method post">POST</span>
+                    <span class="path">/v1/cccd/parse</span>
+                </h3>
+                <p class="description">Parse số CCCD 12 chữ số để lấy thông tin</p>
+
+                <div class="warning-box">
+                    <strong>Lưu ý:</strong> Chỉ chấp nhận POST method. OPTIONS trả về 405.
+                </div>
+
+                <h4>Headers</h4>
+                <div class="params">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Header</th>
+                                <th>Type</th>
+                                <th>Required</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>X-API-Key</code></td>
+                                <td>string</td>
+                                <td><span class="badge required">Required</span></td>
+                                <td>API key để authenticate</td>
+                            </tr>
+                            <tr>
+                                <td><code>Content-Type</code></td>
+                                <td>string</td>
+                                <td><span class="badge required">Required</span></td>
+                                <td>Must be <code>application/json</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h4>Request Body</h4>
+                <div class="params">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Field</th>
+                                <th>Type</th>
+                                <th>Required</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>cccd</code></td>
+                                <td>string</td>
+                                <td><span class="badge required">Required</span></td>
+                                <td>Số CCCD 12 chữ số (pattern: <code>^[0-9]{12}$</code>)</td>
+                            </tr>
+                            <tr>
+                                <td><code>province_version</code></td>
+                                <td>string</td>
+                                <td><span class="badge optional">Optional</span></td>
+                                <td>Phiên bản mapping tỉnh/thành phố: <code>legacy_63</code> hoặc <code>current_34</code> (mặc định: <code>current_34</code>)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h4>Request Example</h4>
+                <div class="code-block">
+<pre>{
+  "cccd": "079203012345",
+  "province_version": "current_34"
+}</pre>
+                </div>
+
+                <h4>Response (200 OK)</h4>
+                <div class="response">
+                    <span class="status-code success">200 OK</span>
+                    <div class="code-block">
+<pre>{
+  "success": true,
+  "data": {
+    "province_code": "079",
+    "province_name": "Tp. Hồ Chí Minh",
+    "gender": "Nam",
+    "birth_year": 2003,
+    "century": 21,
+    "age": 21
+  },
+  "is_valid_format": true,
+  "is_plausible": true,
+  "province_version": "current_34",
+  "warnings": null
+}</pre>
+                    </div>
+                </div>
+
+                <h4>Response với Warnings</h4>
+                <div class="response">
+                    <span class="status-code success">200 OK</span>
+                    <div class="code-block">
+<pre>{
+  "success": true,
+  "data": {
+    "province_code": "079",
+    "province_name": null,
+    "gender": "Nam",
+    "birth_year": 2025,
+    "century": 21,
+    "age": null
+  },
+  "is_valid_format": true,
+  "is_plausible": false,
+  "province_version": "current_34",
+  "warnings": [
+    "province_code_not_found",
+    "birth_year_in_future"
+  ]
+}</pre>
+                    </div>
+                </div>
+
+                <h4>Error Responses</h4>
+                <div class="response">
+                    <span class="status-code error">400 Bad Request</span>
+                    <p style="margin: 10px 0;">CCCD format không hợp lệ hoặc thiếu field</p>
+                    <div class="code-block">
+<pre>{
+  "success": false,
+  "is_valid_format": false,
+  "data": null,
+  "message": "CCCD không hợp lệ (cần là chuỗi số, độ dài 12)."
+}</pre>
+                    </div>
+                </div>
+
+                <div class="response">
+                    <span class="status-code error">401 Unauthorized</span>
+                    <p style="margin: 10px 0;">API key không hợp lệ hoặc thiếu</p>
+                    <div class="code-block">
+<pre>{
+  "success": false,
+  "is_valid_format": false,
+  "data": null,
+  "message": "API key không hợp lệ hoặc thiếu."
+}</pre>
+                    </div>
+                </div>
+
+                <div class="response">
+                    <span class="status-code error">429 Too Many Requests</span>
+                    <p style="margin: 10px 0;">Vượt quá rate limit</p>
+                    <div class="code-block">
+<pre>{
+  "success": false,
+  "is_valid_format": false,
+  "data": null,
+  "message": "Quá nhiều request. Giới hạn: 10 per 1 minute"
+}</pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="rate-limits">
+            <h2>Rate Limits</h2>
+            <p>Rate limits được áp dụng theo tier của API key:</p>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                <thead>
+                    <tr>
+                        <th style="padding: 12px; background: #f8f9fa; border-bottom: 2px solid #e0e0e0;">Tier</th>
+                        <th style="padding: 12px; background: #f8f9fa; border-bottom: 2px solid #e0e0e0;">Requests per Minute</th>
+                        <th style="padding: 12px; background: #f8f9fa; border-bottom: 2px solid #e0e0e0;">Requests per Day</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;"><strong>Free</strong></td>
+                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;">10</td>
+                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;">1,000</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;"><strong>Premium</strong></td>
+                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;">100</td>
+                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;">Unlimited</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;"><strong>Ultra</strong></td>
+                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;">1,000</td>
+                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;">Unlimited</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box" style="margin-top: 20px;">
+                <strong>Rate Limit Headers:</strong><br>
+                Response headers chứa: <code>X-RateLimit-Remaining</code>, <code>X-RateLimit-Reset</code>, <code>Retry-After</code>
+            </div>
+        </section>
+
+        <section id="error-codes">
+            <h2>Error Codes</h2>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                <thead>
+                    <tr>
+                        <th style="padding: 12px; background: #f8f9fa; border-bottom: 2px solid #e0e0e0;">Status Code</th>
+                        <th style="padding: 12px; background: #f8f9fa; border-bottom: 2px solid #e0e0e0;">Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;"><span class="status-code success">200</span></td>
+                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;">Request thành công</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;"><span class="status-code error">400</span></td>
+                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;">Validation error - CCCD format không hợp lệ hoặc thiếu field</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;"><span class="status-code error">401</span></td>
+                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;">API key không hợp lệ hoặc thiếu</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;"><span class="status-code error">405</span></td>
+                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;">Method không được hỗ trợ (chỉ POST được phép cho /v1/cccd/parse)</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;"><span class="status-code error">429</span></td>
+                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;">Vượt quá rate limit</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;"><span class="status-code error">500</span></td>
+                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;">Lỗi server</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="examples">
+            <h2>Code Examples</h2>
+
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('python')">Python</button>
+                <button class="tab" onclick="showTab('javascript')">JavaScript</button>
+                <button class="tab" onclick="showTab('curl')">cURL</button>
+                <button class="tab" onclick="showTab('php')">PHP</button>
+            </div>
+
+            <div id="python" class="tab-content active">
+                <h3>Python (requests library)</h3>
+                <div class="code-block">
+<pre>import requests
+
+url = "http://127.0.0.1:8000/v1/cccd/parse"
+headers = {
+    "X-API-Key": "your-api-key-here",
+    "Content-Type": "application/json"
+}
+data = {
+    "cccd": "079203012345"
+}
+
+response = requests.post(url, json=data, headers=headers)
+print(response.json())</pre>
+                </div>
+
+                <h3>Using Python SDK</h3>
+                <div class="code-block">
+<pre>from sdk.python.cccd_api import CCCDAPI
+
+with CCCDAPI(api_key="your-api-key-here") as api:
+    result = api.parse("079203012345")
+    print(result.data['province_name'])  # Tp. Hồ Chí Minh</pre>
+                </div>
+            </div>
+
+            <div id="javascript" class="tab-content">
+                <h3>JavaScript (fetch API)</h3>
+                <div class="code-block">
+<pre>fetch('http://127.0.0.1:8000/v1/cccd/parse', {
+  method: 'POST',
+  headers: {
+    'X-API-Key': 'your-api-key-here',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    cccd: '079203012345'
+  })
+})
+.then(response => response.json())
+.then(data => console.log(data))
+.catch(error => console.error('Error:', error));</pre>
+                </div>
+            </div>
+
+            <div id="curl" class="tab-content">
+                <h3>cURL</h3>
+                <div class="code-block">
+<pre>curl -X POST http://127.0.0.1:8000/v1/cccd/parse \
+  -H "X-API-Key: your-api-key-here" \
+  -H "Content-Type: application/json" \
+  -d '{"cccd": "079203012345"}'</pre>
+                </div>
+            </div>
+
+            <div id="php" class="tab-content">
+                <h3>PHP (cURL)</h3>
+                <div class="code-block">
+<pre>&lt;?php
+$url = 'http://127.0.0.1:8000/v1/cccd/parse';
+$data = json_encode(['cccd' => '079203012345']);
+
+$ch = curl_init($url);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'X-API-Key: your-api-key-here',
+    'Content-Type: application/json'
+]);
+
+$response = curl_exec($ch);
+curl_close($ch);
+echo $response;
+?&gt;</pre>
+                </div>
+            </div>
+        </section>
+
+        <footer style="margin-top: 50px; padding-top: 30px; border-top: 2px solid #e0e0e0; color: #666; text-align: center;">
+            <p>CCCD API Documentation v1.0.0</p>
+            <p style="margin-top: 10px;">
+                <a href="/docs/api/README.md" style="color: #1976d2;">Full Documentation</a> |
+                <a href="/docs/api/ERROR_CODES.md" style="color: #1976d2;">Error Codes</a> |
+                <a href="/docs/api/RATE_LIMITS.md" style="color: #1976d2;">Rate Limits</a>
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>
