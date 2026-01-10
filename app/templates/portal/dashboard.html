@@ -70,11 +70,9 @@
                 <p style="margin: 8px 0 0; color: #856404;">
                     Vui lòng xác thực email để có thể tạo API key. 
                     Kiểm tra email hoặc 
-                    <form method="POST" action="{{ url_for('portal.resend_verification') }}" style="display: inline;">
-                        <button type="submit" style="background: none; border: none; color: #0b57d0; text-decoration: underline; cursor: pointer; padding: 0;">
-                            gửi lại email xác thực
-                        </button>
-                    </form>
+                    <a href="{{ url_for('portal.resend_verification') }}" style="color: #0b57d0; text-decoration: underline;">
+                        gửi lại email xác thực
+                    </a>
                 </p>
             </div>
             {% endif %}
