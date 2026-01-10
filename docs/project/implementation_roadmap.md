@@ -243,16 +243,12 @@ Tài liệu này track việc triển khai các tính năng ưu tiên đã đư�
   - [ ] Login, Logout
   - [ ] Register
   - [ ] Change password
-  - [ ] Update profile
   - [ ] Create API key
   - [ ] Delete API key
-  - [ ] Rotate API key
   - [ ] Update subscription
 - [ ] Log admin actions:
   - [ ] Approve payment
-  - [ ] Create key for user
-  - [ ] Deactivate key
-  - [ ] View sensitive data
+
 - [ ] Audit log UI:
   - [ ] Admin dashboard - view all audit logs
   - [ ] User dashboard - view own audit logs

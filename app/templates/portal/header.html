@@ -1,0 +1,109 @@
+<!-- Portal Header Navigation -->
+<header class="header" role="banner">
+    <div class="header-content container">
+        <div class="logo">
+            <a href="{{ url_for('portal.dashboard') }}" style="color: var(--color-primary); text-decoration: none;">
+                🚀 CCCD API
+            </a>
+        </div>
+        
+        <nav class="nav-desktop" role="navigation" aria-label="Main navigation">
+            <ul style="display: flex; list-style: none; gap: var(--spacing-2); align-items: center; margin: 0;">
+                <li>
+                    <a href="{{ url_for('portal.dashboard') }}" 
+                       class="nav-link {% if request.endpoint == 'portal.dashboard' %}active{% endif %}">
+                        Dashboard
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('portal.keys') }}" 
+                       class="nav-link {% if request.endpoint == 'portal.keys' %}active{% endif %}">
+                        API Keys
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('portal.usage') }}" 
+                       class="nav-link {% if request.endpoint == 'portal.usage' %}active{% endif %}">
+                        Usage
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('portal.billing') }}" 
+                       class="nav-link {% if request.endpoint == 'portal.billing' %}active{% endif %}">
+                        Billing
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('portal.upgrade') }}" 
+                       class="nav-link {% if request.endpoint == 'portal.upgrade' %}active{% endif %}">
+                        Upgrade
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        
+        <div class="user-info" style="display: flex; align-items: center; gap: var(--spacing-5);">
+            {% if session.user_id %}
+                <span class="user-name" style="color: var(--color-text-primary); font-weight: var(--font-weight-medium);">
+                    Xin chào, {{ session.user_name or session.user_email or 'User' }}
+                </span>
+                <a href="{{ url_for('portal.logout') }}" class="btn btn-secondary btn-sm">Đăng xuất</a>
+            {% else %}
+                <a href="{{ url_for('portal.login') }}" class="btn btn-secondary btn-sm">Đăng nhập</a>
+                <a href="{{ url_for('portal.register') }}" class="btn btn-primary btn-sm">Đăng ký</a>
+            {% endif %}
+        </div>
+    </div>
+</header>
+
+<style>
+.header {
+    background: var(--color-bg-primary);
+    padding: var(--spacing-5);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: var(--spacing-6);
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-4);
+}
+
+.logo {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-primary);
+}
+
+@media (max-width: 767px) {
+    .header {
+        padding: var(--spacing-4);
+    }
+    
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .nav-desktop {
+        width: 100%;
+    }
+    
+    .nav-desktop ul {
+        flex-direction: column;
+        width: 100%;
+        gap: var(--spacing-1);
+    }
+    
+    .user-info {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+</style>
