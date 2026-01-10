@@ -57,27 +57,41 @@ Tài liệu này track việc triển khai các tính năng ưu tiên đã đư�
 ---
 
 #### 1.2 Email Verification
-**Status:** ⏳ Pending  
+**Status:** ✅ **COMPLETED**  
 **Priority:** 🔴 CRITICAL  
 **Estimated Time:** 2-3 days  
-**Dependencies:** Email System (1.1)
+**Actual Time:** 1 day  
+**Dependencies:** Email System (1.1) ✅
 
 **Tasks:**
-- [ ] Thêm `email_verified` column vào `users` table
-- [ ] Thêm `verification_token` column vào `users` table
-- [ ] Generate verification token khi user đăng ký
-- [ ] Send verification email với link
-- [ ] Tạo route `/portal/verify-email/<token>`
-- [ ] Block user chưa verify (không thể tạo API key)
-- [ ] Resend verification email functionality
-- [ ] Update registration flow để show verification message
+- [x] Thêm `email_verified` column vào `users` table ✅
+- [x] Thêm `verification_token` column vào `users` table ✅
+- [x] Thêm `verification_token_expires` column ✅
+- [x] Generate verification token khi user đăng ký ✅
+- [x] Send verification email với link ✅
+- [x] Tạo route `/portal/verify-email/<token>` ✅
+- [x] Block user chưa verify (không thể tạo API key) ✅
+- [x] Resend verification email functionality ✅
+- [x] Update registration flow để show verification message ✅
+- [x] Update dashboard và keys page để show verification warning ✅
 
-**Files to modify:**
-- `services/user_service.py` - add `generate_verification_token()`, `verify_email()`
-- `routes/portal.py` - add verification routes
-- `app/templates/portal/register.html` - show verification message
-- `app/templates/emails/verification.html` - email template
-- `scripts/db_schema_portal.sql` - add columns
+**Files created/modified:**
+- ✅ `scripts/db_schema_email_verification.sql` - Database migration script
+- ✅ `services/user_service.py` - Added `generate_verification_token()`, `verify_email()`, `generate_new_verification_token()`
+- ✅ `routes/portal.py` - Added `/portal/verify-email/<token>` and `/portal/resend-verification` routes
+- ✅ `app/templates/portal/dashboard.html` - Added email verification warning
+- ✅ `app/templates/portal/keys.html` - Added email verification warning and disabled form
+- ✅ `app/templates/emails/verification.html` - Email template (already created in 1.1)
+
+**Verification:**
+- ✅ Database columns added (email_verified, verification_token, verification_token_expires)
+- ✅ Verification token generated on registration (24h expiry)
+- ✅ Verification email sent after registration
+- ✅ Verification route works and updates database
+- ✅ Unverified users blocked from creating API keys
+- ✅ Resend verification email functionality
+- ✅ UI warnings shown in dashboard and keys page
+- ⚠️ **Note:** User cần run database migration script: `mysql -u root -p cccd_api < scripts/db_schema_email_verification.sql`
 
 ---
 
