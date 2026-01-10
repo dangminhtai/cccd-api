@@ -139,28 +139,30 @@ Tài liệu này track việc triển khai các tính năng ưu tiên đã đư�
 ### Phase 2: API Key Management
 
 #### 2.1 API Key Rotation & Management
-**Status:** ✅ COMPLETED  
+**Status:** ✅ COMPLETED (Simplified)  
 **Priority:** 🔴 CRITICAL  
 **Estimated Time:** 4-5 days  
 **Actual Time:** ~4 days
 
 **Tasks:**
 - [x] Thêm `label` column vào `api_keys` table (để user đặt tên cho key)
-- [x] Thêm `rotated_from` column (track key rotation)
-- [x] API key rotation:
-  - [x] Tạo key mới
-  - [x] Set expiry cho key cũ (grace period 7 ngày)
-  - [x] Link key mới với key cũ
 - [x] Key management UI:
-  - [x] Edit key label
-  - [x] Suspend/Resume key (không xóa, chỉ tạm dừng)
-  - [x] View key usage per key
+  - [x] Edit key label (AJAX, không reload)
+  - [x] View key usage per key (modal với stats)
+  - [x] Delete key (hard delete, AJAX)
   - [ ] Export keys (backup) - **Deferred to future**
 - [x] Key expiration reminders:
   - [x] Email warning 7 ngày trước khi hết hạn
   - [x] Email warning 3 ngày trước khi hết hạn
   - [x] Email warning 1 ngày trước khi hết hạn
 - [x] Key history (track changes) - **Implemented via `api_key_history` table**
+
+**Removed Features (too complex for MVP):**
+- ❌ API key rotation (rotated_from column removed)
+- ❌ Suspend/Resume key (suspended_at column removed)
+- ❌ `rotate_key()`, `suspend_key()`, `resume_key()` functions removed
+
+**Note:** Simplified UI - users can only Edit Label, View Usage, and Delete keys. Rotate and Suspend features were removed as too complex for current users.
 
 **Files to modify:**
 - `services/api_key_service.py` - add rotation functions
