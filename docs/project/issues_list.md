@@ -502,3 +502,45 @@
   - **List queries**: Luôn filter theo status để không hiển thị deleted/inactive items
   - **AJAX cho actions**: Rotate, create, delete nên dùng AJAX để tránh reload page
   - **Test**: Verify delete thực sự xóa khỏi database (query trực tiếp), không chỉ hide trong UI
+
+---
+
+## 34) AJAX requests (delete, update_label, usage) bị 302 redirect → nhận HTML thay vì JSON
+
+- **Hiện tượng**: 
+  - Click "Xóa", "Edit Label", "Usage" → AJAX request trả về 302 redirect → nhận HTML (`<!doctype`) thay vì JSON
+  - JavaScript error: "Unexpected token '<', "<!doctype "... is not valid JSON"
+  - Status code 302 (redirect) thay vì 200 (success)
+- **Nguyên nhân**: 
+  - `require_login` decorator không detect được AJAX requests → luôn redirect về HTML login page
+  - Khi POST với FormData, browser không tự động set `X-Requested-With` header
+  - JavaScript không check content-type trước khi parse JSON → cố parse HTML thành JSON → lỗi
+  - Route `/keys/<id>/usage` có thể bị redirect nếu session expired
+- **Cách xử lý**: 
+  - **Sửa `require_login` decorator** để detect AJAX requests:
+    - Check `X-Requested-With: XMLHttpRequest` header
+    - Check `Accept: application/json` header
+    - Check `request.is_json`
+    - Check POST với action="delete" hoặc "update_label"
+    - Check path có chứa "/usage"
+    - Nếu là AJAX → return JSON 401 thay vì redirect HTML
+  - **Thêm headers** vào tất cả AJAX fetch requests:
+    ```javascript
+    headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+    }
+    ```
+  - **Check content-type** trong JavaScript trước khi parse JSON:
+    ```javascript
+    const contentType = res.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+        throw new Error(`Expected JSON but got ${contentType}`);
+    }
+    ```
+  - **Early return** trong route `keys()` để return JSON ngay khi action="delete"/"update_label" và user không tồn tại
+- **Cách tránh lần sau**: 
+  - **Luôn set headers** cho AJAX requests (`X-Requested-With`, `Accept: application/json`)
+  - **Decorator `require_login`** phải detect AJAX và return JSON thay vì redirect
+  - **JavaScript error handling** phải check content-type trước khi parse JSON
+  - **Test** với Network tab để verify response là JSON, không phải HTML redirect
+  - **Kiểm tra** redirects (302) trong browser DevTools để phát hiện sớm
