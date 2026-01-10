@@ -215,8 +215,27 @@ def delete_key_by_id(key_id: int, user_id: int) -> bool:
             if key_row is None:
                 return False  # Key không tồn tại hoặc không thuộc về user
             
-            # Log deletion before deleting
-            _log_key_history(key_id, "deleted", "exists", "deleted", user_id)
+            # Log deletion in the same transaction (using same connection to avoid deadlock)
+            try:
+                cursor.execute(
+                    """
+                    SELECT COUNT(*)
+                    FROM INFORMATION_SCHEMA.TABLES
+                    WHERE TABLE_SCHEMA = DATABASE()
+                    AND TABLE_NAME = 'api_key_history'
+                    """
+                )
+                if cursor.fetchone()["COUNT(*)"] > 0:
+                    cursor.execute(
+                        """
+                        INSERT INTO api_key_history (key_id, action, old_value, new_value, performed_by)
+                        VALUES (%s, %s, %s, %s, %s)
+                        """,
+                        (key_id, "deleted", "exists", "deleted", user_id),
+                    )
+            except Exception:
+                # Silently fail if history logging fails (non-critical)
+                pass
             
             # Hard delete - DELETE row khỏi database
             # Foreign key constraints sẽ tự động:
@@ -230,8 +249,17 @@ def delete_key_by_id(key_id: int, user_id: int) -> bool:
             affected = cursor.rowcount
             
         conn.commit()
+    except Exception as e:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        raise e
     finally:
-        conn.close()
+        try:
+            conn.close()
+        except Exception:
+            pass
     
     return affected > 0
 
@@ -442,16 +470,44 @@ def update_key_label(key_id: int, user_id: int, label: str | None) -> tuple[bool
                     """,
                     (label, key_id),
                 )
-                _log_key_history(key_id, "label_updated", old_label, label, user_id)
+                
+                # Log history using the same connection to avoid deadlock
+                try:
+                    # Check if api_key_history table exists
+                    cursor.execute(
+                        """
+                        SELECT COUNT(*)
+                        FROM INFORMATION_SCHEMA.TABLES
+                        WHERE TABLE_SCHEMA = DATABASE()
+                        AND TABLE_NAME = 'api_key_history'
+                        """
+                    )
+                    if cursor.fetchone()["COUNT(*)"] > 0:
+                        cursor.execute(
+                            """
+                            INSERT INTO api_key_history (key_id, action, old_value, new_value, performed_by)
+                            VALUES (%s, %s, %s, %s, %s)
+                            """,
+                            (key_id, "label_updated", old_label, label, user_id),
+                        )
+                except Exception:
+                    # Silently fail if history logging fails (non-critical)
+                    pass
             else:
                 return False, "Label feature chưa được kích hoạt"
         conn.commit()
         return True, None
     except Exception as e:
-        conn.rollback()
+        try:
+            conn.rollback()
+        except Exception:
+            pass
         return False, f"Lỗi khi update label: {str(e)}"
     finally:
-        conn.close()
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 def get_key_usage_per_key(key_id: int, user_id: int, days: int = 30) -> dict | None:
