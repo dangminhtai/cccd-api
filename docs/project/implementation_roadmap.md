@@ -139,27 +139,28 @@ Tài liệu này track việc triển khai các tính năng ưu tiên đã đư�
 ### Phase 2: API Key Management
 
 #### 2.1 API Key Rotation & Management
-**Status:** ⏳ Pending  
+**Status:** ✅ COMPLETED  
 **Priority:** 🔴 CRITICAL  
-**Estimated Time:** 4-5 days
+**Estimated Time:** 4-5 days  
+**Actual Time:** ~4 days
 
 **Tasks:**
-- [ ] Thêm `label` column vào `api_keys` table (để user đặt tên cho key)
-- [ ] Thêm `rotated_from` column (track key rotation)
-- [ ] API key rotation:
-  - [ ] Tạo key mới
-  - [ ] Set expiry cho key cũ (grace period 7 ngày)
-  - [ ] Link key mới với key cũ
-- [ ] Key management UI:
-  - [ ] Edit key label
-  - [ ] Suspend/Resume key (không xóa, chỉ tạm dừng)
-  - [ ] View key usage per key
-  - [ ] Export keys (backup)
-- [ ] Key expiration reminders:
-  - [ ] Email warning 7 ngày trước khi hết hạn
-  - [ ] Email warning 3 ngày trước khi hết hạn
-  - [ ] Email warning 1 ngày trước khi hết hạn
-- [ ] Key history (track changes)
+- [x] Thêm `label` column vào `api_keys` table (để user đặt tên cho key)
+- [x] Thêm `rotated_from` column (track key rotation)
+- [x] API key rotation:
+  - [x] Tạo key mới
+  - [x] Set expiry cho key cũ (grace period 7 ngày)
+  - [x] Link key mới với key cũ
+- [x] Key management UI:
+  - [x] Edit key label
+  - [x] Suspend/Resume key (không xóa, chỉ tạm dừng)
+  - [x] View key usage per key
+  - [ ] Export keys (backup) - **Deferred to future**
+- [x] Key expiration reminders:
+  - [x] Email warning 7 ngày trước khi hết hạn
+  - [x] Email warning 3 ngày trước khi hết hạn
+  - [x] Email warning 1 ngày trước khi hết hạn
+- [x] Key history (track changes) - **Implemented via `api_key_history` table**
 
 **Files to modify:**
 - `services/api_key_service.py` - add rotation functions

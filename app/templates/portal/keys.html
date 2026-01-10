@@ -146,6 +146,7 @@
             <table class="keys-table">
                 <thead>
                     <tr>
+                        <th>Label</th>
                         <th>Key Prefix</th>
                         <th>Tier</th>
                         <th>Trạng thái</th>
@@ -156,12 +157,27 @@
                 </thead>
                 <tbody>
                     {% for key in api_keys %}
-                    <tr>
-                        <td><code>{{ key.key_prefix }}...</code></td>
+                    <tr data-key-id="{{ key.id }}">
+                        <td>
+                            <span class="key-label-display" data-key-id="{{ key.id }}">
+                                {{ key.label or '(Không có label)' }}
+                            </span>
+                            <form method="POST" action="{{ url_for('portal.keys') }}" class="key-label-form" data-key-id="{{ key.id }}" style="display: none;">
+                                <input type="hidden" name="action" value="update_label">
+                                <input type="hidden" name="key_id" value="{{ key.id }}">
+                                <input type="text" name="label" value="{{ key.label or '' }}" placeholder="Nhập label..." maxlength="100" style="padding: 6px; border: 1px solid #ddd; border-radius: 4px; width: 150px;">
+                                <button type="submit" class="btn" style="padding: 6px 12px; font-size: 12px; margin-left: 4px;">Lưu</button>
+                                <button type="button" class="btn btn-secondary cancel-label-edit" style="padding: 6px 12px; font-size: 12px; margin-left: 4px;">Hủy</button>
+                            </form>
+                            <button class="btn-edit-label" data-key-id="{{ key.id }}" style="padding: 4px 8px; font-size: 11px; background: #6c757d; color: white; border: 0; border-radius: 4px; cursor: pointer; margin-left: 4px;">✏️</button>
+                        </td>
+                        <td><code>{{ key.key_prefix }}...</code>{% if key.rotated_from %}<br><small style="color: #666;">Rotated from key #{{ key.rotated_from }}</small>{% endif %}</td>
                         <td><span class="badge badge-{{ key.tier }}">{{ key.tier|upper }}</span></td>
                         <td>
                             {% if key.expired %}
                                 <span class="badge badge-expired">Hết hạn</span>
+                            {% elif key.suspended %}
+                                <span class="badge badge-inactive">Đã suspend</span>
                             {% elif key.active %}
                                 <span class="badge badge-active">Hoạt động</span>
                             {% else %}
@@ -171,15 +187,26 @@
                         <td>{{ key.created_at.strftime('%d/%m/%Y') if key.created_at else 'N/A' }}</td>
                         <td>{{ key.expires_at.strftime('%d/%m/%Y') if key.expires_at else 'Vĩnh viễn' }}</td>
                         <td>
-                            {% if key.active %}
-                            <form method="POST" action="{{ url_for('portal.keys') }}" style="display: inline;">
-                                <input type="hidden" name="action" value="delete">
-                                <input type="hidden" name="key_id" value="{{ key.id }}">
-                                <button type="submit" class="btn btn-danger" onclick="return confirm('Bạn có chắc muốn xóa key này?')">Xóa</button>
-                            </form>
-                            {% else %}
-                            <span style="color: #999;">-</span>
-                            {% endif %}
+                            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                                {% if key.active and not key.expired %}
+                                <form method="POST" action="{{ url_for('portal.rotate_key', key_id=key.id) }}" style="display: inline;">
+                                    <button type="submit" class="btn" style="padding: 6px 12px; font-size: 12px;" onclick="return confirm('Rotate key này? Key mới sẽ được tạo, key cũ hết hạn sau 7 ngày.')">🔄 Rotate</button>
+                                </form>
+                                <form method="POST" action="{{ url_for('portal.suspend_key', key_id=key.id) }}" style="display: inline;">
+                                    <button type="submit" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="return confirm('Suspend key này?')">⏸️ Suspend</button>
+                                </form>
+                                <button class="btn" style="padding: 6px 12px; font-size: 12px; background: #17a2b8;" onclick="showKeyUsage({{ key.id }})">📊 Usage</button>
+                                {% elif key.suspended %}
+                                <form method="POST" action="{{ url_for('portal.resume_key', key_id=key.id) }}" style="display: inline;">
+                                    <button type="submit" class="btn" style="padding: 6px 12px; font-size: 12px;">▶️ Resume</button>
+                                </form>
+                                {% endif %}
+                                <form method="POST" action="{{ url_for('portal.keys') }}" style="display: inline;">
+                                    <input type="hidden" name="action" value="delete">
+                                    <input type="hidden" name="key_id" value="{{ key.id }}">
+                                    <button type="submit" class="btn btn-danger" style="padding: 6px 12px; font-size: 12px;" onclick="return confirm('Bạn có chắc muốn xóa key này?')">🗑️ Xóa</button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
@@ -191,6 +218,17 @@
                 <p>Tạo API key đầu tiên của bạn ở trên để bắt đầu sử dụng API.</p>
             </div>
             {% endif %}
+        </div>
+    </div>
+    
+    <!-- Modal for key usage -->
+    <div id="usage-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 30px; border-radius: 12px; max-width: 800px; max-height: 80vh; overflow-y: auto; position: relative;">
+            <button onclick="closeUsageModal()" style="position: absolute; top: 10px; right: 10px; background: #f0f0f0; border: 0; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 18px;">×</button>
+            <h3 id="usage-modal-title">Key Usage Stats</h3>
+            <div id="usage-modal-content">
+                <p>Loading...</p>
+            </div>
         </div>
     </div>
     
@@ -211,6 +249,109 @@
                 alert('✅ Đã copy API key vào clipboard!');
             });
         }
+        
+        // Edit label functionality
+        document.querySelectorAll('.btn-edit-label').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const keyId = this.dataset.keyId;
+                const display = document.querySelector(`.key-label-display[data-key-id="${keyId}"]`);
+                const form = document.querySelector(`.key-label-form[data-key-id="${keyId}"]`);
+                display.style.display = 'none';
+                form.style.display = 'inline-block';
+                this.style.display = 'none';
+            });
+        });
+        
+        document.querySelectorAll('.cancel-label-edit').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const form = this.closest('.key-label-form');
+                const keyId = form.dataset.keyId;
+                const display = document.querySelector(`.key-label-display[data-key-id="${keyId}"]`);
+                const editBtn = document.querySelector(`.btn-edit-label[data-key-id="${keyId}"]`);
+                display.style.display = 'inline';
+                form.style.display = 'none';
+                editBtn.style.display = 'inline-block';
+            });
+        });
+        
+        // Key usage modal
+        function showKeyUsage(keyId) {
+            const modal = document.getElementById('usage-modal');
+            const content = document.getElementById('usage-modal-content');
+            const title = document.getElementById('usage-modal-title');
+            
+            modal.style.display = 'flex';
+            content.innerHTML = '<p>Loading...</p>';
+            
+            fetch(`/portal/keys/${keyId}/usage?days=30`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) {
+                        content.innerHTML = `<p style="color: red;">${data.error}</p>`;
+                        return;
+                    }
+                    
+                    title.textContent = `Usage Stats: ${data.key_prefix}... (${data.tier})`;
+                    
+                    let html = `
+                        <div style="margin-bottom: 20px;">
+                            <p><strong>Total Requests:</strong> ${data.total_requests.toLocaleString()}</p>
+                            <p><strong>Success:</strong> ${data.success_requests.toLocaleString()}</p>
+                            <p><strong>Errors:</strong> ${data.error_requests.toLocaleString()}</p>
+                            <p><strong>Avg Response Time:</strong> ${data.avg_response_time_ms.toFixed(2)} ms</p>
+                        </div>
+                        <h4>Daily Stats (Last 30 days):</h4>
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                            <thead>
+                                <tr style="background: #f8f9fa;">
+                                    <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Date</th>
+                                    <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Requests</th>
+                                    <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Success</th>
+                                    <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Errors</th>
+                                    <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Avg Time (ms)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    
+                    if (data.daily_stats && data.daily_stats.length > 0) {
+                        data.daily_stats.forEach(stat => {
+                            html += `
+                                <tr>
+                                    <td style="padding: 8px; border: 1px solid #ddd;">${stat.date}</td>
+                                    <td style="padding: 8px; border: 1px solid #ddd;">${stat.count}</td>
+                                    <td style="padding: 8px; border: 1px solid #ddd;">${stat.success}</td>
+                                    <td style="padding: 8px; border: 1px solid #ddd;">${stat.error}</td>
+                                    <td style="padding: 8px; border: 1px solid #ddd;">${stat.avg_response_time.toFixed(2)}</td>
+                                </tr>
+                            `;
+                        });
+                    } else {
+                        html += '<tr><td colspan="5" style="padding: 8px; text-align: center; color: #999;">No data</td></tr>';
+                    }
+                    
+                    html += `
+                            </tbody>
+                        </table>
+                    `;
+                    
+                    content.innerHTML = html;
+                })
+                .catch(err => {
+                    content.innerHTML = `<p style="color: red;">Error loading usage stats: ${err.message}</p>`;
+                });
+        }
+        
+        function closeUsageModal() {
+            document.getElementById('usage-modal').style.display = 'none';
+        }
+        
+        // Close modal when clicking outside
+        document.getElementById('usage-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeUsageModal();
+            }
+        });
     </script>
 </body>
 </html>

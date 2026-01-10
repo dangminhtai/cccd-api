@@ -110,7 +110,7 @@ Tạo trang web để khách hàng có thể:
 - [X] Frontend: Billing history page (`billing.html`)
 - [X] Frontend: Upgrade tier page (`upgrade.html`)
 - [X] Manual payment flow (admin approve)
-- [ ] (Optional) Payment gateway integration (Stripe) - sau MVP
+- [X] (Optional) Payment gateway integration (Stripe) - sau MVP
 
 ## Tech Stack
 

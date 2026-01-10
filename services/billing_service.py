@@ -400,7 +400,7 @@ def approve_payment_admin(payment_id: int) -> tuple[bool, Optional[str]]:
             finally:
                 verify_conn.close()
             
-            return True, f"Đã approve payment và extend {keys_extended} API key(s)"
+            return True, f"Đã approve payment và đồng bộ {keys_updated} API key(s) với subscription (hết hạn: {expires_at.strftime('%Y-%m-%d')})"
             
         except Exception as e:
             # Rollback nếu có lỗi

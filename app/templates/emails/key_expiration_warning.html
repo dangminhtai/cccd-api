@@ -1,0 +1,21 @@
+{% extends "emails/base.html" %}
+
+{% block content %}
+<h2>⚠️ Cảnh báo: API Key sắp hết hạn</h2>
+
+<p>Xin chào {{ to_name }},</p>
+
+<p>API Key của bạn <strong>{{ key_prefix }}...</strong> (Tier: {{ tier }}) sẽ hết hạn sau <strong>{{ days_remaining }} ngày</strong> (vào ngày {{ expiration_date }}).</p>
+
+<p>Khi key hết hạn, bạn sẽ không thể sử dụng API nữa. Vui lòng:</p>
+<ul>
+    <li>Rotate key để tạo key mới (key cũ sẽ có grace period 7 ngày)</li>
+    <li>Hoặc tạo key mới từ <a href="{{ keys_url }}">trang quản lý API Keys</a></li>
+</ul>
+
+<p><a href="{{ keys_url }}" style="display: inline-block; padding: 12px 24px; background: #667eea; color: white; text-decoration: none; border-radius: 6px; margin-top: 20px;">Quản lý API Keys</a></p>
+
+<p>Nếu bạn không muốn nhận email này nữa, vui lòng liên hệ hỗ trợ.</p>
+
+<p>Trân trọng,<br>CCCD API Team</p>
+{% endblock %}

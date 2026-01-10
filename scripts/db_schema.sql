@@ -46,3 +46,5 @@ INSERT INTO tier_config (tier, rate_limit_per_minute, rate_limit_per_day, descri
     ('ultra', 1000, NULL, 'Ultra tier - 1000 req/min, unlimited/day')
 ON DUPLICATE KEY UPDATE tier=tier;
 
+-- Optional: Request Logs Table (chỉ tạo nếu muốn database logging)
+-- Xem scripts/db_schema_logs.sql để tạo bảng request_logs

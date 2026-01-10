@@ -30,4 +30,3 @@ def test_500():
         return jsonify({"message": "Only available in development"}), 403
     raise RuntimeError("This is a test error for step 7")
 
-

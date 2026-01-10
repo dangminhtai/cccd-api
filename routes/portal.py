@@ -510,6 +510,23 @@ def keys():
                     flash(f"Lỗi khi xóa API key: {str(e)}", "error")
             
             return redirect(url_for("portal.keys"))
+        
+        elif action == "update_label":
+            key_id = request.form.get("key_id")
+            label = request.form.get("label", "").strip()
+            if key_id:
+                try:
+                    key_id_int = int(key_id)
+                    from services.api_key_service import update_key_label
+                    success, error_msg = update_key_label(key_id_int, user_id, label if label else None)
+                    if success:
+                        flash("Đã cập nhật label thành công", "success")
+                    else:
+                        flash(error_msg or "Lỗi khi cập nhật label", "error")
+                except (ValueError, Exception) as e:
+                    flash(f"Lỗi khi cập nhật label: {str(e)}", "error")
+            
+            return redirect(url_for("portal.keys"))
     
     # GET: List keys
     from services.api_key_service import get_user_api_keys
@@ -527,6 +544,90 @@ def keys():
         current_tier=current_tier,
         email_verified=user.get("email_verified", False) if user else False,
     )
+
+
+@portal_bp.route("/keys/<int:key_id>/rotate", methods=["POST"])
+@require_login
+def rotate_key(key_id: int):
+    """Rotate API key"""
+    user_id = session.get("user_id")
+    if not user_id:
+        flash("Vui lòng đăng nhập", "error")
+        return redirect(url_for("portal.login"))
+    
+    from services.api_key_service import rotate_key as rotate_key_service
+    success, error_msg, new_key = rotate_key_service(key_id, user_id)
+    
+    if success and new_key:
+        session["new_api_key"] = new_key
+        flash("Rotate key thành công! Key mới đã được tạo. Key cũ sẽ hết hạn sau 7 ngày.", "success")
+    else:
+        flash(error_msg or "Lỗi khi rotate key", "error")
+    
+    return redirect(url_for("portal.keys"))
+
+
+@portal_bp.route("/keys/<int:key_id>/suspend", methods=["POST"])
+@require_login
+def suspend_key(key_id: int):
+    """Suspend API key"""
+    user_id = session.get("user_id")
+    if not user_id:
+        flash("Vui lòng đăng nhập", "error")
+        return redirect(url_for("portal.login"))
+    
+    from services.api_key_service import suspend_key as suspend_key_service
+    success, error_msg = suspend_key_service(key_id, user_id)
+    
+    if success:
+        flash("Đã suspend key thành công", "success")
+    else:
+        flash(error_msg or "Lỗi khi suspend key", "error")
+    
+    return redirect(url_for("portal.keys"))
+
+
+@portal_bp.route("/keys/<int:key_id>/resume", methods=["POST"])
+@require_login
+def resume_key(key_id: int):
+    """Resume API key"""
+    user_id = session.get("user_id")
+    if not user_id:
+        flash("Vui lòng đăng nhập", "error")
+        return redirect(url_for("portal.login"))
+    
+    from services.api_key_service import resume_key as resume_key_service
+    success, error_msg = resume_key_service(key_id, user_id)
+    
+    if success:
+        flash("Đã resume key thành công", "success")
+    else:
+        flash(error_msg or "Lỗi khi resume key", "error")
+    
+    return redirect(url_for("portal.keys"))
+
+
+@portal_bp.route("/keys/<int:key_id>/usage")
+@require_login
+def key_usage(key_id: int):
+    """Get usage stats for a specific key (JSON API)"""
+    user_id = session.get("user_id")
+    if not user_id:
+        from flask import jsonify
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    days = request.args.get("days", "30", type=int)
+    if days not in (7, 30, 90, 365):
+        days = 30
+    
+    from services.api_key_service import get_key_usage_per_key
+    from flask import jsonify
+    
+    usage = get_key_usage_per_key(key_id, user_id, days=days)
+    if usage is None:
+        return jsonify({"error": "Key not found or access denied"}), 404
+    
+    return jsonify(usage)
 
 
 @portal_bp.route("/usage")

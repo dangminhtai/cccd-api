@@ -186,3 +186,33 @@ def send_password_reset_email(to_email: str, to_name: str, reset_url: str) -> bo
     except Exception as e:
         logger.error(f"Error sending password reset email: {str(e)}", exc_info=True)
         return False
+
+
+def send_key_expiration_warning_email(
+    to_email: str,
+    to_name: str,
+    key_prefix: str,
+    tier: str,
+    days_remaining: int,
+    expiration_date: str,
+    keys_url: str,
+) -> bool:
+    """Send key expiration warning email"""
+    try:
+        from flask import render_template
+        
+        subject = f"⚠️ Cảnh báo: API Key sắp hết hạn sau {days_remaining} ngày - CCCD API"
+        html_content = render_template(
+            "emails/key_expiration_warning.html",
+            to_name=to_name,
+            key_prefix=key_prefix,
+            tier=tier,
+            days_remaining=days_remaining,
+            expiration_date=expiration_date,
+            keys_url=keys_url,
+        )
+        
+        return send_email(to_email, subject, html_content, to_name=to_name)
+    except Exception as e:
+        logger.error(f"Error sending key expiration warning email: {str(e)}", exc_info=True)
+        return False
