@@ -3,9 +3,24 @@ Portal routes - Customer-facing web portal
 """
 from __future__ import annotations
 
+from datetime import datetime
+
 from flask import Blueprint, current_app, flash, redirect, render_template, request, session, url_for
 
-from services.user_service import authenticate_user, get_user_by_id, get_user_subscription, register_user
+import os
+import pymysql
+
+from app import limiter
+from services.email_service import send_password_reset_email
+from services.user_service import (
+    authenticate_user,
+    get_user_by_id,
+    get_user_subscription,
+    invalidate_user_sessions,
+    register_user,
+    request_password_reset,
+    reset_password as reset_password_service,
+)
 
 portal_bp = Blueprint("portal", __name__, url_prefix="/portal")
 
@@ -102,6 +117,165 @@ def register():
             return render_template("portal/register.html")
     
     return render_template("portal/register.html")
+
+
+def _get_password_reset_rate_limit_key():
+    """Get rate limit key for password reset - based on email"""
+    email = request.form.get("email", "").strip()
+    if email:
+        return f"pwd_reset:{email}"
+    # Fallback to IP if no email (shouldn't happen, but safety)
+    from flask_limiter.util import get_remote_address
+    return f"pwd_reset_ip:{get_remote_address()}"
+
+
+@portal_bp.route("/forgot-password", methods=["GET", "POST"])
+@limiter.limit("3 per hour", key_func=_get_password_reset_rate_limit_key)
+def forgot_password():
+    """Quên mật khẩu - Request password reset"""
+    if request.method == "POST":
+        email = request.form.get("email", "").strip()
+        
+        if not email:
+            flash("Vui lòng nhập email", "error")
+            return render_template("portal/forgot_password.html")
+        
+        # Basic email validation
+        if "@" not in email or "." not in email.split("@")[-1]:
+            flash("Email không hợp lệ", "error")
+            return render_template("portal/forgot_password.html")
+        
+        # Request password reset
+        success, error_msg, reset_token = request_password_reset(email)
+        
+        if success and reset_token:
+            # Get user info for email
+            conn = pymysql.connect(
+                host=os.getenv("MYSQL_HOST", "localhost"),
+                port=int(os.getenv("MYSQL_PORT", "3306")),
+                user=os.getenv("MYSQL_USER", "root"),
+                password=os.getenv("MYSQL_PASSWORD", ""),
+                database=os.getenv("MYSQL_DATABASE", "cccd_api"),
+                cursorclass=pymysql.cursors.DictCursor,
+            )
+            try:
+                with conn.cursor() as cursor:
+                    cursor.execute("SELECT id, email, full_name FROM users WHERE email = %s", (email,))
+                    user = cursor.fetchone()
+                    
+                    if user:
+                        # Send reset email
+                        base_url = os.getenv("BASE_URL", "http://localhost:8000")
+                        reset_url = f"{base_url}/portal/reset-password/{reset_token}"
+                        
+                        email_sent = send_password_reset_email(
+                            to_email=user["email"],
+                            to_name=user["full_name"],
+                            reset_url=reset_url
+                        )
+                        
+                        if email_sent:
+                            flash("Đã gửi email đặt lại mật khẩu. Vui lòng kiểm tra hộp thư (có thể trong Spam)", "success")
+                        else:
+                            flash("Không thể gửi email. Vui lòng thử lại sau hoặc liên hệ hỗ trợ", "error")
+            except Exception:
+                pass  # Don't reveal if email exists
+            finally:
+                conn.close()
+        elif error_msg:
+            flash(error_msg, "error")
+        else:
+            # Don't reveal if email exists (security)
+            flash("Nếu email tồn tại, bạn sẽ nhận được link đặt lại mật khẩu", "success")
+        
+        return redirect(url_for("portal.login"))
+    
+    return render_template("portal/forgot_password.html")
+
+
+@portal_bp.route("/reset-password/<token>", methods=["GET", "POST"])
+def reset_password(token: str):
+    """Đặt lại mật khẩu với token"""
+    if request.method == "POST":
+        new_password = request.form.get("password", "")
+        confirm_password = request.form.get("confirm_password", "")
+        
+        if not new_password or not confirm_password:
+            flash("Vui lòng điền đầy đủ thông tin", "error")
+            return render_template("portal/reset_password.html", token=token)
+        
+        if new_password != confirm_password:
+            flash("Mật khẩu xác nhận không khớp", "error")
+            return render_template("portal/reset_password.html", token=token)
+        
+        # Validate password length
+        if len(new_password) < 8:
+            flash("Mật khẩu phải có ít nhất 8 ký tự", "error")
+            return render_template("portal/reset_password.html", token=token)
+        
+        if len(new_password) > 100:
+            flash("Mật khẩu quá dài (tối đa 100 ký tự)", "error")
+            return render_template("portal/reset_password.html", token=token)
+        
+        # Reset password
+        success, error_msg, user_id = reset_password_service(token, new_password)
+        
+        if success and user_id:
+            # Invalidate all sessions
+            invalidate_user_sessions(user_id)
+            
+            flash("Đặt lại mật khẩu thành công! Vui lòng đăng nhập với mật khẩu mới", "success")
+            return redirect(url_for("portal.login"))
+        else:
+            flash(error_msg or "Đặt lại mật khẩu thất bại", "error")
+            return render_template("portal/reset_password.html", token=token)
+    
+    # GET: Show reset form - Validate token first
+    try:
+        conn = pymysql.connect(
+            host=os.getenv("MYSQL_HOST", "localhost"),
+            port=int(os.getenv("MYSQL_PORT", "3306")),
+            user=os.getenv("MYSQL_USER", "root"),
+            password=os.getenv("MYSQL_PASSWORD", ""),
+            database=os.getenv("MYSQL_DATABASE", "cccd_api"),
+            cursorclass=pymysql.cursors.DictCursor,
+        )
+        try:
+            with conn.cursor() as cursor:
+                try:
+                    cursor.execute(
+                        """
+                        SELECT id, password_reset_expires, status
+                        FROM users
+                        WHERE password_reset_token = %s
+                        """,
+                        (token,),
+                    )
+                except Exception:
+                    # Columns don't exist
+                    flash("Password reset feature chưa được kích hoạt", "error")
+                    return redirect(url_for("portal.login"))
+                
+                user = cursor.fetchone()
+                
+                if not user:
+                    flash("Token không hợp lệ hoặc đã hết hạn", "error")
+                    return redirect(url_for("portal.login"))
+                
+                if user["status"] != "active":
+                    flash("Tài khoản đã bị khóa", "error")
+                    return redirect(url_for("portal.login"))
+                
+                if user["password_reset_expires"] and user["password_reset_expires"] < datetime.now():
+                    flash("Token đã hết hạn. Vui lòng yêu cầu lại", "error")
+                    return redirect(url_for("portal.forgot_password"))
+        finally:
+            conn.close()
+    except Exception:
+        flash("Có lỗi xảy ra. Vui lòng thử lại", "error")
+        return redirect(url_for("portal.login"))
+    
+    return render_template("portal/reset_password.html", token=token)
 
 
 @portal_bp.route("/login", methods=["GET", "POST"])

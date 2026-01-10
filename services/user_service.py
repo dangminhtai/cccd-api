@@ -304,6 +304,148 @@ def get_user_by_id(user_id: int) -> Optional[dict]:
         return None
 
 
+def generate_password_reset_token() -> str:
+    """Generate secure password reset token"""
+    return secrets.token_urlsafe(32)
+
+
+def request_password_reset(email: str) -> Tuple[bool, Optional[str], Optional[str]]:
+    """
+    Request password reset cho user
+    
+    Returns:
+        (success, error_message, reset_token)
+    """
+    try:
+        conn = _get_db_connection()
+        try:
+            with conn.cursor() as cursor:
+                # Check if user exists
+                try:
+                    cursor.execute(
+                        """
+                        SELECT id, email, full_name, status
+                        FROM users
+                        WHERE email = %s
+                        """,
+                        (email,),
+                    )
+                except Exception:
+                    return False, "Lỗi hệ thống", None
+                
+                user = cursor.fetchone()
+                
+                # Always return success (security: don't reveal if email exists)
+                if not user:
+                    return True, None, None
+                
+                if user["status"] != "active":
+                    return True, None, None  # Don't reveal account status
+                
+                # Generate reset token
+                reset_token = generate_password_reset_token()
+                reset_expires = datetime.now() + timedelta(hours=1)  # 1 hour expiry
+                
+                # Update user with reset token
+                try:
+                    cursor.execute(
+                        """
+                        UPDATE users 
+                        SET password_reset_token = %s, 
+                            password_reset_expires = %s
+                        WHERE id = %s
+                        """,
+                        (reset_token, reset_expires, user["id"]),
+                    )
+                except Exception:
+                    # Columns might not exist, return False
+                    return False, "Password reset feature chưa được kích hoạt. Vui lòng liên hệ hỗ trợ", None
+                
+                conn.commit()
+                return True, None, reset_token
+        finally:
+            conn.close()
+    except Exception as e:
+        logger.error(f"Error requesting password reset: {str(e)}", exc_info=True)
+        return False, f"Lỗi hệ thống: {str(e)}", None
+
+
+def reset_password(token: str, new_password: str) -> Tuple[bool, Optional[str], Optional[int]]:
+    """
+    Reset password với token
+    
+    Returns:
+        (success, error_message, user_id)
+    """
+    try:
+        conn = _get_db_connection()
+        try:
+            with conn.cursor() as cursor:
+                # Check if token exists and not expired
+                try:
+                    cursor.execute(
+                        """
+                        SELECT id, email, password_reset_expires, status
+                        FROM users
+                        WHERE password_reset_token = %s
+                        """,
+                        (token,),
+                    )
+                except Exception:
+                    # Columns might not exist
+                    return False, "Password reset feature chưa được kích hoạt. Vui lòng liên hệ hỗ trợ", None
+                
+                user = cursor.fetchone()
+                
+                if not user:
+                    return False, "Token không hợp lệ hoặc đã hết hạn", None
+                
+                if user["status"] != "active":
+                    return False, "Tài khoản đã bị khóa", None
+                
+                # Check token expiry
+                if user["password_reset_expires"] and user["password_reset_expires"] < datetime.now():
+                    return False, "Token đã hết hạn. Vui lòng yêu cầu lại", None
+                
+                # Hash new password
+                password_hash = hash_password(new_password)
+                
+                # Update password and clear reset token
+                cursor.execute(
+                    """
+                    UPDATE users 
+                    SET password_hash = %s, 
+                        password_reset_token = NULL,
+                        password_reset_expires = NULL
+                    WHERE id = %s
+                    """,
+                    (password_hash, user["id"]),
+                )
+                conn.commit()
+                
+                return True, None, user["id"]
+        finally:
+            conn.close()
+    except Exception as e:
+        logger.error(f"Error resetting password: {str(e)}", exc_info=True)
+        return False, f"Lỗi hệ thống: {str(e)}", None
+
+
+def invalidate_user_sessions(user_id: int) -> bool:
+    """
+    Invalidate all sessions cho user (sau khi reset password)
+    Note: Flask sessions are stored client-side, so we can't directly invalidate them
+    This function is a placeholder for future implementation (e.g., storing session IDs in DB)
+    
+    Returns:
+        success
+    """
+    # TODO: Implement session management if needed
+    # For now, sessions will be invalidated when user tries to use them (password check fails)
+    logger.info(f"Password reset for user {user_id} - sessions should be invalidated on next login attempt")
+    return True
+
+
 def get_user_subscription(user_id: int) -> Optional[dict]:
     """Lấy subscription hiện tại của user"""
     try:
