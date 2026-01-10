@@ -307,3 +307,23 @@ def admin_approve_payment(payment_id: int):
     
     return redirect(url_for("admin.admin_dashboard"))
 
+
+@admin_bp.get("/demo")
+def admin_demo():
+    """Trang demo để test API (chỉ dành cho Admin)"""
+    from flask import current_app
+    
+    settings = current_app.config.get("SETTINGS")
+    api_key_required = settings.api_key is not None
+    configured_key = settings.api_key or "chưa cấu hình"
+    
+    # Lấy admin key từ query parameter hoặc header để hiển thị trong template
+    admin_key = request.args.get("admin_key") or request.headers.get("X-Admin-Key")
+    
+    return render_template(
+        "demo.html",
+        api_key_required=api_key_required,
+        configured_key=configured_key,
+        admin_key_provided=bool(admin_key),
+    )
+
