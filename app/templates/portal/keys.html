@@ -270,9 +270,25 @@
                 
                 fetch('/portal/keys', {
                     method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
                     body: formData
                 })
-                .then(res => res.json())
+                .then(res => {
+                    const contentType = res.headers.get("content-type") || "";
+                    if (!contentType.includes("application/json")) {
+                        return res.text().then(text => {
+                            throw new Error(`Expected JSON but got ${contentType}. Response: ${text.substring(0, 200)}`);
+                        });
+                    }
+                    if (!res.ok && res.status !== 200) {
+                        return res.json().then(data => {
+                            throw new Error(data.error || `HTTP ${res.status}`);
+                        });
+                    }
+                    return res.json();
+                })
                 .then(data => {
                     if (data.success) {
                         const display = document.querySelector(`.key-label-display[data-key-id="${keyId}"]`);
@@ -292,6 +308,7 @@
                 })
                 .catch(err => {
                     alert('Lỗi: ' + err.message);
+                    console.error('Update label error:', err);
                 });
             });
         });
@@ -310,9 +327,25 @@
                 
                 fetch('/portal/keys', {
                     method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
                     body: formData
                 })
-                .then(res => res.json())
+                .then(res => {
+                    const contentType = res.headers.get("content-type") || "";
+                    if (!contentType.includes("application/json")) {
+                        return res.text().then(text => {
+                            throw new Error(`Expected JSON but got ${contentType}. Response: ${text.substring(0, 200)}`);
+                        });
+                    }
+                    if (!res.ok && res.status !== 200) {
+                        return res.json().then(data => {
+                            throw new Error(data.error || `HTTP ${res.status}`);
+                        });
+                    }
+                    return res.json();
+                })
                 .then(data => {
                     if (data.success) {
                         showFlashMessage(data.message || 'Đã xóa API key thành công', 'success');
@@ -332,6 +365,7 @@
                 })
                 .catch(err => {
                     alert('Lỗi: ' + err.message);
+                    console.error('Delete key error:', err);
                 });
             });
         });
@@ -376,22 +410,62 @@
             modal.style.display = 'flex';
             content.innerHTML = '<p>Loading...</p>';
             
-            fetch(`/portal/keys/${keyId}/usage?days=30`)
-                .then(res => res.json())
+            fetch(`/portal/keys/${keyId}/usage?days=30`, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+                .then(res => {
+                    // Check if response is JSON
+                    const contentType = res.headers.get("content-type") || "";
+                    if (!contentType.includes("application/json")) {
+                        // If redirect (302), follow it but check if it's HTML
+                        if (res.redirected || res.status === 302 || res.status === 401) {
+                            return res.text().then(text => {
+                                throw new Error(`Authentication failed or redirected. Status: ${res.status}`);
+                            });
+                        }
+                        return res.text().then(text => {
+                            throw new Error(`Expected JSON but got ${contentType}: ${text.substring(0, 100)}`);
+                        });
+                    }
+                    if (!res.ok) {
+                        return res.json().then(data => {
+                            throw new Error(data.error || `HTTP ${res.status}`);
+                        });
+                    }
+                    return res.json();
+                })
                 .then(data => {
+                    // Check if response has error field (direct error response)
                     if (data.error) {
                         content.innerHTML = `<p style="color: red;">${data.error}</p>`;
                         return;
                     }
                     
-                    title.textContent = `Usage Stats: ${data.key_prefix}... (${data.tier})`;
+                    // Check if response has success flag (wrapped response)
+                    if (data.success === false) {
+                        content.innerHTML = `<p style="color: red;">${data.error || 'Lỗi khi tải usage stats'}</p>`;
+                        return;
+                    }
+                    
+                    // Extract data from response (may be wrapped in 'data' field, or direct)
+                    const usage = data.data || data;
+                    
+                    if (!usage || !usage.key_prefix) {
+                        content.innerHTML = `<p style="color: red;">Invalid response format. Received: ${JSON.stringify(data).substring(0, 200)}</p>`;
+                        return;
+                    }
+                    
+                    title.textContent = `Usage Stats: ${usage.key_prefix}... (${usage.tier})`;
                     
                     let html = `
                         <div style="margin-bottom: 20px;">
-                            <p><strong>Total Requests:</strong> ${data.total_requests.toLocaleString()}</p>
-                            <p><strong>Success:</strong> ${data.success_requests.toLocaleString()}</p>
-                            <p><strong>Errors:</strong> ${data.error_requests.toLocaleString()}</p>
-                            <p><strong>Avg Response Time:</strong> ${data.avg_response_time_ms.toFixed(2)} ms</p>
+                            <p><strong>Total Requests:</strong> ${(usage.total_requests || 0).toLocaleString()}</p>
+                            <p><strong>Success:</strong> ${(usage.success_requests || 0).toLocaleString()}</p>
+                            <p><strong>Errors:</strong> ${(usage.error_requests || 0).toLocaleString()}</p>
+                            <p><strong>Avg Response Time:</strong> ${(usage.avg_response_time_ms || 0).toFixed(2)} ms</p>
                         </div>
                         <h4>Daily Stats (Last 30 days):</h4>
                         <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
@@ -407,15 +481,15 @@
                             <tbody>
                     `;
                     
-                    if (data.daily_stats && data.daily_stats.length > 0) {
-                        data.daily_stats.forEach(stat => {
+                    if (usage.daily_stats && usage.daily_stats.length > 0) {
+                        usage.daily_stats.forEach(stat => {
                             html += `
                                 <tr>
                                     <td style="padding: 8px; border: 1px solid #ddd;">${stat.date}</td>
-                                    <td style="padding: 8px; border: 1px solid #ddd;">${stat.count}</td>
-                                    <td style="padding: 8px; border: 1px solid #ddd;">${stat.success}</td>
-                                    <td style="padding: 8px; border: 1px solid #ddd;">${stat.error}</td>
-                                    <td style="padding: 8px; border: 1px solid #ddd;">${stat.avg_response_time.toFixed(2)}</td>
+                                    <td style="padding: 8px; border: 1px solid #ddd;">${stat.count || 0}</td>
+                                    <td style="padding: 8px; border: 1px solid #ddd;">${stat.success || 0}</td>
+                                    <td style="padding: 8px; border: 1px solid #ddd;">${stat.error || 0}</td>
+                                    <td style="padding: 8px; border: 1px solid #ddd;">${(stat.avg_response_time || 0).toFixed(2)}</td>
                                 </tr>
                             `;
                         });
@@ -432,6 +506,7 @@
                 })
                 .catch(err => {
                     content.innerHTML = `<p style="color: red;">Error loading usage stats: ${err.message}</p>`;
+                    console.error('Usage stats error:', err);
                 });
         }
         

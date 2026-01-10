@@ -172,33 +172,6 @@ Tài liệu này track việc triển khai các tính năng ưu tiên đã đư�
 
 ---
 
-#### 2.2 API Key Scopes/Permissions
-**Status:** ⏳ Pending  
-**Priority:** 🟡 MEDIUM  
-**Estimated Time:** 5-7 days
-
-**Tasks:**
-- [ ] Design scope system:
-  - Scopes: `cccd:read`, `cccd:write`, `admin:read`, `admin:write`
-  - Default scope: `cccd:read` (cho tất cả keys)
-- [ ] Thêm `scopes` column vào `api_keys` table (JSON array)
-- [ ] Thêm `ip_whitelist` column (JSON array)
-- [ ] Thêm `allowed_domains` column (JSON array)
-- [ ] Thêm `time_restrictions` column (JSON: `{"start": "09:00", "end": "18:00", "timezone": "Asia/Ho_Chi_Minh"}`)
-- [ ] Update API key validation:
-  - [ ] Check scopes khi request
-  - [ ] Check IP whitelist
-  - [ ] Check domain restrictions
-  - [ ] Check time restrictions
-- [ ] UI để configure scopes và restrictions
-- [ ] Admin UI để manage scopes
-
-**Files to modify:**
-- `services/api_key_service.py` - add scope validation
-- `routes/cccd.py` - add scope checking
-- `routes/portal.py` - add scope configuration UI
-- `app/templates/portal/keys.html` - add scope/restriction settings
-- `scripts/db_schema.sql` - add columns
 
 ---
 

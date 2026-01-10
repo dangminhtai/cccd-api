@@ -26,12 +26,26 @@ portal_bp = Blueprint("portal", __name__, url_prefix="/portal")
 
 
 def require_login(f):
-    """Decorator để yêu cầu login"""
+    """Decorator để yêu cầu login - hỗ trợ AJAX requests"""
     from functools import wraps
     
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if "user_id" not in session:
+            # Check if this is likely an AJAX request (JSON expected)
+            # Check multiple indicators: X-Requested-With header, Accept header, or POST with specific actions
+            is_ajax = (
+                request.headers.get("X-Requested-With") == "XMLHttpRequest" or
+                request.headers.get("Accept") and "application/json" in request.headers.get("Accept", "") or
+                request.is_json or
+                (request.method == "POST" and request.form.get("action") in ("delete", "update_label")) or
+                "/usage" in request.path or
+                request.path.endswith("/usage")
+            )
+            
+            if is_ajax:
+                from flask import jsonify
+                return jsonify({"success": False, "error": "Vui lòng đăng nhập để tiếp tục"}), 401
             flash("Vui lòng đăng nhập để tiếp tục", "warning")
             return redirect(url_for("portal.login"))
         return f(*args, **kwargs)
@@ -423,6 +437,16 @@ def keys():
     user_id = session.get("user_id")
     user = get_user_by_id(user_id)
     
+    # Check if this is an AJAX POST request (delete/update_label) - return JSON if auth fails
+    if request.method == "POST":
+        action = request.form.get("action")
+        if action in ("delete", "update_label"):
+            # AJAX endpoint - return JSON if user not found
+            if not user:
+                from flask import jsonify
+                session.clear()
+                return jsonify({"success": False, "error": "Phiên đăng nhập đã hết hạn"}), 401
+    
     if not user:
         session.clear()
         flash("Phiên đăng nhập đã hết hạn", "warning")
@@ -431,7 +455,7 @@ def keys():
     subscription = get_user_subscription(user_id)
     current_tier = subscription["tier"] if subscription else "free"
     
-    # POST: Create new key
+    # POST: Create new key or AJAX actions
     if request.method == "POST":
         action = request.form.get("action")
         
@@ -555,23 +579,28 @@ def keys():
 @portal_bp.route("/keys/<int:key_id>/usage")
 @require_login
 def key_usage(key_id: int):
-    """Get usage stats for a specific key (JSON API)"""
+    """Get usage stats for a specific key (JSON API) - AJAX endpoint"""
+    from flask import jsonify
     user_id = session.get("user_id")
     if not user_id:
-        from flask import jsonify
-        return jsonify({"error": "Unauthorized"}), 401
+        return jsonify({"success": False, "error": "Unauthorized"}), 401
+    
+    # Verify user exists
+    user = get_user_by_id(user_id)
+    if not user:
+        return jsonify({"success": False, "error": "Phiên đăng nhập đã hết hạn"}), 401
     
     days = request.args.get("days", "30", type=int)
     if days not in (7, 30, 90, 365):
         days = 30
     
     from services.api_key_service import get_key_usage_per_key
-    from flask import jsonify
     
     usage = get_key_usage_per_key(key_id, user_id, days=days)
     if usage is None:
-        return jsonify({"error": "Key not found or access denied"}), 404
+        return jsonify({"success": False, "error": "Key not found or access denied"}), 404
     
+    # Return usage data directly (not wrapped) for backward compatibility with existing JavaScript
     return jsonify(usage)
 
 
