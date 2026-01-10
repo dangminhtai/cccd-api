@@ -121,6 +121,12 @@ def register():
 
 def _get_password_reset_rate_limit_key():
     """Get rate limit key for password reset - based on email"""
+    # Only rate limit POST requests
+    if request.method != "POST":
+        from flask_limiter.util import get_remote_address
+        # Exempt GET requests from rate limiting by using a unique key that won't conflict
+        return f"pwd_reset_get:{get_remote_address()}:{id(request)}"
+    
     email = request.form.get("email", "").strip()
     if email:
         return f"pwd_reset:{email}"
@@ -130,7 +136,7 @@ def _get_password_reset_rate_limit_key():
 
 
 @portal_bp.route("/forgot-password", methods=["GET", "POST"])
-@limiter.limit("3 per hour", key_func=_get_password_reset_rate_limit_key)
+@limiter.limit("3 per hour", key_func=_get_password_reset_rate_limit_key, per_method=True)
 def forgot_password():
     """Quên mật khẩu - Request password reset"""
     if request.method == "POST":
