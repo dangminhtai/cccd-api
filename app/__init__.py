@@ -139,6 +139,7 @@ def create_app() -> Flask:
 
     # API Documentation endpoint (static HTML page)
     @app.route("/docs")
+    @app.route("/api-docs")
     def api_docs():
         """API Documentation - static HTML page với examples và hướng dẫn"""
         from flask import render_template
