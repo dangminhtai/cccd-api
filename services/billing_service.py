@@ -200,15 +200,20 @@ def approve_payment(payment_id: int, user_id: int) -> bool:
                 )
                 subscription_id = cursor.lastrowid
                 
-                # Update payment status
+                # Update payment status - QUAN TRỌNG: Phải check status = 'pending' để tránh double approve
                 cursor.execute(
                     """
                     UPDATE payments
                     SET status = 'success', paid_at = NOW(), subscription_id = %s
-                    WHERE id = %s
+                    WHERE id = %s AND status = 'pending'
                     """,
                     (subscription_id, payment_id),
                 )
+                
+                # Verify update succeeded
+                if cursor.rowcount == 0:
+                    conn.rollback()
+                    return False, "Không thể update payment status (có thể đã được approve rồi)"
                 
             conn.commit()
             return True
@@ -223,102 +228,134 @@ def approve_payment_admin(payment_id: int) -> tuple[bool, Optional[str]]:
     Approve payment từ admin (không cần user_id check)
     Returns: (success, error_message)
     """
+    conn = None
     try:
         conn = _get_db_connection()
+        cursor = conn.cursor()
+        
         try:
-            with conn.cursor() as cursor:
-                # Get payment info với user info
-                cursor.execute(
-                    """
-                    SELECT 
-                        p.id,
-                        p.user_id,
-                        p.amount,
-                        p.currency,
-                        p.payment_gateway,
-                        p.transaction_id,
-                        p.notes,
-                        u.email,
-                        u.full_name
-                    FROM payments p
-                    JOIN users u ON p.user_id = u.id
-                    WHERE p.id = %s AND p.status = 'pending'
-                    """,
-                    (payment_id,),
+            # Get payment info với user info
+            cursor.execute(
+                """
+                SELECT 
+                    p.id,
+                    p.user_id,
+                    p.amount,
+                    p.currency,
+                    p.payment_gateway,
+                    p.transaction_id,
+                    p.notes,
+                    u.email,
+                    u.full_name
+                FROM payments p
+                JOIN users u ON p.user_id = u.id
+                WHERE p.id = %s AND p.status = 'pending'
+                """,
+                (payment_id,),
+            )
+            payment = cursor.fetchone()
+            
+            if not payment:
+                return False, "Payment không tồn tại hoặc đã được xử lý"
+            
+            user_id = payment["user_id"]
+            amount = float(payment["amount"])
+            
+            # Determine tier from amount
+            if amount == 0:
+                tier = "free"
+            elif amount < 1000000:  # < 1,000,000 VND = Premium
+                tier = "premium"
+            else:  # >= 1,000,000 VND = Ultra
+                tier = "ultra"
+            
+            # Deactivate old subscription
+            cursor.execute(
+                """
+                UPDATE subscriptions
+                SET status = 'expired'
+                WHERE user_id = %s AND status = 'active'
+                """,
+                (user_id,),
+            )
+            
+            # Create new subscription (1 month default)
+            from datetime import datetime, timedelta
+            expires_at = datetime.now() + timedelta(days=30)
+            
+            cursor.execute(
+                """
+                INSERT INTO subscriptions (user_id, tier, status, payment_method, amount, currency, expires_at)
+                VALUES (%s, %s, 'active', %s, %s, %s, %s)
+                """,
+                (user_id, tier, payment["payment_gateway"], amount, payment["currency"], expires_at),
+            )
+            subscription_id = cursor.lastrowid
+            
+            if not subscription_id:
+                conn.rollback()
+                return False, "Không thể tạo subscription"
+            
+            # Update payment status - QUAN TRỌNG: Phải update status = 'success'
+            cursor.execute(
+                """
+                UPDATE payments
+                SET status = 'success', paid_at = NOW(), subscription_id = %s
+                WHERE id = %s AND status = 'pending'
+                """,
+                (subscription_id, payment_id),
+            )
+            
+            if cursor.rowcount == 0:
+                conn.rollback()
+                return False, "Không thể update payment status (có thể đã được xử lý)"
+            
+            # Extend API keys expiration cho user này
+            # Lấy subscription duration từ amount (1 month = 30 days)
+            # Premium/Ultra: extend 30 days từ ngày hết hạn hiện tại hoặc từ bây giờ
+            cursor.execute(
+                """
+                UPDATE api_keys
+                SET expires_at = DATE_ADD(
+                    COALESCE(expires_at, NOW()),
+                    INTERVAL 30 DAY
                 )
-                payment = cursor.fetchone()
-                
-                if not payment:
-                    return False, "Payment không tồn tại hoặc đã được xử lý"
-                
-                user_id = payment["user_id"]
-                amount = float(payment["amount"])
-                
-                # Determine tier from amount
-                if amount == 0:
-                    tier = "free"
-                elif amount < 1000000:  # < 1,000,000 VND = Premium
-                    tier = "premium"
-                else:  # >= 1,000,000 VND = Ultra
-                    tier = "ultra"
-                
-                # Deactivate old subscription
-                cursor.execute(
-                    """
-                    UPDATE subscriptions
-                    SET status = 'expired'
-                    WHERE user_id = %s AND status = 'active'
-                    """,
-                    (user_id,),
-                )
-                
-                # Create new subscription (1 month default)
-                from datetime import datetime, timedelta
-                expires_at = datetime.now() + timedelta(days=30)
-                
-                cursor.execute(
-                    """
-                    INSERT INTO subscriptions (user_id, tier, status, payment_method, amount, currency, expires_at)
-                    VALUES (%s, %s, 'active', %s, %s, %s, %s)
-                    """,
-                    (user_id, tier, payment["payment_gateway"], amount, payment["currency"], expires_at),
-                )
-                subscription_id = cursor.lastrowid
-                
-                # Update payment status
-                cursor.execute(
-                    """
-                    UPDATE payments
-                    SET status = 'success', paid_at = NOW(), subscription_id = %s
-                    WHERE id = %s
-                    """,
-                    (subscription_id, payment_id),
-                )
-                
-                # Extend API keys expiration cho user này
-                # Lấy subscription duration từ amount (1 month = 30 days)
-                # Premium/Ultra: extend 30 days từ ngày hết hạn hiện tại hoặc từ bây giờ
-                cursor.execute(
-                    """
-                    UPDATE api_keys
-                    SET expires_at = DATE_ADD(
-                        COALESCE(expires_at, NOW()),
-                        INTERVAL 30 DAY
-                    )
-                    WHERE user_id = %s 
-                    AND status = 'active'
-                    AND (expires_at IS NULL OR expires_at > NOW())
-                    """,
-                    (user_id,),
-                )
-                keys_extended = cursor.rowcount
-                
+                WHERE user_id = %s 
+                AND status = 'active'
+                AND (expires_at IS NULL OR expires_at > NOW())
+                """,
+                (user_id,),
+            )
+            keys_extended = cursor.rowcount
+            
+            # Commit transaction - QUAN TRỌNG: Phải commit để lưu thay đổi
+            # Tất cả operations đã thành công, commit để lưu vào database
             conn.commit()
+            
             return True, f"Đã approve payment và extend {keys_extended} API key(s)"
+            
+        except Exception as e:
+            # Rollback nếu có lỗi
+            if conn:
+                try:
+                    conn.rollback()
+                except:
+                    pass
+            raise e
         finally:
-            conn.close()
+            if cursor:
+                cursor.close()
+            
     except Exception as e:
-        return False, f"Lỗi: {str(e)}"
+        import traceback
+        error_msg = f"Lỗi khi approve payment: {str(e)}\n{traceback.format_exc()}"
+        return False, error_msg
+    finally:
+        if conn:
+            try:
+                conn.close()
+            except:
+                pass
 
 
 def get_tier_pricing() -> dict:

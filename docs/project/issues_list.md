@@ -372,4 +372,27 @@
   - Nếu cần exclude routes, check `request.endpoint` trong handler
   - Nếu cần decorator riêng, tạo function decorator riêng (không phải `before_request`)
 
+---
+
+## 28) Admin approve payment nhưng status vẫn là "pending" trong database
+
+- **Hiện tượng**: Sau khi admin approve payment cho user, status trong database vẫn còn là "pending", không được update thành "success"
+- **Nguyên nhân**: 
+  - Code có update payment status nhưng có thể transaction không commit đúng cách
+  - Hoặc có exception xảy ra sau UPDATE payment nhưng trước commit, làm transaction bị rollback
+  - Hoặc UPDATE payment không match WHERE condition (payment đã được approve rồi)
+  - PyMySQL mặc định auto-commit = False, cần explicit commit để lưu thay đổi
+- **Cách xử lý**: 
+  - Thêm check `WHERE id = %s AND status = 'pending'` trong UPDATE để tránh double approve
+  - Check `cursor.rowcount == 0` để đảm bảo update thành công
+  - Rollback nếu update không thành công
+  - Verify payment status sau khi commit để đảm bảo transaction thành công
+  - Thêm error handling tốt hơn với logging chi tiết
+- **Cách tránh lần sau**: Khi làm việc với database transactions:
+  - **Luôn check** `rowcount` sau UPDATE/INSERT để đảm bảo operation thành công
+  - **Luôn verify** data sau khi commit để đảm bảo transaction thực sự được lưu
+  - **Luôn rollback** nếu có lỗi trước khi commit
+  - **Thêm logging** chi tiết để debug khi có vấn đề
+  - **Test** với transaction thực tế để đảm bảo commit/rollback hoạt động đúng
+
 
