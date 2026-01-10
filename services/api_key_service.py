@@ -292,11 +292,6 @@ def get_user_api_keys(user_id: int) -> list[dict]:
         # Add optional columns if they exist
         if "label" in row:
             key_data["label"] = row["label"]
-        if "rotated_from" in row:
-            key_data["rotated_from"] = row["rotated_from"]
-        if "suspended_at" in row:
-            key_data["suspended_at"] = row["suspended_at"]
-            key_data["suspended"] = row["suspended_at"] is not None
         
         result.append(key_data)
     
