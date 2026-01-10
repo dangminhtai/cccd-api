@@ -4,12 +4,15 @@ User Service - Quản lý users, authentication, registration
 from __future__ import annotations
 
 import hashlib
+import logging
 import secrets
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
 
 import bcrypt
 import pymysql
+
+logger = logging.getLogger(__name__)
 
 
 def _get_db_connection():
