@@ -141,6 +141,17 @@ def create_app() -> Flask:
     from routes.health import health_bp
     from routes.cccd import cccd_bp
     from routes.portal import portal_bp
+    
+    # Root route - redirect to portal
+    @app.route("/")
+    def root():
+        """Redirect root to portal login or dashboard"""
+        from flask import redirect, session, url_for
+        # Nếu đã đăng nhập, redirect đến dashboard
+        if "user_id" in session:
+            return redirect(url_for("portal.dashboard"))
+        # Nếu chưa đăng nhập, redirect đến login
+        return redirect(url_for("portal.login"))
 
     app.register_blueprint(health_bp)
     app.register_blueprint(cccd_bp)
