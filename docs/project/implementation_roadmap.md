@@ -297,41 +297,6 @@ Tài liệu này track việc triển khai các tính năng ưu tiên đã đư�
 
 ---
 
-### Phase 4: Advanced Security
-
-#### 4.1 Advanced Security Features
-**Status:** ⏳ Pending  
-**Priority:** 🔵 LOW  
-**Estimated Time:** 7-10 days
-
-**Tasks:**
-- [ ] DDoS Protection:
-  - [ ] Rate limiting per IP (global)
-  - [ ] IP-based blocking (temporary ban)
-  - [ ] Request size limits
-- [ ] WAF (Web Application Firewall):
-  - [ ] SQL injection detection
-  - [ ] XSS detection
-  - [ ] Path traversal detection
-  - [ ] Use library như `flask-limiter` hoặc Cloudflare
-- [ ] IP Reputation Checking:
-  - [ ] Check IP against blacklists
-  - [ ] Block known malicious IPs
-  - [ ] Optional: Integrate với services như AbuseIPDB
-- [ ] Bot Detection:
-  - [ ] CAPTCHA cho sensitive operations (password reset, payment)
-  - [ ] reCAPTCHA v3 integration
-  - [ ] Behavioral analysis (detect bot patterns)
-- [ ] Security Headers:
-  - [ ] CSP (Content Security Policy)
-  - [ ] HSTS (HTTP Strict Transport Security)
-  - [ ] X-Frame-Options
-  - [ ] X-Content-Type-Options
-  - [ ] Referrer-Policy
-- [ ] Security Monitoring:
-  - [ ] Log security events
-  - [ ] Alert on suspicious patterns
-  - [ ] Security dashboard
 
 **Files to create:**
 - `services/security_service.py`
@@ -411,7 +376,7 @@ Mỗi tính năng được coi là "Done" khi:
 
 ## 📝 Notes
 
-- **Email Service:** Bắt đầu với SendGrid free tier, upgrade khi cần
+- **Email Service:** Bắt đầu với SMTP
 - **API Documentation:** Bắt đầu với Swagger UI, sau đó có thể tạo custom docs page
 - **Audit Logging:** Log tất cả actions, có thể optimize sau (archive old logs)
 - **Security:** Implement từng layer, test kỹ trước khi deploy

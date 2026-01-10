@@ -241,14 +241,14 @@ def get_user_api_keys(user_id: int) -> list[dict]:
     conn = _get_db_connection()
     try:
         with conn.cursor() as cursor:
-            # Check if new columns exist
+            # Check if label column exists
             cursor.execute(
                 """
                 SELECT COLUMN_NAME
                 FROM INFORMATION_SCHEMA.COLUMNS
                 WHERE TABLE_SCHEMA = DATABASE()
                 AND TABLE_NAME = 'api_keys'
-                AND COLUMN_NAME IN ('label', 'rotated_from', 'suspended_at')
+                AND COLUMN_NAME = 'label'
                 """
             )
             available_columns = {row["COLUMN_NAME"] for row in cursor.fetchall()}
@@ -257,10 +257,6 @@ def get_user_api_keys(user_id: int) -> list[dict]:
             base_columns = "id, key_prefix, tier, owner_email, active, created_at, expires_at"
             if "label" in available_columns:
                 base_columns += ", label"
-            if "rotated_from" in available_columns:
-                base_columns += ", rotated_from"
-            if "suspended_at" in available_columns:
-                base_columns += ", suspended_at"
             
             cursor.execute(
                 f"""

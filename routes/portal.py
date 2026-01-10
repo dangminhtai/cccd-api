@@ -550,62 +550,6 @@ def keys():
     )
 
 
-@portal_bp.route("/keys/<int:key_id>/rotate", methods=["POST"])
-@require_login
-def rotate_key(key_id: int):
-    """Rotate API key - AJAX endpoint"""
-    from flask import jsonify
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"success": False, "error": "Vui lòng đăng nhập"}), 401
-    
-    from services.api_key_service import rotate_key as rotate_key_service
-    success, error_msg, new_key = rotate_key_service(key_id, user_id)
-    
-    if success and new_key:
-        return jsonify({
-            "success": True,
-            "message": "Rotate key thành công! Key mới đã được tạo. Key cũ sẽ hết hạn sau 7 ngày.",
-            "new_key": new_key  # Trả về key mới để show trong modal
-        })
-    else:
-        return jsonify({"success": False, "error": error_msg or "Lỗi khi rotate key"}), 400
-
-
-@portal_bp.route("/keys/<int:key_id>/suspend", methods=["POST"])
-@require_login
-def suspend_key(key_id: int):
-    """Suspend API key - AJAX endpoint"""
-    from flask import jsonify
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"success": False, "error": "Vui lòng đăng nhập"}), 401
-    
-    from services.api_key_service import suspend_key as suspend_key_service
-    success, error_msg = suspend_key_service(key_id, user_id)
-    
-    if success:
-        return jsonify({"success": True, "message": "Đã suspend key thành công"})
-    else:
-        return jsonify({"success": False, "error": error_msg or "Lỗi khi suspend key"}), 400
-
-
-@portal_bp.route("/keys/<int:key_id>/resume", methods=["POST"])
-@require_login
-def resume_key(key_id: int):
-    """Resume API key - AJAX endpoint"""
-    from flask import jsonify
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"success": False, "error": "Vui lòng đăng nhập"}), 401
-    
-    from services.api_key_service import resume_key as resume_key_service
-    success, error_msg = resume_key_service(key_id, user_id)
-    
-    if success:
-        return jsonify({"success": True, "message": "Đã resume key thành công"})
-    else:
-        return jsonify({"success": False, "error": error_msg or "Lỗi khi resume key"}), 400
 
 
 @portal_bp.route("/keys/<int:key_id>/usage")
