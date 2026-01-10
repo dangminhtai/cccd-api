@@ -1,0 +1,429 @@
+openapi: 3.0.3
+info:
+  title: CCCD API
+  description: |
+    API để parse thông tin từ số CCCD (Căn cước công dân) 12 chữ số của Việt Nam.
+    
+    ## Authentication
+    API yêu cầu API key được gửi qua header `X-API-Key`.
+    
+    ## Rate Limits
+    - **Free**: 10 requests/minute
+    - **Premium**: 100 requests/minute
+    - **Ultra**: 1000 requests/minute
+    
+    Nếu vượt quá rate limit, API trả về HTTP 429.
+    
+    ## Error Handling
+    Tất cả errors trả về JSON với format:
+    ```json
+    {
+      "success": false,
+      "is_valid_format": false,
+      "data": null,
+      "message": "Error message"
+    }
+    ```
+    
+    ## Response Format
+    Success responses trả về:
+    ```json
+    {
+      "success": true,
+      "data": {
+        "province_code": "079",
+        "province_name": "Tp. Hồ Chí Minh",
+        "gender": "Nam",
+        "birth_year": 2003,
+        "century": 21,
+        "age": 21
+      },
+      "is_valid_format": true,
+      "is_plausible": true,
+      "province_version": "current_34",
+      "warnings": null
+    }
+    ```
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@cccd-api.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://127.0.0.1:8000
+    description: Local development server
+  - url: https://api.cccd-api.com
+    description: Production server
+
+tags:
+  - name: CCCD
+    description: CCCD parsing endpoints
+  - name: Health
+    description: Health check endpoints
+
+paths:
+  /v1/cccd/parse:
+    post:
+      tags:
+        - CCCD
+      summary: Parse CCCD number
+      description: |
+        Parse số CCCD 12 chữ số để lấy thông tin:
+        - Mã tỉnh/thành phố (province_code)
+        - Tên tỉnh/thành phố (province_name)
+        - Giới tính (gender)
+        - Năm sinh (birth_year)
+        - Thế kỷ (century)
+        - Tuổi (age)
+        
+        **Lưu ý**: Chỉ chấp nhận POST method. OPTIONS trả về 405.
+      operationId: parseCCCD
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - cccd
+              properties:
+                cccd:
+                  type: string
+                  pattern: '^[0-9]{12}$'
+                  example: "079203012345"
+                  description: Số CCCD 12 chữ số
+                province_version:
+                  type: string
+                  enum: [legacy_63, current_34]
+                  default: current_34
+                  description: |
+                    Phiên bản mapping tỉnh/thành phố:
+                    - `legacy_63`: 63 tỉnh/thành (trước 2008)
+                    - `current_34`: 34 tỉnh/thành (hiện tại)
+                    Mặc định dùng `current_34` hoặc giá trị từ config `DEFAULT_PROVINCE_VERSION`
+            examples:
+              basic:
+                summary: Basic request
+                value:
+                  cccd: "079203012345"
+              with_province_version:
+                summary: With province version
+                value:
+                  cccd: "079203012345"
+                  province_version: "legacy_63"
+      responses:
+        '200':
+          description: Success
+          headers:
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+              description: Số requests còn lại trong window hiện tại
+            X-RateLimit-Reset:
+              schema:
+                type: integer
+              description: Unix timestamp khi rate limit window reset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParseResponse'
+              examples:
+                success:
+                  summary: Successful parse
+                  value:
+                    success: true
+                    data:
+                      province_code: "079"
+                      province_name: "Tp. Hồ Chí Minh"
+                      gender: "Nam"
+                      birth_year: 2003
+                      century: 21
+                      age: 21
+                    is_valid_format: true
+                    is_plausible: true
+                    province_version: "current_34"
+                    warnings: null
+                with_warnings:
+                  summary: Parse with warnings
+                  value:
+                    success: true
+                    data:
+                      province_code: "079"
+                      province_name: "Tp. Hồ Chí Minh"
+                      gender: "Nam"
+                      birth_year: 2025
+                      century: 21
+                      age: null
+                    is_valid_format: true
+                    is_plausible: false
+                    province_version: "current_34"
+                    warnings:
+                      - "birth_year_in_future"
+        '400':
+          description: Bad Request - CCCD format invalid hoặc thiếu field
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing_cccd:
+                  summary: Missing cccd field
+                  value:
+                    success: false
+                    is_valid_format: false
+                    data: null
+                    message: "Thiếu trường cccd."
+                invalid_format:
+                  summary: Invalid CCCD format
+                  value:
+                    success: false
+                    is_valid_format: false
+                    data: null
+                    message: "CCCD không hợp lệ (cần là chuỗi số, độ dài 12)."
+                invalid_province_version:
+                  summary: Invalid province_version
+                  value:
+                    success: false
+                    is_valid_format: false
+                    data: null
+                    message: "province_version không hợp lệ (chỉ nhận legacy_63 hoặc current_34)."
+        '401':
+          description: Unauthorized - API key không hợp lệ hoặc thiếu
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                is_valid_format: false
+                data: null
+                message: "API key không hợp lệ hoặc thiếu."
+        '429':
+          description: Too Many Requests - Vượt quá rate limit
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+              description: Số giây cần chờ trước khi retry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                is_valid_format: false
+                data: null
+                message: "Quá nhiều request. Giới hạn: 10 per 1 minute"
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                is_valid_format: false
+                data: null
+                message: "Lỗi hệ thống. Vui lòng thử lại sau."
+                request_id: "abc12345"
+      x-code-samples:
+        - lang: Python
+          source: |
+            import requests
+
+            url = "http://127.0.0.1:8000/v1/cccd/parse"
+            headers = {
+                "X-API-Key": "your-api-key-here",
+                "Content-Type": "application/json"
+            }
+            data = {
+                "cccd": "079203012345"
+            }
+            response = requests.post(url, json=data, headers=headers)
+            print(response.json())
+        - lang: JavaScript
+          source: |
+            fetch('http://127.0.0.1:8000/v1/cccd/parse', {
+              method: 'POST',
+              headers: {
+                'X-API-Key': 'your-api-key-here',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                cccd: '079203012345'
+              })
+            })
+            .then(response => response.json())
+            .then(data => console.log(data))
+            .catch(error => console.error('Error:', error));
+        - lang: cURL
+          source: |
+            curl -X POST http://127.0.0.1:8000/v1/cccd/parse \
+              -H "X-API-Key: your-api-key-here" \
+              -H "Content-Type: application/json" \
+              -d '{"cccd": "079203012345"}'
+        - lang: PHP
+          source: |
+            <?php
+            $url = 'http://127.0.0.1:8000/v1/cccd/parse';
+            $data = json_encode(['cccd' => '079203012345']);
+            
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'X-API-Key: your-api-key-here',
+                'Content-Type: application/json'
+            ]);
+            
+            $response = curl_exec($ch);
+            curl_close($ch);
+            echo $response;
+            ?>
+    options:
+      tags:
+        - CCCD
+      summary: OPTIONS not allowed
+      description: OPTIONS method không được hỗ trợ. Chỉ dùng POST.
+      responses:
+        '405':
+          description: Method Not Allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Method not allowed"
+
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Kiểm tra trạng thái API server
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+              example:
+                status: "ok"
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication. Lấy từ Customer Portal sau khi đăng ký.
+
+  schemas:
+    ParseResponse:
+      type: object
+      required:
+        - success
+        - data
+        - is_valid_format
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            province_code:
+              type: string
+              description: Mã tỉnh/thành phố (3 chữ số đầu của CCCD)
+              example: "079"
+            province_name:
+              type: string
+              nullable: true
+              description: Tên tỉnh/thành phố (mapping từ province_code)
+              example: "Tp. Hồ Chí Minh"
+            gender:
+              type: string
+              enum: [Nam, Nữ]
+              nullable: true
+              description: Giới tính
+              example: "Nam"
+            birth_year:
+              type: integer
+              nullable: true
+              description: Năm sinh
+              example: 2003
+            century:
+              type: integer
+              nullable: true
+              description: Thế kỷ (20, 21, 22, ...)
+              example: 21
+            age:
+              type: integer
+              nullable: true
+              description: Tuổi tính từ birth_year
+              example: 21
+        is_valid_format:
+          type: boolean
+          description: CCCD có đúng format 12 chữ số không
+          example: true
+        is_plausible:
+          type: boolean
+          nullable: true
+          description: Dữ liệu parse có hợp lý không (ví dụ: birth_year không trong tương lai)
+          example: true
+        province_version:
+          type: string
+          enum: [legacy_63, current_34]
+          description: Phiên bản mapping tỉnh/thành phố đã dùng
+          example: "current_34"
+        warnings:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: |
+            Danh sách warnings nếu có:
+            - `province_version_alias_legacy_64`: Dùng alias legacy_64 thay vì legacy_63
+            - `province_version_alias_current_63`: Dùng alias current_63 thay vì current_34
+            - `province_code_not_found`: Không tìm thấy province_name cho province_code
+            - `birth_year_in_future`: Năm sinh trong tương lai (không hợp lý)
+          example: null
+
+    ErrorResponse:
+      type: object
+      required:
+        - success
+        - is_valid_format
+        - data
+        - message
+      properties:
+        success:
+          type: boolean
+          example: false
+        is_valid_format:
+          type: boolean
+          example: false
+        data:
+          type: object
+          nullable: true
+          example: null
+        message:
+          type: string
+          description: Error message tiếng Việt
+          example: "API key không hợp lệ hoặc thiếu."
+        request_id:
+          type: string
+          description: Request ID để trace (nếu có)
+          example: "abc12345"

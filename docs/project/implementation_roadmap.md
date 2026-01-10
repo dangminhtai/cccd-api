@@ -178,37 +178,41 @@ Tài liệu này track việc triển khai các tính năng ưu tiên đã đư�
 ### Phase 3: Documentation & Monitoring
 
 #### 3.1 API Documentation
-**Status:** ⏳ Pending  
+**Status:** ✅ COMPLETED  
 **Priority:** 🟠 HIGH  
-**Estimated Time:** 5-7 days
+**Estimated Time:** 5-7 days (Completed in 1 day)
 
 **Tasks:**
-- [ ] Setup Swagger/OpenAPI:
-  - [ ] Install `flask-swagger-ui` hoặc `flasgger`
-  - [ ] Create OpenAPI spec file
-  - [ ] Add API endpoint `/api-docs` hoặc `/swagger`
-- [ ] Document all endpoints:
-  - [ ] `/v1/cccd/parse` - main endpoint
-  - [ ] `/health` - health check
-  - [ ] Portal endpoints (nếu cần)
-- [ ] Code examples:
-  - [ ] Python (requests library)
-  - [ ] JavaScript (fetch API)
-  - [ ] cURL
-  - [ ] PHP
-- [ ] SDK libraries:
-  - [ ] Python SDK (priority)
-  - [ ] Node.js SDK (optional)
-- [ ] Postman collection:
-  - [ ] Export Postman collection
-  - [ ] Include examples
-- [ ] Error codes reference:
-  - [ ] Document all error codes
-  - [ ] Error handling guide
-- [ ] Rate limit documentation:
-  - [ ] Explain rate limits per tier
-  - [ ] Rate limit headers
-  - [ ] Best practices
+- [x] Setup Swagger/OpenAPI:
+  - [x] Install `flasgger` (added to requirements.txt)
+  - [x] Create OpenAPI spec file (`docs/api/openapi.yaml`)
+  - [x] Add API endpoint `/api-docs` (Swagger UI)
+  - [x] Add Swagger docstrings to routes
+- [x] Document all endpoints:
+  - [x] `/v1/cccd/parse` - main endpoint (with full docstring)
+  - [x] `/health` - health check (with docstring)
+  - [x] Portal endpoints (documented in separate portal docs)
+- [x] Code examples:
+  - [x] Python (`docs/api/examples/python_example.py`)
+  - [x] JavaScript (`docs/api/examples/javascript_example.js`)
+  - [x] cURL (`docs/api/examples/curl_example.sh`)
+  - [x] PHP (`docs/api/examples/php_example.php`)
+- [x] SDK libraries:
+  - [x] Python SDK (`sdk/python/cccd_api.py` với full documentation)
+  - [ ] Node.js SDK (optional - chưa implement)
+- [x] Postman collection:
+  - [x] Export Postman collection (`postman/CCCD_API.postman_collection.json`)
+  - [x] Include examples (health check, parse CCCD, error handling)
+- [x] Error codes reference:
+  - [x] Document all error codes (`docs/api/ERROR_CODES.md`)
+  - [x] Error handling guide (with best practices)
+- [x] Rate limit documentation:
+  - [x] Explain rate limits per tier (`docs/api/RATE_LIMITS.md`)
+  - [x] Rate limit headers
+  - [x] Best practices (exponential backoff, queue system, etc.)
+- [x] API Documentation README:
+  - [x] Create main README (`docs/api/README.md`)
+  - [x] Include quick start, examples, links to all resources
 
 **Files to create:**
 - `docs/api/` - API documentation

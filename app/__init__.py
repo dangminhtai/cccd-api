@@ -137,6 +137,61 @@ def create_app() -> Flask:
             500,
         )
 
+    # Swagger/OpenAPI documentation
+    try:
+        from flasgger import Swagger
+        import os
+        
+        swagger_config = {
+            "headers": [],
+            "specs": [
+                {
+                    "endpoint": "apispec",
+                    "route": "/apispec.json",
+                    "rule_filter": lambda rule: True,
+                    "model_filter": lambda tag: True,
+                }
+            ],
+            "static_url_path": "/flasgger_static",
+            "swagger_ui": True,
+            "specs_route": "/api-docs",
+        }
+        
+        swagger_template = {
+            "swagger": "2.0",
+            "info": {
+                "title": "CCCD API",
+                "description": "API để parse thông tin từ số CCCD (Căn cước công dân) 12 chữ số của Việt Nam.",
+                "version": "1.0.0",
+                "contact": {
+                    "name": "API Support",
+                    "email": "support@cccd-api.com",
+                },
+                "license": {
+                    "name": "MIT",
+                    "url": "https://opensource.org/licenses/MIT",
+                },
+            },
+            "host": os.getenv("API_DOCS_HOST", "127.0.0.1:8000"),
+            "basePath": "/",
+            "schemes": ["http", "https"],
+            "securityDefinitions": {
+                "ApiKeyAuth": {
+                    "type": "apiKey",
+                    "in": "header",
+                    "name": "X-API-Key",
+                    "description": "API key for authentication. Lấy từ Customer Portal sau khi đăng ký.",
+                }
+            },
+        }
+        
+        swagger = Swagger(app, config=swagger_config, template=swagger_template)
+        app.logger.info("Swagger/OpenAPI documentation enabled at /api-docs")
+    except ImportError:
+        app.logger.warning("flasgger not installed. Install with: pip install flasgger")
+    except Exception as e:
+        app.logger.warning(f"Failed to initialize Swagger: {e}")
+
     # Routes
     from routes.health import health_bp
     from routes.cccd import cccd_bp

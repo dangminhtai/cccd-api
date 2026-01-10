@@ -20,6 +20,24 @@ def index():
 
 @health_bp.get("/health")
 def health():
+    """
+    Health check endpoint
+    
+    Kiểm tra trạng thái API server
+    
+    ---
+    tags:
+      - Health
+    responses:
+      200:
+        description: Server is healthy
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: "ok"
+    """
     return jsonify({"status": "ok"}), 200
 
 

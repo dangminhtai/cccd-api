@@ -169,6 +169,149 @@ def _get_rate_limit():
 @cccd_bp.route("/v1/cccd/parse", methods=["POST"])
 @limiter.limit(_get_rate_limit)
 def cccd_parse():
+    """
+    Parse CCCD number to extract information
+    
+    Parse số CCCD 12 chữ số để lấy thông tin:
+    - Mã tỉnh/thành phố (province_code)
+    - Tên tỉnh/thành phố (province_name)
+    - Giới tính (gender)
+    - Năm sinh (birth_year)
+    - Thế kỷ (century)
+    - Tuổi (age)
+    
+    ---
+    tags:
+      - CCCD
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - in: header
+        name: X-API-Key
+        required: true
+        schema:
+          type: string
+        description: API key for authentication
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - cccd
+          properties:
+            cccd:
+              type: string
+              pattern: '^[0-9]{12}$'
+              example: "079203012345"
+              description: Số CCCD 12 chữ số
+            province_version:
+              type: string
+              enum: [legacy_63, current_34]
+              default: current_34
+              description: |
+                Phiên bản mapping tỉnh/thành phố:
+                - legacy_63: 63 tỉnh/thành (trước 2008)
+                - current_34: 34 tỉnh/thành (hiện tại)
+    responses:
+      200:
+        description: Success
+        schema:
+          type: object
+          properties:
+            success:
+              type: boolean
+              example: true
+            data:
+              type: object
+              properties:
+                province_code:
+                  type: string
+                  example: "079"
+                province_name:
+                  type: string
+                  example: "Tp. Hồ Chí Minh"
+                gender:
+                  type: string
+                  enum: [Nam, Nữ]
+                  example: "Nam"
+                birth_year:
+                  type: integer
+                  example: 2003
+                century:
+                  type: integer
+                  example: 21
+                age:
+                  type: integer
+                  example: 21
+            is_valid_format:
+              type: boolean
+              example: true
+            is_plausible:
+              type: boolean
+              example: true
+            province_version:
+              type: string
+              example: "current_34"
+            warnings:
+              type: array
+              items:
+                type: string
+              example: null
+      400:
+        description: Bad Request - CCCD format invalid hoặc thiếu field
+        schema:
+          type: object
+          properties:
+            success:
+              type: boolean
+              example: false
+            is_valid_format:
+              type: boolean
+              example: false
+            data:
+              type: object
+              example: null
+            message:
+              type: string
+              example: "CCCD không hợp lệ (cần là chuỗi số, độ dài 12)."
+      401:
+        description: Unauthorized - API key không hợp lệ hoặc thiếu
+        schema:
+          type: object
+          properties:
+            success:
+              type: boolean
+              example: false
+            message:
+              type: string
+              example: "API key không hợp lệ hoặc thiếu."
+      429:
+        description: Too Many Requests - Vượt quá rate limit
+        schema:
+          type: object
+          properties:
+            success:
+              type: boolean
+              example: false
+            message:
+              type: string
+              example: "Quá nhiều request. Giới hạn: 10 per 1 minute"
+      500:
+        description: Internal Server Error
+        schema:
+          type: object
+          properties:
+            success:
+              type: boolean
+              example: false
+            message:
+              type: string
+              example: "Lỗi hệ thống. Vui lòng thử lại sau."
+            request_id:
+              type: string
+              example: "abc12345"
+    """
     # Start timing for response time measurement
     start_time = time.time()
     
