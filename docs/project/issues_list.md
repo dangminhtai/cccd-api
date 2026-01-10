@@ -11,19 +11,19 @@
 
 ## 2) Không tạo được file `.env.example` do bị chặn dotfile
 
-- **Hiện tượng**: tạo `.env.example` bị “blocked by globalignore”.
+- **Hiện tượng**: tạo `.env.example` bị "blocked by globalignore".
 - **Nguyên nhân**: workspace policy chặn tạo/sửa một số dotfiles.
 - **Cách xử lý**: tạo `env.example` (không có dấu chấm) và hướng dẫn copy sang `.env` ở local.
 - **Cách tránh lần sau**: nếu thấy dotfile bị chặn, dùng tên thay thế không có dấu chấm (`env.example`, `env.sample`) và cập nhật doc.
 
 ---
 
-## 3) Rename hàng loạt `guile_*` → `guide_*` bị lỗi do “nest PowerShell”
+## 3) Rename hàng loạt `guile_*` → `guide_*` bị lỗi do "nest PowerShell"
 
 - **Hiện tượng**: chạy lệnh `powershell -Command "..."` trong shell PowerShell khiến `$newName` bị mất, báo lỗi kiểu `= is not recognized`, `Missing argument for NewName`.
-- **Nguyên nhân**: biến `$...` bị shell ngoài “ăn”/parse sai do gọi PowerShell lồng PowerShell.
+- **Nguyên nhân**: biến `$...` bị shell ngoài "ăn"/parse sai do gọi PowerShell lồng PowerShell.
 - **Cách xử lý**: chạy trực tiếp command trong PowerShell session hiện tại (không bọc thêm `powershell -Command`), sau đó `grep` kiểm tra không còn `guile_step_`.
-- **Cách tránh lần sau**: tránh gọi “PowerShell trong PowerShell”; nếu buộc phải bọc, phải escape `$` đúng cách.
+- **Cách tránh lần sau**: tránh gọi "PowerShell trong PowerShell"; nếu buộc phải bọc, phải escape `$` đúng cách.
 
 ---
 
@@ -38,10 +38,10 @@
 
 ## 5) Nội dung `guide_step_01.md` bị dính thêm phần GitHub (đã tách lại)
 
-- **Hiện tượng**: `guide_step_01.md` chứa cả nội dung “Bước 1” và nội dung “Git/GitHub”.
+- **Hiện tượng**: `guide_step_01.md` chứa cả nội dung "Bước 1" và nội dung "Git/GitHub".
 - **Nguyên nhân**: trong quá trình rename/replace, có khả năng bị ghi đè/ghép nhầm nội dung giữa `step00` và `step01`.
 - **Cách xử lý**: cắt bỏ phần Git/GitHub khỏi `guide_step_01.md` (phần đó đã nằm đúng ở `guide_step_00.md`).
-- **Cách tránh lần sau**: sau các thao tác bulk rename/replace, luôn mở spot-check 1–2 file và grep các tiêu đề để đảm bảo không “dính nội dung”.
+- **Cách tránh lần sau**: sau các thao tác bulk rename/replace, luôn mở spot-check 1–2 file và grep các tiêu đề để đảm bảo không "dính nội dung".
 
 ---
 
@@ -70,11 +70,11 @@
 - **Hiện tượng**: chạy lệnh self-test có `Invoke-WebRequest ... -SkipHttpErrorCheck` báo lỗi: `A parameter cannot be found that matches parameter name 'SkipHttpErrorCheck'.`
 - **Nguyên nhân**: `-SkipHttpErrorCheck` chỉ có ở PowerShell 7+; Windows PowerShell 5.1 không hỗ trợ.
 - **Cách xử lý**: dùng `try/catch` + `-ErrorAction Stop` để bắt HTTP 4xx/5xx và in status/content.
-- **Cách tránh lần sau**: khi viết hướng dẫn self-test, mặc định dùng cú pháp tương thích PS 5.1 (hoặc ghi rõ “PowerShell 7+” nếu dùng option mới).
+- **Cách tránh lần sau**: khi viết hướng dẫn self-test, mặc định dùng cú pháp tương thích PS 5.1 (hoặc ghi rõ "PowerShell 7+" nếu dùng option mới).
 
 ---
 
-## 9) Test API bị lỗi do “PowerShell trong PowerShell” làm hỏng `$`/escape JSON
+## 9) Test API bị lỗi do "PowerShell trong PowerShell" làm hỏng `$`/escape JSON
 
 - **Hiện tượng**: khi chạy `powershell -Command "..."` bên trong PowerShell để test API:
   - biểu thức có `$_...` bị mất `$` → lỗi parse kiểu `Unexpected token '.Exception...'`
@@ -393,4 +393,43 @@
   - **Test** với database thực tế để đảm bảo query đúng schema
   - **Transaction handling**: Exception ở bất kỳ đâu trong transaction sẽ rollback toàn bộ
 
+---
 
+## 29) Admin dashboard expose pending payments without authentication
+
+- **Hiện tượng**: Bất kỳ ai cũng có thể truy cập `/admin/` và xem pending payments mà không cần nhập admin key từ `.env`
+- **Nguyên nhân**: 
+  - `check_admin_auth()` exclude `GET /admin/` khỏi authentication check (để hiển thị HTML form)
+  - `admin_dashboard()` route gọi `get_pending_payments()` và truyền vào template
+  - Template render pending payments ngay lập tức, expose sensitive data (user emails, amounts, notes) mà không cần authentication
+- **Cách xử lý**: 
+  - Không truyền `pending_payments` vào template khi render `admin_dashboard()`
+  - Sửa `/admin/payments` endpoint để trả JSON thay vì HTML template
+  - Thêm JavaScript function `loadPendingPayments()` để load payments từ API sau khi user nhập admin key
+  - Pending payments chỉ được load khi user đã authenticate và gọi API với `X-Admin-Key` header
+  - GET `/admin/` vẫn accessible (chỉ hiển thị form), nhưng không expose sensitive data
+- **Cách tránh lần sau**: Khi thiết kế admin dashboard:
+  - **KHÔNG BAO GIỜ** expose sensitive data trong initial page render
+  - **Luôn** require authentication cho các API endpoints trả về sensitive data
+  - **Luôn** load sensitive data qua JavaScript/AJAX sau khi user authenticate
+  - **Test** bằng cách truy cập trang mà không có auth → phải không thấy data nhạy cảm
+  - **Defense in depth**: Even if frontend is compromised, backend API vẫn phải check auth
+
+---
+
+## 30) BuildError khi dùng `url_for()` với route chỉ có POST method
+
+- **Hiện tượng**: Trong template `dashboard.html`, dùng `url_for('portal.resend_verification')` báo lỗi: `BuildError: Could not build url for endpoint 'portal.resend_verification'. Did you mean 'portal.register' instead?`
+- **Nguyên nhân**: 
+  - Route `resend_verification` được define với `methods=["POST"]` (chỉ POST)
+  - Flask `url_for()` chỉ có thể build URL cho routes hỗ trợ GET method
+  - Template không thể tạo URL cho POST-only routes
+- **Cách xử lý**: 
+  - Thêm `GET` vào methods: `@portal_bp.route("/resend-verification", methods=["GET", "POST"])`
+  - Hoặc thay form button bằng link `<a href="{{ url_for('portal.resend_verification') }}">`
+  - Route vẫn xử lý logic khi nhận GET request (send email và redirect)
+- **Cách tránh lần sau**: Khi thiết kế routes:
+  - **Luôn** cho phép GET method nếu route cần được gọi từ template/link
+  - **Hoặc** dùng form với POST nếu route chỉ cần POST
+  - **Không dùng** `url_for()` cho POST-only routes trong template
+  - **Test** template rendering để phát hiện BuildError sớm
