@@ -143,6 +143,26 @@
   box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
 }
 
+.form-error {
+  display: block;
+  margin-top: var(--spacing-1);
+  color: var(--color-error-text);
+  font-size: var(--font-size-sm);
+}
+
+input.error,
+select.error,
+textarea.error {
+  border-color: var(--color-error-border) !important;
+}
+
+input.error:focus,
+select.error:focus,
+textarea.error:focus {
+  outline-color: var(--color-error-border);
+  box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
+}
+
 .form-help {
   display: block;
   margin-top: var(--spacing-1);
@@ -154,7 +174,20 @@
   display: block;
   margin-top: var(--spacing-1);
   font-size: var(--font-size-sm);
-  color: var(--color-error);
+  color: var(--color-error-text);
+}
+
+input.error,
+select.error,
+textarea.error {
+  border-color: var(--color-error-border) !important;
+}
+
+input.error:focus,
+select.error:focus,
+textarea.error:focus {
+  outline-color: var(--color-error-border);
+  box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
 }
 
 .form-check {

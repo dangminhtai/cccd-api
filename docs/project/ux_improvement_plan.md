@@ -665,14 +665,35 @@ Tài liệu này mô tả kế hoạch cải thiện trải nghiệm người d�
 **Verification:** See `docs/project/phase1_verification.md`
 
 ### Phase 2: Core UX (Week 3-4)
+**Status:** ✅ **COMPLETED**  
 **Priority: High**
-- [ ] Form validation & feedback
-- [ ] Loading states cho AJAX
-- [ ] Error handling & user-friendly messages
+- [x] Form validation & feedback
+- [x] Loading states cho AJAX
+- [x] Error handling & user-friendly messages
 - [ ] Table improvements (sorting, pagination)
-- [ ] Empty states
+- [x] Empty states
 
 **Impact: High** - Trực tiếp ảnh hưởng user experience
+
+**Completed Date:** 2026-01-11
+
+**Files Created:**
+- `app/static/js/forms.js` - Client-side form validation (real-time)
+- `app/static/js/ajax-helpers.js` - AJAX helpers với loading states & toast notifications
+- `app/static/css/utilities.css` - Utility classes (loading, empty states, skeleton)
+
+**Files Updated:**
+- `app/templates/base.html` - Include JS & CSS files
+- `app/templates/portal/keys.html` - Extend base.html, use ajaxFetch, toast notifications
+- `app/static/css/components.css` - Form error styles
+
+**Features Implemented:**
+- ✅ Real-time form validation (email, password, required fields, label length)
+- ✅ Loading states cho buttons (spinner + disabled)
+- ✅ Toast notifications (success/error/warning/info) với auto-dismiss
+- ✅ Enhanced error handling với user-friendly messages
+- ✅ Empty states với icons và friendly messages
+- ✅ AJAX helpers (`ajaxFetch`) để standardize tất cả requests
 
 ### Phase 3: Polish (Week 5-6)
 **Priority: Medium**

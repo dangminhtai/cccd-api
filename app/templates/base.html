@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/utilities.css') }}">
     
     {% block extra_css %}{% endblock %}
 </head>
@@ -25,6 +26,10 @@
     </main>
     
     {% block footer %}{% endblock %}
+    
+    <!-- Common JavaScript -->
+    <script src="{{ url_for('static', filename='js/ajax-helpers.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/forms.js') }}"></script>
     
     {% block extra_js %}{% endblock %}
     {% endblock %}
