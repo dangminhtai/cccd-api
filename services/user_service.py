@@ -64,15 +64,28 @@ def register_user(email: str, password: str, full_name: str) -> Tuple[bool, Opti
                 verification_token = generate_verification_token()
                 verification_expires = datetime.now() + timedelta(hours=24)
                 
-                # Insert user
-                cursor.execute(
-                    """
-                    INSERT INTO users (email, password_hash, full_name, status, 
-                                    email_verified, verification_token, verification_token_expires)
-                    VALUES (%s, %s, %s, 'active', FALSE, %s, %s)
-                    """,
-                    (email, password_hash, full_name, verification_token, verification_expires),
-                )
+                # Insert user - try with email_verified columns first, fallback if columns don't exist
+                try:
+                    cursor.execute(
+                        """
+                        INSERT INTO users (email, password_hash, full_name, status, 
+                                        email_verified, verification_token, verification_token_expires)
+                        VALUES (%s, %s, %s, 'active', FALSE, %s, %s)
+                        """,
+                        (email, password_hash, full_name, verification_token, verification_expires),
+                    )
+                except Exception as e:
+                    # Columns don't exist yet, insert without email_verified columns
+                    logger.warning(f"Email verification columns not found, inserting without them: {str(e)}")
+                    cursor.execute(
+                        """
+                        INSERT INTO users (email, password_hash, full_name, status)
+                        VALUES (%s, %s, %s, 'active')
+                        """,
+                        (email, password_hash, full_name),
+                    )
+                    # Set verification_token to None to indicate columns don't exist
+                    verification_token = None
                 user_id = cursor.lastrowid
                 
                 # Create default free subscription
@@ -245,18 +258,36 @@ def get_user_by_id(user_id: int) -> Optional[dict]:
         conn = _get_db_connection()
         try:
             with conn.cursor() as cursor:
-                cursor.execute(
-                    """
-                    SELECT id, email, full_name, status, email_verified, created_at, last_login_at
-                    FROM users
-                    WHERE id = %s
-                    """,
-                    (user_id,),
-                )
+                # Check if email_verified column exists first
+                # If not, query without it (backward compatibility)
+                try:
+                    cursor.execute(
+                        """
+                        SELECT id, email, full_name, status, email_verified, created_at, last_login_at
+                        FROM users
+                        WHERE id = %s
+                        """,
+                        (user_id,),
+                    )
+                except Exception:
+                    # Column doesn't exist, query without email_verified
+                    cursor.execute(
+                        """
+                        SELECT id, email, full_name, status, created_at, last_login_at
+                        FROM users
+                        WHERE id = %s
+                        """,
+                        (user_id,),
+                    )
+                    user = cursor.fetchone()
+                    if user:
+                        user["email_verified"] = False  # Default to False if column doesn't exist
+                    return user
                 return cursor.fetchone()
         finally:
             conn.close()
-    except Exception:
+    except Exception as e:
+        logger.error(f"Error getting user by id: {str(e)}", exc_info=True)
         return None
 
 

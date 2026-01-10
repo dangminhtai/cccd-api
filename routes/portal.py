@@ -74,24 +74,27 @@ def register():
         success, error_msg, user_id, verification_token = register_user(email, password, full_name)
         
         if success and user_id:
-            # Send verification email
-            from services.email_service import send_verification_email
-            from flask import url_for
-            import os
-            
-            base_url = os.getenv("BASE_URL", "http://localhost:8000")
-            verification_url = f"{base_url}/portal/verify-email/{verification_token}"
-            
-            email_sent = send_verification_email(
-                to_email=email,
-                to_name=full_name,
-                verification_url=verification_url
-            )
-            
-            if email_sent:
-                flash("Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản", "success")
+            # Send verification email only if verification_token was generated
+            if verification_token:
+                from services.email_service import send_verification_email
+                import os
+                
+                base_url = os.getenv("BASE_URL", "http://localhost:8000")
+                verification_url = f"{base_url}/portal/verify-email/{verification_token}"
+                
+                email_sent = send_verification_email(
+                    to_email=email,
+                    to_name=full_name,
+                    verification_url=verification_url
+                )
+                
+                if email_sent:
+                    flash("Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản", "success")
+                else:
+                    flash("Đăng ký thành công! Nhưng không thể gửi email xác thực. Vui lòng liên hệ hỗ trợ", "warning")
             else:
-                flash("Đăng ký thành công! Nhưng không thể gửi email xác thực. Vui lòng liên hệ hỗ trợ", "warning")
+                # Email verification columns don't exist, user can use immediately
+                flash("Đăng ký thành công! Vui lòng đăng nhập", "success")
             
             return redirect(url_for("portal.login"))
         else:
