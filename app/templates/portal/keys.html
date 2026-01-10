@@ -94,9 +94,21 @@
             <p style="color: #dc3545; font-weight: 600; margin-bottom: 10px;">⚠️ Lưu ý: Key này chỉ hiển thị 1 lần. Vui lòng copy và lưu lại ngay!</p>
             <div class="new-key-box" id="new-key-box">{{ new_api_key }}</div>
             <button class="btn copy-btn" onclick="copyKey()">📋 Copy Key</button>
-            <a href="{{ url_for('portal.keys') }}" class="btn btn-secondary" style="margin-left: 10px;">Đóng</a>
+            <button class="btn btn-secondary" onclick="closeNewKeyModal()" style="margin-left: 10px;">Đóng</button>
         </div>
         {% endif %}
+        
+        <!-- Modal for rotated key (AJAX) -->
+        <div id="rotate-key-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+            <div class="section new-key-modal" style="position: relative; max-width: 600px; margin: 40px auto;">
+                <button onclick="closeRotateKeyModal()" style="position: absolute; top: 10px; right: 10px; background: #f0f0f0; border: 0; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 18px;">×</button>
+                <h3>🎉 API Key mới đã được tạo (Rotated)!</h3>
+                <p style="color: #dc3545; font-weight: 600; margin-bottom: 10px;">⚠️ Lưu ý: Key này chỉ hiển thị 1 lần. Vui lòng copy và lưu lại ngay!</p>
+                <div class="new-key-box" id="rotate-key-box"></div>
+                <button class="btn copy-btn" onclick="copyRotateKey()">📋 Copy Key</button>
+                <button class="btn btn-secondary" onclick="closeRotateKeyModal()" style="margin-left: 10px;">Đóng</button>
+            </div>
+        </div>
         
         <div class="section">
             <h2>Tạo API Key mới</h2>
@@ -162,13 +174,11 @@
                             <span class="key-label-display" data-key-id="{{ key.id }}">
                                 {{ key.label or '(Không có label)' }}
                             </span>
-                            <form method="POST" action="{{ url_for('portal.keys') }}" class="key-label-form" data-key-id="{{ key.id }}" style="display: none;">
-                                <input type="hidden" name="action" value="update_label">
-                                <input type="hidden" name="key_id" value="{{ key.id }}">
-                                <input type="text" name="label" value="{{ key.label or '' }}" placeholder="Nhập label..." maxlength="100" style="padding: 6px; border: 1px solid #ddd; border-radius: 4px; width: 150px;">
-                                <button type="submit" class="btn" style="padding: 6px 12px; font-size: 12px; margin-left: 4px;">Lưu</button>
-                                <button type="button" class="btn btn-secondary cancel-label-edit" style="padding: 6px 12px; font-size: 12px; margin-left: 4px;">Hủy</button>
-                            </form>
+                            <div class="key-label-form" data-key-id="{{ key.id }}" style="display: none;">
+                                <input type="text" class="label-input" data-key-id="{{ key.id }}" value="{{ key.label or '' }}" placeholder="Nhập label..." maxlength="100" style="padding: 6px; border: 1px solid #ddd; border-radius: 4px; width: 150px;">
+                                <button type="button" class="btn save-label-btn" data-key-id="{{ key.id }}" style="padding: 6px 12px; font-size: 12px; margin-left: 4px;">Lưu</button>
+                                <button type="button" class="btn btn-secondary cancel-label-edit" data-key-id="{{ key.id }}" style="padding: 6px 12px; font-size: 12px; margin-left: 4px;">Hủy</button>
+                            </div>
                             <button class="btn-edit-label" data-key-id="{{ key.id }}" style="padding: 4px 8px; font-size: 11px; background: #6c757d; color: white; border: 0; border-radius: 4px; cursor: pointer; margin-left: 4px;">✏️</button>
                         </td>
                         <td><code>{{ key.key_prefix }}...</code>{% if key.rotated_from %}<br><small style="color: #666;">Rotated from key #{{ key.rotated_from }}</small>{% endif %}</td>
@@ -189,23 +199,13 @@
                         <td>
                             <div style="display: flex; gap: 4px; flex-wrap: wrap;">
                                 {% if key.active and not key.expired %}
-                                <form method="POST" action="{{ url_for('portal.rotate_key', key_id=key.id) }}" style="display: inline;">
-                                    <button type="submit" class="btn" style="padding: 6px 12px; font-size: 12px;" onclick="return confirm('Rotate key này? Key mới sẽ được tạo, key cũ hết hạn sau 7 ngày.')">🔄 Rotate</button>
-                                </form>
-                                <form method="POST" action="{{ url_for('portal.suspend_key', key_id=key.id) }}" style="display: inline;">
-                                    <button type="submit" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="return confirm('Suspend key này?')">⏸️ Suspend</button>
-                                </form>
-                                <button class="btn" style="padding: 6px 12px; font-size: 12px; background: #17a2b8;" onclick="showKeyUsage({{ key.id }})">📊 Usage</button>
+                                <button class="btn rotate-key-btn" data-key-id="{{ key.id }}" style="padding: 6px 12px; font-size: 12px;">🔄 Rotate</button>
+                                <button class="btn btn-secondary suspend-key-btn" data-key-id="{{ key.id }}" style="padding: 6px 12px; font-size: 12px;">⏸️ Suspend</button>
+                                <button class="btn view-usage-btn" data-key-id="{{ key.id }}" style="padding: 6px 12px; font-size: 12px; background: #17a2b8;">📊 Usage</button>
                                 {% elif key.suspended %}
-                                <form method="POST" action="{{ url_for('portal.resume_key', key_id=key.id) }}" style="display: inline;">
-                                    <button type="submit" class="btn" style="padding: 6px 12px; font-size: 12px;">▶️ Resume</button>
-                                </form>
+                                <button class="btn resume-key-btn" data-key-id="{{ key.id }}" style="padding: 6px 12px; font-size: 12px;">▶️ Resume</button>
                                 {% endif %}
-                                <form method="POST" action="{{ url_for('portal.keys') }}" style="display: inline;">
-                                    <input type="hidden" name="action" value="delete">
-                                    <input type="hidden" name="key_id" value="{{ key.id }}">
-                                    <button type="submit" class="btn btn-danger" style="padding: 6px 12px; font-size: 12px;" onclick="return confirm('Bạn có chắc muốn xóa key này?')">🗑️ Xóa</button>
-                                </form>
+                                <button class="btn btn-danger delete-key-btn" data-key-id="{{ key.id }}" style="padding: 6px 12px; font-size: 12px;">🗑️ Xóa</button>
                             </div>
                         </td>
                     </tr>
@@ -264,13 +264,227 @@
         
         document.querySelectorAll('.cancel-label-edit').forEach(btn => {
             btn.addEventListener('click', function() {
-                const form = this.closest('.key-label-form');
-                const keyId = form.dataset.keyId;
+                const keyId = this.dataset.keyId;
                 const display = document.querySelector(`.key-label-display[data-key-id="${keyId}"]`);
+                const form = document.querySelector(`.key-label-form[data-key-id="${keyId}"]`);
                 const editBtn = document.querySelector(`.btn-edit-label[data-key-id="${keyId}"]`);
                 display.style.display = 'inline';
                 form.style.display = 'none';
                 editBtn.style.display = 'inline-block';
+            });
+        });
+        
+        // Save label (AJAX)
+        document.querySelectorAll('.save-label-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const keyId = this.dataset.keyId;
+                const input = document.querySelector(`.label-input[data-key-id="${keyId}"]`);
+                const label = input.value.trim();
+                
+                const formData = new FormData();
+                formData.append('action', 'update_label');
+                formData.append('key_id', keyId);
+                formData.append('label', label);
+                
+                fetch('/portal/keys', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        const display = document.querySelector(`.key-label-display[data-key-id="${keyId}"]`);
+                        const form = document.querySelector(`.key-label-form[data-key-id="${keyId}"]`);
+                        const editBtn = document.querySelector(`.btn-edit-label[data-key-id="${keyId}"]`);
+                        
+                        display.textContent = label || '(Không có label)';
+                        display.style.display = 'inline';
+                        form.style.display = 'none';
+                        editBtn.style.display = 'inline-block';
+                        
+                        // Show success message
+                        showFlashMessage(data.message || 'Đã cập nhật label thành công', 'success');
+                    } else {
+                        alert('Lỗi: ' + (data.error || 'Không thể cập nhật label'));
+                    }
+                })
+                .catch(err => {
+                    alert('Lỗi: ' + err.message);
+                });
+            });
+        });
+        
+        // Suspend key (AJAX)
+        document.querySelectorAll('.suspend-key-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (!confirm('Suspend key này?')) return;
+                
+                const keyId = this.dataset.keyId;
+                
+                fetch(`/portal/keys/${keyId}/suspend`, {
+                    method: 'POST'
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        showFlashMessage(data.message || 'Đã suspend key thành công', 'success');
+                        // Reload page to update status
+                        setTimeout(() => window.location.reload(), 500);
+                    } else {
+                        alert('Lỗi: ' + (data.error || 'Không thể suspend key'));
+                    }
+                })
+                .catch(err => {
+                    alert('Lỗi: ' + err.message);
+                });
+            });
+        });
+        
+        // Resume key (AJAX)
+        document.querySelectorAll('.resume-key-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const keyId = this.dataset.keyId;
+                
+                fetch(`/portal/keys/${keyId}/resume`, {
+                    method: 'POST'
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        showFlashMessage(data.message || 'Đã resume key thành công', 'success');
+                        // Reload page to update status
+                        setTimeout(() => window.location.reload(), 500);
+                    } else {
+                        alert('Lỗi: ' + (data.error || 'Không thể resume key'));
+                    }
+                })
+                .catch(err => {
+                    alert('Lỗi: ' + err.message);
+                });
+            });
+        });
+        
+        // Delete key (AJAX)
+        document.querySelectorAll('.delete-key-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (!confirm('Bạn có chắc muốn xóa key này?')) return;
+                
+                const keyId = this.dataset.keyId;
+                const row = this.closest('tr');
+                
+                const formData = new FormData();
+                formData.append('action', 'delete');
+                formData.append('key_id', keyId);
+                
+                fetch('/portal/keys', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        showFlashMessage(data.message || 'Đã xóa API key thành công', 'success');
+                        // Remove row from table
+                        row.style.opacity = '0.5';
+                        setTimeout(() => {
+                            row.remove();
+                            // Check if table is empty
+                            const tbody = document.querySelector('.keys-table tbody');
+                            if (tbody && tbody.children.length === 0) {
+                                location.reload();
+                            }
+                        }, 300);
+                    } else {
+                        alert('Lỗi: ' + (data.error || 'Không thể xóa key'));
+                    }
+                })
+                .catch(err => {
+                    alert('Lỗi: ' + err.message);
+                });
+            });
+        });
+        
+        // Rotate key (AJAX)
+        document.querySelectorAll('.rotate-key-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (!confirm('Rotate key này? Key mới sẽ được tạo, key cũ hết hạn sau 7 ngày.')) return;
+                
+                const keyId = this.dataset.keyId;
+                
+                fetch(`/portal/keys/${keyId}/rotate`, {
+                    method: 'POST'
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.new_key) {
+                        // Show modal with new key
+                        const modal = document.getElementById('rotate-key-modal');
+                        const keyBox = document.getElementById('rotate-key-box');
+                        keyBox.textContent = data.new_key;
+                        modal.style.display = 'flex';
+                        
+                        // Reload page after a delay to update key list
+                        setTimeout(() => window.location.reload(), 2000);
+                    } else {
+                        alert('Lỗi: ' + (data.error || 'Không thể rotate key'));
+                    }
+                })
+                .catch(err => {
+                    alert('Lỗi: ' + err.message);
+                });
+            });
+        });
+        
+        function closeRotateKeyModal() {
+            document.getElementById('rotate-key-modal').style.display = 'none';
+            // Reload page to show updated key list
+            window.location.reload();
+        }
+        
+        function copyRotateKey() {
+            const keyBox = document.getElementById('rotate-key-box');
+            const text = keyBox.textContent.trim();
+            navigator.clipboard.writeText(text).then(() => {
+                alert('✅ Đã copy API key vào clipboard!');
+            }).catch(() => {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('✅ Đã copy API key vào clipboard!');
+            });
+        }
+        
+        function closeNewKeyModal() {
+            const modal = document.querySelector('.new-key-modal');
+            if (modal && modal.parentElement) {
+                modal.remove();
+            }
+        }
+        
+        // Helper function to show flash messages
+        function showFlashMessage(message, type) {
+            const flashContainer = document.querySelector('.flash-messages');
+            if (!flashContainer) return;
+            
+            const flashDiv = document.createElement('div');
+            flashDiv.className = `flash flash-${type}`;
+            flashDiv.textContent = message;
+            flashContainer.appendChild(flashDiv);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                flashDiv.remove();
+            }, 5000);
+        }
+        
+        // View usage button handlers
+        document.querySelectorAll('.view-usage-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const keyId = parseInt(this.dataset.keyId);
+                showKeyUsage(keyId);
             });
         });
         

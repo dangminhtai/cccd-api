@@ -188,15 +188,47 @@ def deactivate_key(api_key: str) -> bool:
 
 
 def deactivate_key_by_id(key_id: int, user_id: int) -> bool:
-    """Vô hiệu hóa key theo ID (chỉ user sở hữu mới được)"""
+    """Vô hiệu hóa key theo ID (chỉ user sở hữu mới được) - DEPRECATED: dùng delete_key_by_id thay thế"""
+    return delete_key_by_id(key_id, user_id)
+
+
+def delete_key_by_id(key_id: int, user_id: int) -> bool:
+    """Xóa key khỏi database (hard delete) - chỉ user sở hữu mới được
+    
+    Lưu ý: Xóa key sẽ cascade xóa:
+    - api_key_history (ON DELETE CASCADE)
+    - api_usage (ON DELETE CASCADE)
+    - request_logs.api_key_id sẽ SET NULL (ON DELETE SET NULL)
+    
+    Returns:
+        True nếu xóa thành công, False nếu không tìm thấy hoặc không có quyền
+    """
     conn = _get_db_connection()
     try:
         with conn.cursor() as cursor:
+            # First verify ownership
             cursor.execute(
-                "UPDATE api_keys SET active = FALSE WHERE id = %s AND user_id = %s",
+                "SELECT id FROM api_keys WHERE id = %s AND user_id = %s",
+                (key_id, user_id),
+            )
+            key_row = cursor.fetchone()
+            if key_row is None:
+                return False  # Key không tồn tại hoặc không thuộc về user
+            
+            # Log deletion before deleting
+            _log_key_history(key_id, "deleted", "exists", "deleted", user_id)
+            
+            # Hard delete - DELETE row khỏi database
+            # Foreign key constraints sẽ tự động:
+            # - DELETE api_key_history (CASCADE)
+            # - DELETE api_usage (CASCADE)
+            # - SET NULL request_logs.api_key_id (SET NULL)
+            cursor.execute(
+                "DELETE FROM api_keys WHERE id = %s AND user_id = %s",
                 (key_id, user_id),
             )
             affected = cursor.rowcount
+            
         conn.commit()
     finally:
         conn.close()
@@ -235,6 +267,7 @@ def get_user_api_keys(user_id: int) -> list[dict]:
                 SELECT {base_columns}
                 FROM api_keys
                 WHERE user_id = %s
+                AND active = TRUE
                 ORDER BY created_at DESC
                 """,
                 (user_id,),

@@ -452,3 +452,53 @@
   - **Test** chạy code sau khi thêm logging calls
   - **Dùng linter/IDE** để phát hiện undefined names
   - **Kiểm tra** tất cả files có dùng `logger.` đều có `import logging`
+
+---
+
+## 32) Edit label/Suspend/Resume quá chậm do redirect (302), và không xóa được key đã inactive
+
+- **Hiện tượng**: 
+  - Edit label, Suspend, Resume đều redirect (302) → reload toàn bộ page → rất chậm
+  - Xóa key đã inactive (active = 0) bị lỗi "Không tìm thấy API key hoặc bạn không có quyền xóa"
+- **Nguyên nhân**: 
+  - **Vấn đề 1**: Tất cả actions dùng form submit → POST → redirect → reload page. User phải chờ reload toàn bộ page.
+  - **Vấn đề 2**: `deactivate_key_by_id()` UPDATE với `active = FALSE` nhưng không check ownership trước. Nếu key đã inactive, UPDATE sẽ không affect rows (đã là FALSE rồi) → `rowcount = 0` → return False → báo lỗi "Không tìm thấy"
+- **Cách xử lý**: 
+  - **Vấn đề 1**: Chuyển sang AJAX cho tất cả actions (edit label, suspend, resume, delete). Return JSON thay vì redirect. Update UI inline mà không reload page.
+  - **Vấn đề 2**: Sửa `deactivate_key_by_id()` để:
+    - Check ownership trước (SELECT để verify)
+    - Nếu ownership đúng, update active = FALSE (chỉ nếu chưa inactive)
+    - Return True nếu ownership đúng (không quan tâm rowcount)
+- **Cách tránh lần sau**: Khi implement actions cần feedback ngay:
+  - **Ưu tiên AJAX** cho các actions không cần reload page (edit, suspend, resume, delete)
+  - **Chỉ dùng redirect** cho actions cần reload (như rotate - cần show key mới)
+  - **Khi UPDATE với điều kiện**, luôn verify ownership/validity trước, rồi mới update
+  - **Không dựa vào rowcount** để quyết định success nếu có thể key đã ở trạng thái đó rồi
+  - **Test** với các trạng thái khác nhau (active, inactive, suspended, expired)
+
+---
+
+## 33) Rotate key vẫn reload page, và delete key chỉ set active=FALSE chưa xóa thật
+
+- **Hiện tượng**: 
+  - Rotate key vẫn redirect (302) → reload toàn bộ page → chậm
+  - Delete key chỉ set `active = FALSE` nhưng key vẫn hiển thị trong list (chưa filter inactive)
+  - User muốn delete key thực sự xóa khỏi database (hard delete)
+- **Nguyên nhân**: 
+  - **Vấn đề 1**: Rotate route vẫn dùng `redirect()` và `session["new_api_key"]` thay vì return JSON
+  - **Vấn đề 2**: `get_user_api_keys()` không filter `active = TRUE`, nên keys đã inactive vẫn hiển thị
+  - **Vấn đề 3**: `deactivate_key_by_id()` chỉ set `active = FALSE` (soft delete), không thực sự xóa row
+- **Cách xử lý**: 
+  - **Vấn đề 1**: Chuyển rotate route sang AJAX, return JSON với `new_key`, show modal với key mới
+  - **Vấn đề 2**: Filter `active = TRUE` trong `get_user_api_keys()` để chỉ hiển thị active keys
+  - **Vấn đề 3**: Tạo function mới `delete_key_by_id()` để hard delete (DELETE row). Foreign key constraints sẽ tự động:
+    - DELETE `api_key_history` (CASCADE)
+    - DELETE `api_usage` (CASCADE)
+    - SET NULL `request_logs.api_key_id` (SET NULL)
+- **Cách tránh lần sau**: 
+  - **Khi delete data**: Quyết định rõ ràng soft delete vs hard delete
+  - **Soft delete**: Dùng flag (active, deleted_at) và filter trong query
+  - **Hard delete**: Dùng DELETE và đảm bảo foreign key constraints đúng (CASCADE/SET NULL)
+  - **List queries**: Luôn filter theo status để không hiển thị deleted/inactive items
+  - **AJAX cho actions**: Rotate, create, delete nên dùng AJAX để tránh reload page
+  - **Test**: Verify delete thực sự xóa khỏi database (query trực tiếp), không chỉ hide trong UI
