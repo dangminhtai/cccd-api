@@ -161,7 +161,7 @@ def create_app() -> Flask:
             "swagger": "2.0",
             "info": {
                 "title": "CCCD API",
-                "description": "API để parse thông tin từ số CCCD (Căn cước công dân) 12 chữ số của Việt Nam.",
+                "description": "API để parse thông tin từ số CCCD (Căn cước công dân) 12 chữ số của Việt Nam.\n\n## Authentication\nAPI yêu cầu API key được gửi qua header `X-API-Key`.\n\n## Rate Limits\n- **Free**: 10 requests/minute\n- **Premium**: 100 requests/minute\n- **Ultra**: 1000 requests/minute\n\n## Error Handling\nTất cả errors trả về JSON với format:\n```json\n{\n  \"success\": false,\n  \"is_valid_format\": false,\n  \"data\": null,\n  \"message\": \"Error message\"\n}\n```",
                 "version": "1.0.0",
                 "contact": {
                     "name": "API Support",
@@ -186,11 +186,91 @@ def create_app() -> Flask:
         }
         
         swagger = Swagger(app, config=swagger_config, template=swagger_template)
-        app.logger.info("Swagger/OpenAPI documentation enabled at /api-docs")
+        app.logger.info("Swagger/OpenAPI documentation enabled at /api-docs and /docs")
+        
+        # Add redirect from /docs to /api-docs for convenience
+        @app.route("/docs")
+        def docs_redirect():
+            """Redirect /docs to /api-docs for convenience"""
+            from flask import redirect
+            return redirect("/api-docs", code=301)
+            
     except ImportError:
         app.logger.warning("flasgger not installed. Install with: pip install flasgger")
+        
+        # Add a simple HTML page at /docs explaining how to install flasgger
+        @app.route("/docs")
+        @app.route("/api-docs")
+        def docs_missing():
+            from flask import render_template_string
+            return render_template_string("""
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Documentation - flasgger Required</title>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
+        .install { background: #e8f5e9; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .error { color: #d32f2f; }
+    </style>
+</head>
+<body>
+    <h1>API Documentation</h1>
+    <p class="error">Swagger UI chưa được kích hoạt vì <code>flasgger</code> chưa được cài đặt.</p>
+    <div class="install">
+        <h2>Để kích hoạt API Documentation:</h2>
+        <ol>
+            <li>Cài đặt <code>flasgger</code>:
+                <pre><code>pip install flasgger</code></pre>
+            </li>
+            <li>Hoặc cài đặt tất cả dependencies:
+                <pre><code>pip install -r requirements.txt</code></pre>
+            </li>
+            <li>Restart server:
+                <pre><code>py run.py</code></pre>
+            </li>
+            <li>Truy cập lại <a href="/docs">/docs</a> hoặc <a href="/api-docs">/api-docs</a></li>
+        </ol>
+    </div>
+    <h2>Documentation Files</h2>
+    <p>Bạn có thể xem tài liệu offline tại:</p>
+    <ul>
+        <li><a href="/docs/api/README.md">docs/api/README.md</a> - Main API documentation</li>
+        <li><a href="/docs/api/ERROR_CODES.md">docs/api/ERROR_CODES.md</a> - Error codes reference</li>
+        <li><a href="/docs/api/RATE_LIMITS.md">docs/api/RATE_LIMITS.md</a> - Rate limits documentation</li>
+        <li><a href="/docs/api/openapi.yaml">docs/api/openapi.yaml</a> - OpenAPI 3.0 specification</li>
+    </ul>
+</body>
+</html>
+            """), 503
     except Exception as e:
         app.logger.warning(f"Failed to initialize Swagger: {e}")
+        
+        @app.route("/docs")
+        @app.route("/api-docs")
+        def docs_error():
+            from flask import render_template_string
+            return render_template_string(f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Documentation - Error</title>
+    <style>
+        body {{ font-family: system-ui, -apple-system, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }}
+        .error {{ background: #ffebee; padding: 20px; border-radius: 8px; color: #c62828; }}
+    </style>
+</head>
+<body>
+    <h1>API Documentation - Error</h1>
+    <div class="error">
+        <p><strong>Lỗi khi khởi tạo Swagger UI:</strong></p>
+        <pre>{e}</pre>
+    </div>
+    <p>Vui lòng kiểm tra logs để biết thêm chi tiết.</p>
+</body>
+</html>
+            """), 500
 
     # Routes
     from routes.health import health_bp
