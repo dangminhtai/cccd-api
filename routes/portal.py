@@ -154,6 +154,68 @@ def logout():
     return redirect(url_for("portal.index"))
 
 
+@portal_bp.route("/verify-email/<token>")
+def verify_email(token: str):
+    """Xác thực email với token"""
+    from services.user_service import verify_email as verify_email_service
+    
+    success, error_msg = verify_email_service(token)
+    
+    if success:
+        flash("Email đã được xác thực thành công! Bạn có thể tạo API key ngay bây giờ", "success")
+        return redirect(url_for("portal.login"))
+    else:
+        flash(error_msg or "Xác thực email thất bại", "error")
+        return redirect(url_for("portal.login"))
+
+
+@portal_bp.route("/resend-verification", methods=["GET", "POST"])
+@require_login
+def resend_verification():
+    """Gửi lại email xác thực"""
+    from services.user_service import generate_new_verification_token, get_user_by_id
+    from services.email_service import send_verification_email
+    import os
+    
+    user_id = session.get("user_id")
+    if not user_id:
+        flash("Vui lòng đăng nhập", "error")
+        return redirect(url_for("portal.login"))
+    
+    user = get_user_by_id(user_id)
+    if not user:
+        flash("User không tồn tại", "error")
+        return redirect(url_for("portal.login"))
+    
+    if user.get("email_verified"):
+        flash("Email đã được xác thực rồi", "info")
+        return redirect(url_for("portal.dashboard"))
+    
+    # Handle both GET and POST
+    # Generate new token
+    success, error_msg, verification_token = generate_new_verification_token(user_id)
+    
+    if success and verification_token:
+        # Send verification email
+        base_url = os.getenv("BASE_URL", "http://localhost:8000")
+        verification_url = f"{base_url}/portal/verify-email/{verification_token}"
+        
+        email_sent = send_verification_email(
+            to_email=user["email"],
+            to_name=user["full_name"],
+            verification_url=verification_url
+        )
+        
+        if email_sent:
+            flash("Đã gửi lại email xác thực. Vui lòng kiểm tra hộp thư", "success")
+        else:
+            flash("Không thể gửi email. Vui lòng thử lại sau", "error")
+    else:
+        flash(error_msg or "Không thể tạo token xác thực", "error")
+    
+    return redirect(url_for("portal.dashboard"))
+
+
 @portal_bp.route("/dashboard")
 @require_login
 def dashboard():
