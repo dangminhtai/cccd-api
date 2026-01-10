@@ -220,23 +220,20 @@ def send_email(
 
 def send_welcome_email(to_email: str, to_name: str, verification_url: Optional[str] = None) -> bool:
     """Send welcome email to new user"""
-    from flask import render_template, url_for
-    
-    # This will be implemented when we create email templates
-    # For now, just a placeholder
-    subject = "Chào mừng đến với CCCD API"
-    html_content = f"""
-    <html>
-    <body>
-        <h2>Chào mừng {to_name}!</h2>
-        <p>Cảm ơn bạn đã đăng ký tài khoản CCCD API.</p>
-        {f'<p>Vui lòng xác thực email của bạn bằng cách click vào link sau: <a href="{verification_url}">Xác thực email</a></p>' if verification_url else ''}
-        <p>Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi.</p>
-    </body>
-    </html>
-    """
-    
-    return send_email(to_email, subject, html_content, to_name=to_name)
+    try:
+        from flask import render_template
+        
+        subject = "Chào mừng đến với CCCD API"
+        html_content = render_template(
+            "emails/welcome.html",
+            user_name=to_name,
+            verification_url=verification_url
+        )
+        
+        return send_email(to_email, subject, html_content, to_name=to_name)
+    except Exception as e:
+        logger.error(f"Error sending welcome email: {str(e)}", exc_info=True)
+        return False
 
 
 def send_verification_email(to_email: str, to_name: str, verification_url: str) -> bool:
