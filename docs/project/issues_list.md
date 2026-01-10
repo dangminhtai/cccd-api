@@ -433,3 +433,22 @@
   - **Hoặc** dùng form với POST nếu route chỉ cần POST
   - **Không dùng** `url_for()` cho POST-only routes trong template
   - **Test** template rendering để phát hiện BuildError sớm
+
+---
+
+## 31) NameError: name 'logger' is not defined trong user_service.py
+
+- **Hiện tượng**: Chạy password reset route báo lỗi: `NameError: name 'logger' is not defined` tại `services/user_service.py`
+- **Nguyên nhân**: 
+  - Code sử dụng `logger.error()`, `logger.warning()`, `logger.info()` nhưng thiếu import `logging` module
+  - Thiếu dòng `logger = logging.getLogger(__name__)`
+  - Khi refactor code, đã thêm logging calls nhưng quên import
+- **Cách xử lý**: 
+  - Thêm `import logging` vào đầu file `services/user_service.py`
+  - Thêm `logger = logging.getLogger(__name__)` sau imports
+  - Đảm bảo tất cả files có dùng logger đều có import logging
+- **Cách tránh lần sau**: Khi refactor code hoặc thêm logging:
+  - **Luôn kiểm tra** imports trước khi dùng logger
+  - **Test** chạy code sau khi thêm logging calls
+  - **Dùng linter/IDE** để phát hiện undefined names
+  - **Kiểm tra** tất cả files có dùng `logger.` đều có `import logging`
