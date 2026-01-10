@@ -284,13 +284,20 @@ def admin_payments():
 def admin_approve_payment(payment_id: int):
     """Admin: Approve payment và extend API keys"""
     from services.billing_service import approve_payment_admin
+    from flask import current_app
+    
+    current_app.logger.info(f"Admin approve payment_id={payment_id}")
     
     success, message = approve_payment_admin(payment_id)
+    
+    current_app.logger.info(f"Approve payment result: success={success}, message={message}")
     
     if success:
         flash(f"✅ {message}", "success")
     else:
         flash(f"❌ {message}", "error")
+        # Log error để debug
+        current_app.logger.error(f"Failed to approve payment {payment_id}: {message}")
     
-    return redirect(url_for("admin.admin_payments"))
+    return redirect(url_for("admin.admin_dashboard"))
 

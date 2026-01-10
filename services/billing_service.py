@@ -223,6 +223,17 @@ def approve_payment(payment_id: int, user_id: int) -> bool:
         return False
 
 
+def _log_debug(msg: str):
+    """Helper để log debug messages - dùng Flask logger nếu có context, nếu không thì print"""
+    try:
+        from flask import current_app
+        current_app.logger.info(msg)
+        print(msg)  # In luôn ra console để dễ debug
+    except RuntimeError:
+        # Không có Flask context, dùng print
+        print(f"[DEBUG] {msg}")
+
+
 def approve_payment_admin(payment_id: int) -> tuple[bool, Optional[str]]:
     """
     Approve payment từ admin (không cần user_id check)
@@ -230,11 +241,13 @@ def approve_payment_admin(payment_id: int) -> tuple[bool, Optional[str]]:
     """
     conn = None
     try:
+        _log_debug(f"[APPROVE PAYMENT] Bắt đầu approve payment_id={payment_id}")
         conn = _get_db_connection()
         cursor = conn.cursor()
         
         try:
             # Get payment info với user info
+            _log_debug(f"[APPROVE PAYMENT] Query payment với id={payment_id}, status='pending'")
             cursor.execute(
                 """
                 SELECT 
@@ -245,6 +258,7 @@ def approve_payment_admin(payment_id: int) -> tuple[bool, Optional[str]]:
                     p.payment_gateway,
                     p.transaction_id,
                     p.notes,
+                    p.status,
                     u.email,
                     u.full_name
                 FROM payments p
@@ -256,7 +270,16 @@ def approve_payment_admin(payment_id: int) -> tuple[bool, Optional[str]]:
             payment = cursor.fetchone()
             
             if not payment:
-                return False, "Payment không tồn tại hoặc đã được xử lý"
+                _log_debug(f"[APPROVE PAYMENT] Payment {payment_id} không tồn tại hoặc không phải pending")
+                # Check xem payment có tồn tại không (có thể đã được approve)
+                cursor.execute("SELECT id, status FROM payments WHERE id = %s", (payment_id,))
+                existing = cursor.fetchone()
+                if existing:
+                    _log_debug(f"[APPROVE PAYMENT] Payment đã có status='{existing['status']}'")
+                    return False, f"Payment đã có status='{existing['status']}', không thể approve lại"
+                return False, "Payment không tồn tại"
+            
+            _log_debug(f"[APPROVE PAYMENT] ✅ Tìm thấy payment: id={payment['id']}, user_id={payment['user_id']}, amount={payment['amount']}, status={payment['status']}")
             
             user_id = payment["user_id"]
             amount = float(payment["amount"])
@@ -269,7 +292,10 @@ def approve_payment_admin(payment_id: int) -> tuple[bool, Optional[str]]:
             else:  # >= 1,000,000 VND = Ultra
                 tier = "ultra"
             
+            _log_debug(f"[APPROVE PAYMENT] Tier được xác định: {tier} (amount={amount})")
+            
             # Deactivate old subscription
+            _log_debug(f"[APPROVE PAYMENT] Deactivate old subscriptions cho user_id={user_id}")
             cursor.execute(
                 """
                 UPDATE subscriptions
@@ -278,11 +304,14 @@ def approve_payment_admin(payment_id: int) -> tuple[bool, Optional[str]]:
                 """,
                 (user_id,),
             )
+            expired_count = cursor.rowcount
+            _log_debug(f"[APPROVE PAYMENT] Đã expire {expired_count} subscription(s)")
             
             # Create new subscription (1 month default)
             from datetime import datetime, timedelta
             expires_at = datetime.now() + timedelta(days=30)
             
+            _log_debug(f"[APPROVE PAYMENT] Tạo subscription mới: tier={tier}, expires_at={expires_at}")
             cursor.execute(
                 """
                 INSERT INTO subscriptions (user_id, tier, status, payment_method, amount, currency, expires_at)
@@ -293,10 +322,14 @@ def approve_payment_admin(payment_id: int) -> tuple[bool, Optional[str]]:
             subscription_id = cursor.lastrowid
             
             if not subscription_id:
+                _log_debug(f"[APPROVE PAYMENT] ❌ Không thể tạo subscription (lastrowid={cursor.lastrowid})")
                 conn.rollback()
                 return False, "Không thể tạo subscription"
             
+            _log_debug(f"[APPROVE PAYMENT] ✅ Subscription created: id={subscription_id}")
+            
             # Update payment status - QUAN TRỌNG: Phải update status = 'success'
+            _log_debug(f"[APPROVE PAYMENT] 🔄 UPDATE payment: id={payment_id}, set status='success', subscription_id={subscription_id}")
             cursor.execute(
                 """
                 UPDATE payments
@@ -305,14 +338,31 @@ def approve_payment_admin(payment_id: int) -> tuple[bool, Optional[str]]:
                 """,
                 (subscription_id, payment_id),
             )
+            update_count = cursor.rowcount
+            _log_debug(f"[APPROVE PAYMENT] UPDATE payment rowcount={update_count}")
             
-            if cursor.rowcount == 0:
+            if update_count == 0:
+                _log_debug(f"[APPROVE PAYMENT] ❌ UPDATE payment KHÔNG thành công (rowcount=0)")
+                # Check payment status hiện tại
+                cursor.execute("SELECT id, status FROM payments WHERE id = %s", (payment_id,))
+                current_payment = cursor.fetchone()
+                if current_payment:
+                    _log_debug(f"[APPROVE PAYMENT] Payment hiện tại có status='{current_payment['status']}'")
                 conn.rollback()
-                return False, "Không thể update payment status (có thể đã được xử lý)"
+                return False, f"Không thể update payment status (rowcount=0, có thể status không phải 'pending')"
+            
+            # Verify payment đã được update trong cùng transaction
+            cursor.execute("SELECT id, status, subscription_id FROM payments WHERE id = %s", (payment_id,))
+            verify_payment = cursor.fetchone()
+            _log_debug(f"[APPROVE PAYMENT] Verify payment sau UPDATE: id={verify_payment['id']}, status={verify_payment['status']}, subscription_id={verify_payment['subscription_id']}")
+            
+            if verify_payment['status'] != 'success':
+                _log_debug(f"[APPROVE PAYMENT] ❌ Payment status vẫn là '{verify_payment['status']}' sau UPDATE!")
+                conn.rollback()
+                return False, f"Payment status không được update (vẫn là '{verify_payment['status']}')"
             
             # Extend API keys expiration cho user này
-            # Lấy subscription duration từ amount (1 month = 30 days)
-            # Premium/Ultra: extend 30 days từ ngày hết hạn hiện tại hoặc từ bây giờ
+            _log_debug(f"[APPROVE PAYMENT] Extend API keys cho user_id={user_id}")
             cursor.execute(
                 """
                 UPDATE api_keys
@@ -327,35 +377,64 @@ def approve_payment_admin(payment_id: int) -> tuple[bool, Optional[str]]:
                 (user_id,),
             )
             keys_extended = cursor.rowcount
+            _log_debug(f"[APPROVE PAYMENT] Extended {keys_extended} API key(s)")
             
             # Commit transaction - QUAN TRỌNG: Phải commit để lưu thay đổi
-            # Tất cả operations đã thành công, commit để lưu vào database
+            _log_debug(f"[APPROVE PAYMENT] 🔄 COMMIT transaction...")
             conn.commit()
+            _log_debug(f"[APPROVE PAYMENT] ✅ COMMIT thành công!")
+            
+            # Verify sau commit (trong connection mới để đảm bảo thấy được data đã commit)
+            verify_conn = _get_db_connection()
+            try:
+                verify_cursor = verify_conn.cursor()
+                verify_cursor.execute("SELECT id, status, subscription_id, paid_at FROM payments WHERE id = %s", (payment_id,))
+                final_payment = verify_cursor.fetchone()
+                verify_cursor.close()
+                
+                _log_debug(f"[APPROVE PAYMENT] Verify sau COMMIT: id={final_payment['id']}, status={final_payment['status']}, subscription_id={final_payment['subscription_id']}, paid_at={final_payment['paid_at']}")
+                
+                if final_payment['status'] != 'success':
+                    _log_debug(f"[APPROVE PAYMENT] ❌ LỖI: Payment status vẫn là '{final_payment['status']}' sau COMMIT!")
+                    return False, f"Payment status không được lưu (sau commit vẫn là '{final_payment['status']}')"
+                else:
+                    _log_debug(f"[APPROVE PAYMENT] ✅✅✅ THÀNH CÔNG: Payment đã được approve (status='success')")
+            finally:
+                verify_conn.close()
             
             return True, f"Đã approve payment và extend {keys_extended} API key(s)"
             
         except Exception as e:
             # Rollback nếu có lỗi
+            import traceback
+            _log_debug(f"[APPROVE PAYMENT] ❌ Exception trong transaction: {e}")
+            _log_debug(f"[APPROVE PAYMENT] Traceback: {traceback.format_exc()}")
             if conn:
                 try:
+                    _log_debug(f"[APPROVE PAYMENT] 🔄 ROLLBACK transaction...")
                     conn.rollback()
-                except:
-                    pass
+                    _log_debug(f"[APPROVE PAYMENT] ✅ ROLLBACK thành công")
+                except Exception as rollback_err:
+                    _log_debug(f"[APPROVE PAYMENT] ❌ Lỗi khi rollback: {rollback_err}")
             raise e
         finally:
             if cursor:
                 cursor.close()
+                _log_debug(f"[APPROVE PAYMENT] Cursor closed")
             
     except Exception as e:
         import traceback
+        _log_debug(f"[APPROVE PAYMENT] ❌ Exception ngoài transaction: {e}")
+        _log_debug(f"[APPROVE PAYMENT] Traceback: {traceback.format_exc()}")
         error_msg = f"Lỗi khi approve payment: {str(e)}\n{traceback.format_exc()}"
         return False, error_msg
     finally:
         if conn:
             try:
                 conn.close()
-            except:
-                pass
+                _log_debug(f"[APPROVE PAYMENT] Connection closed")
+            except Exception as close_err:
+                _log_debug(f"[APPROVE PAYMENT] ❌ Lỗi khi đóng connection: {close_err}")
 
 
 def get_tier_pricing() -> dict:
