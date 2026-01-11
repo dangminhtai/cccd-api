@@ -652,6 +652,12 @@
             }
         }
         
+        // Set progress bar widths
+        document.querySelectorAll('.progress-bar').forEach(function(bar) {
+            var percentage = parseFloat(bar.dataset.percentage) || 0;
+            bar.style.width = percentage + '%';
+        });
+        
         // Search functionality
         var searchInput = document.getElementById('key-search');
         if (searchInput) {
