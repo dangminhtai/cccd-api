@@ -80,9 +80,8 @@ def create_app() -> Flask:
         response.headers["X-XSS-Protection"] = "1; mode=block"
         
         # Content-Security-Policy: restrict resources to same origin
-        # Note: Allow inline scripts/styles for demo.html (needed for the demo page)
         # Allow Google Fonts for Material Symbols icons
-        # Allow Tailwind CSS CDN for login page
+        # Allow Tailwind CSS CDN for portal pages
         # In production, consider removing 'unsafe-inline' and using nonces/hashes
         response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; worker-src 'self' blob:; connect-src 'self' https://cdn.jsdelivr.net;"
         
