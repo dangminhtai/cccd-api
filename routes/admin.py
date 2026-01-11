@@ -407,4 +407,33 @@ def admin_search_user():
     return jsonify({"user": user})
 
 
+@admin_bp.get("/users")
+def admin_list_users():
+    """Admin API: List users with pagination (JSON)"""
+    from services.user_service import get_users_list
+    
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 20, type=int)
+    search = request.args.get("search", "").strip() or None
+    
+    if page < 1:
+        page = 1
+    if per_page < 1 or per_page > 100:
+        per_page = 20
+    
+    users, total_count = get_users_list(page=page, per_page=per_page, search=search)
+    
+    total_pages = (total_count + per_page - 1) // per_page if total_count > 0 else 1
+    
+    return jsonify({
+        "users": users,
+        "pagination": {
+            "page": page,
+            "per_page": per_page,
+            "total": total_count,
+            "total_pages": total_pages,
+        }
+    })
+
+
 

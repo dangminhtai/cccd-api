@@ -189,41 +189,30 @@
         </div>
       </div>
       
-      <!-- Change User Tier Section -->
+      <!-- User Management Section -->
       <div class="section">
-        <h2>🔄 Thay Đổi Tier User</h2>
+        <h2>👥 Quản Lý Users</h2>
         <p style="color: #666; margin-bottom: 16px;">
-          Thay đổi tier của user trực tiếp (không qua payment). Dùng để fix lỗi hoặc hỗ trợ khách hàng.
+          Danh sách users với pagination. Admin có thể tìm kiếm và thay đổi tier trực tiếp.
         </p>
         
         <div class="form-group">
-          <div class="form-row">
-            <div>
-              <label>Email User</label>
-              <input id="changeTierEmail" type="email" placeholder="user@example.com" />
+          <div class="form-row" style="align-items: center;">
+            <div style="flex: 1;">
+              <label>Tìm kiếm (Email hoặc Tên)</label>
+              <input id="userSearchInput" type="text" placeholder="Nhập email hoặc tên..." style="min-width: 300px;" />
             </div>
             <div>
-              <label>Tier mới</label>
-              <select id="changeTierSelect">
-                <option value="free">Free</option>
-                <option value="premium">Premium</option>
-                <option value="ultra">Ultra</option>
-              </select>
-            </div>
-            <div>
-              <label>Ghi chú (tùy chọn)</label>
-              <input id="changeTierNotes" type="text" placeholder="Lý do thay đổi..." />
+              <button onclick="loadUsersList()">Tìm</button>
+              <button onclick="clearUserSearch()" style="margin-left: 8px; background: #6c757d;">Xóa</button>
             </div>
           </div>
-          <button onclick="searchUserForTierChange()">Tìm User</button>
-          <button onclick="changeUserTier()" id="changeTierBtn" style="display:none; margin-left: 8px;">Đổi Tier</button>
         </div>
         
-        <div id="changeTierError" class="error" style="display:none;"></div>
-        <div id="changeTierSuccess" class="success" style="display:none;"></div>
-        <div id="changeTierUserInfo" style="display:none; background: #f8f9fa; padding: 16px; border-radius: 8px; margin-top: 16px;">
-          <h3 style="margin-top: 0;">Thông tin User:</h3>
-          <div id="changeTierUserDetails"></div>
+        <div id="usersContainer">
+          <p style="text-align: center; color: #666; padding: 40px;">
+            Vui lòng nhập Admin Secret Key ở trên và nhấn "Tải thống kê" để xem danh sách users
+          </p>
         </div>
       </div>
     </div>

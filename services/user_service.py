@@ -298,17 +298,29 @@ def get_user_by_email(email: str) -> Optional[dict]:
                 if not user:
                     return None
                 
-                # Get current subscription
-                cursor.execute(
-                    """
-                    SELECT tier, status, expires_at
-                    FROM subscriptions
-                    WHERE user_id = %s AND status = 'active'
-                    ORDER BY created_at DESC
-                    LIMIT 1
-                    """,
-                    (user["id"],),
-                )
+                # Get current subscription (try with created_at, fallback without)
+                try:
+                    cursor.execute(
+                        """
+                        SELECT tier, status, expires_at
+                        FROM subscriptions
+                        WHERE user_id = %s AND status = 'active'
+                        ORDER BY created_at DESC
+                        LIMIT 1
+                        """,
+                        (user["id"],),
+                    )
+                except Exception:
+                    # Column created_at doesn't exist, query without ORDER BY
+                    cursor.execute(
+                        """
+                        SELECT tier, status, expires_at
+                        FROM subscriptions
+                        WHERE user_id = %s AND status = 'active'
+                        LIMIT 1
+                        """,
+                        (user["id"],),
+                    )
                 subscription = cursor.fetchone()
                 
                 return {
