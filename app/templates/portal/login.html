@@ -99,9 +99,16 @@
         }
         
         /* Fix overflow for Windows display - ensure all content is visible */
-        html, body {
+        html {
             overflow-x: hidden;
-            height: 100%;
+            overflow-y: auto;
+        }
+        
+        body {
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
         }
         
         /* Ensure checkbox is smaller and looks better */
@@ -119,7 +126,7 @@
     </style>
 </head>
 <body class="font-display bg-background-light dark:bg-background-dark text-[#0e111b] dark:text-white transition-colors duration-300">
-    <div class="relative min-h-screen w-full flex items-center justify-center overflow-x-hidden bg-navy-deep py-6">
+    <div class="relative h-full w-full flex items-center justify-center overflow-x-hidden overflow-y-auto bg-navy-deep" style="padding: 1.5rem 0;">
         <!-- Abstract Tech Background -->
         <div class="absolute inset-0 z-0">
             <!-- Gradient Base -->
