@@ -12,6 +12,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/utilities.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/animations.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/accessibility.css') }}">
     
     {% block extra_css %}{% endblock %}
 </head>
@@ -21,7 +23,7 @@
         {% include 'portal/header.html' %}
     {% endif %}
     
-    <main role="main">
+    <main role="main" id="main-content">
         {% block content %}{% endblock %}
     </main>
     

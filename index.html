@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Auto-fill CCCD</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            width: 400px;
+        }
+
+        h2 { text-align: center; color: #333; margin-bottom: 1.5rem; }
+
+        .form-group { margin-bottom: 1rem; }
+        
+        label { display: block; margin-bottom: 0.5rem; color: #666; font-weight: 500; }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box; /* Đảm bảo padding không làm vỡ layout */
+            transition: all 0.3s;
+        }
+
+        input:focus { border-color: #007bff; outline: none; }
+
+        /* Hiệu ứng khi đang load API */
+        .loading { border-color: #ffc107; background-color: #fffdf5; }
+        
+        /* Hiệu ứng khi fill thành công */
+        .auto-filled { 
+            border-color: #28a745; 
+            background-color: #f0fff4; 
+            font-weight: bold;
+            color: #155724;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 1rem;
+        }
+        .btn:hover { background-color: #0056b3; }
+
+        .note { font-size: 0.8rem; color: #888; margin-top: 10px; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Đăng Ký Hồ Sơ</h2>
+    
+    <div class="form-group">
+        <label>Họ và tên</label>
+        <input type="text" placeholder="Nguyễn Văn A">
+    </div>
+
+    <div class="form-group">
+        <label>Số CCCD / Định danh (Nhập thử 12 số)</label>
+        <input type="text" id="cccdInput" maxlength="12" placeholder="079096000001">
+        <div id="statusMsg" style="font-size: 12px; height: 15px; margin-top: 5px;"></div>
+    </div>
+
+    <div class="form-group">
+        <label>Nơi khai sinh (Tỉnh/TP)</label>
+        <input type="text" id="province" readonly placeholder="...">
+    </div>
+
+    <div class="form-row" style="display: flex; gap: 10px;">
+        <div class="form-group" style="flex: 1;">
+            <label>Giới tính</label>
+            <input type="text" id="gender" readonly placeholder="...">
+        </div>
+        <div class="form-group" style="flex: 1;">
+            <label>Năm sinh</label>
+            <input type="text" id="birthYear" readonly placeholder="...">
+        </div>
+    </div>
+
+    <button class="btn">Hoàn tất đăng ký</button>
+    <p class="note">Các trường bên dưới được điền tự động từ API.</p>
+</div>
+
+<script>
+    const cccdInput = document.getElementById('cccdInput');
+    const statusMsg = document.getElementById('statusMsg');
+
+    // Lắng nghe sự kiện khi người dùng gõ
+    cccdInput.addEventListener('keyup', function(e) {
+        const value = e.target.value;
+
+        // Reset style nếu xóa bớt
+        if (value.length < 12) {
+            resetFields();
+            statusMsg.textContent = '';
+        }
+
+        // Chỉ gọi API khi đủ 12 số
+        if (value.length === 12) {
+            callApi(value);
+        }
+    });
+
+    async function callApi(cccdNumber) {
+        // UI Feedback: Đang xử lý
+        cccdInput.classList.add('loading');
+        statusMsg.textContent = 'Đang trích xuất dữ liệu...';
+        statusMsg.style.color = '#e67e22';
+
+        try {
+            // Gọi API local của ông
+            const response = await fetch('http://127.0.0.1:8000/v1/cccd/parse', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-API-Key': 'prem_2bfeadc2e8fa306a118572edbf870c18' 
+                },
+                body: JSON.stringify({ cccd: cccdNumber })
+            });
+
+            const result = await response.json();
+
+            // Giả sử API trả về cấu trúc như bài trước: { data: { province_name, gender, birth_year }, success: true }
+            if (result && result.data) {
+                fillData(result.data);
+                statusMsg.textContent = 'Đã trích xuất thông tin thành công!';
+                statusMsg.style.color = '#28a745';
+            } else {
+                statusMsg.textContent = 'Không phân tích được số CCCD này.';
+                statusMsg.style.color = 'red';
+            }
+
+        } catch (error) {
+            console.error('Lỗi:', error);
+            statusMsg.textContent = 'Lỗi kết nối đến API (Check CORS/Server).';
+            statusMsg.style.color = 'red';
+        } finally {
+            cccdInput.classList.remove('loading');
+        }
+    }
+
+    function fillData(data) {
+        // Map dữ liệu vào ô input
+        const fields = [
+            { id: 'province', val: data.province_name },
+            { id: 'gender', val: data.gender },
+            { id: 'birthYear', val: data.birth_year }
+        ];
+
+        fields.forEach(field => {
+            const el = document.getElementById(field.id);
+            el.value = field.val || '';
+            el.classList.add('auto-filled'); // Thêm hiệu ứng xanh lá
+            
+            // Flash effect
+            setTimeout(() => el.classList.remove('auto-filled'), 2000);
+        });
+    }
+
+    function resetFields() {
+        ['province', 'gender', 'birthYear'].forEach(id => {
+            document.getElementById(id).value = '';
+        });
+    }
+</script>
+
+</body>
+</html>

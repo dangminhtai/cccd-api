@@ -1,0 +1,165 @@
+/* Accessibility Improvements */
+
+/* Skip to main content link */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--color-primary);
+  color: white;
+  padding: var(--spacing-2) var(--spacing-4);
+  text-decoration: none;
+  z-index: var(--z-tooltip);
+  border-radius: 0 0 var(--radius-md) 0;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Focus indicators */
+*:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .btn {
+    border: 2px solid currentColor;
+  }
+  
+  .card {
+    border: 1px solid var(--color-border-dark);
+  }
+}
+
+/* Screen reader only text */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.sr-only-focusable:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: var(--spacing-2);
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* ARIA live region */
+.aria-live {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* Ensure interactive elements are keyboard accessible */
+button,
+a,
+input[type="checkbox"],
+input[type="radio"],
+input[type="button"],
+input[type="submit"],
+select {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Labels for form controls */
+label {
+  cursor: pointer;
+}
+
+/* Ensure form controls have labels */
+input:not([type="hidden"]):not([aria-label]):not([aria-labelledby]) + label,
+select:not([aria-label]):not([aria-labelledby]) + label,
+textarea:not([aria-label]):not([aria-labelledby]) + label {
+  display: block;
+  margin-top: var(--spacing-2);
+}
+
+/* Improve color contrast for disabled states */
+:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Ensure error messages are visible to screen readers */
+.form-error {
+  display: block;
+  color: var(--color-error-text);
+}
+
+/* Loading state announcements */
+.loading[aria-busy="true"]::before {
+  content: "Đang tải...";
+  position: absolute;
+  left: -10000px;
+}
+
+/* Ensure modals are keyboard accessible */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--z-modal-backdrop);
+}
+
+.modal-content {
+  position: relative;
+  z-index: var(--z-modal);
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Ensure images have alt text */
+img:not([alt]) {
+  border: 2px dashed var(--color-warning);
+}
+
+/* Improve link contrast */
+a:not(.btn) {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+a:not(.btn):hover,
+a:not(.btn):focus {
+  color: var(--color-primary-dark);
+  text-decoration: none;
+}

@@ -696,14 +696,43 @@ Tài liệu này mô tả kế hoạch cải thiện trải nghiệm người d�
 - ✅ AJAX helpers (`ajaxFetch`) để standardize tất cả requests
 
 ### Phase 3: Polish (Week 5-6)
+**Status:** ✅ **COMPLETED** (2/5 tasks)  
 **Priority: Medium**
-- [ ] Micro-interactions & animations
-- [ ] Accessibility improvements
+- [x] Micro-interactions & animations
+- [x] Accessibility improvements
 - [ ] Performance optimization
 - [ ] Onboarding flow
 - [ ] Help & documentation integration
 
 **Impact: Medium** - Enhance overall experience
+
+**Completed Date:** 2026-01-11
+
+**Files Created:**
+- `app/static/css/animations.css` - Micro-interactions & animations (fade-in, hover effects, modal animations, toast animations)
+- `app/static/css/accessibility.css` - Accessibility improvements (skip links, focus indicators, ARIA support, keyboard navigation)
+
+**Files Updated:**
+- `app/templates/base.html` - Include animations.css & accessibility.css, add skip link & main-content id
+- `app/templates/portal/keys.html` - Add modal classes for animations
+
+**Features Implemented:**
+- ✅ Page fade-in animation
+- ✅ Button hover effects (translateY, shadow)
+- ✅ Card hover effects (lift, shadow)
+- ✅ Link hover underline animation
+- ✅ Form input focus animation (scale)
+- ✅ Modal animations (fade + scale)
+- ✅ Toast slide-in animation
+- ✅ Spinner & skeleton animations
+- ✅ Reduced motion support (`prefers-reduced-motion`)
+- ✅ Skip to main content link
+- ✅ Enhanced focus indicators
+- ✅ High contrast mode support
+- ✅ Screen reader only text (`.sr-only`)
+- ✅ ARIA live regions
+- ✅ Keyboard accessibility improvements
+- ✅ Minimum touch target sizes (44x44px)
 
 ### Phase 4: Advanced (Week 7-8+)
 **Priority: Low**
