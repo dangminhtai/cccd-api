@@ -19,6 +19,9 @@ from services.user.service import (
     verify_email,
 )
 
+# Backward compatibility alias
+resend_verification_email as generate_new_verification_token = resend_verification_email
+
 __all__ = [
     # Service functions
     "register_user",

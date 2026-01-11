@@ -295,14 +295,25 @@ def create_password_reset_token(user_id: int, token: str, expires_at: datetime) 
                 cursor.execute(
                     """
                     UPDATE users
-                    SET password_reset_token = %s, password_reset_expires = %s
+                    SET password_reset_token = %s, password_reset_token_expires = %s
                     WHERE id = %s
                     """,
                     (token, expires_at, user_id),
                 )
             except Exception:
-                # Columns don't exist, skip
-                pass
+                # Try with password_reset_expires (backward compatibility)
+                try:
+                    cursor.execute(
+                        """
+                        UPDATE users
+                        SET password_reset_token = %s, password_reset_expires = %s
+                        WHERE id = %s
+                        """,
+                        (token, expires_at, user_id),
+                    )
+                except Exception:
+                    # Columns don't exist, skip
+                    pass
             conn.commit()
     finally:
         conn.close()
@@ -334,14 +345,36 @@ def update_password(user_id: int, password_hash: str) -> None:
     conn = _get_db_connection()
     try:
         with conn.cursor() as cursor:
-            cursor.execute(
-                """
-                UPDATE users
-                SET password_hash = %s, password_reset_token = NULL, password_reset_expires = NULL
-                WHERE id = %s
-                """,
-                (password_hash, user_id),
-            )
+            try:
+                cursor.execute(
+                    """
+                    UPDATE users
+                    SET password_hash = %s, password_reset_token = NULL, password_reset_token_expires = NULL
+                    WHERE id = %s
+                    """,
+                    (password_hash, user_id),
+                )
+            except Exception:
+                # Try with password_reset_expires (backward compatibility)
+                try:
+                    cursor.execute(
+                        """
+                        UPDATE users
+                        SET password_hash = %s, password_reset_token = NULL, password_reset_expires = NULL
+                        WHERE id = %s
+                        """,
+                        (password_hash, user_id),
+                    )
+                except Exception:
+                    # Columns don't exist, just update password
+                    cursor.execute(
+                        """
+                        UPDATE users
+                        SET password_hash = %s
+                        WHERE id = %s
+                        """,
+                        (password_hash, user_id),
+                    )
             conn.commit()
     finally:
         conn.close()

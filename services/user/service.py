@@ -188,38 +188,40 @@ def request_password_reset(email: str) -> Tuple[bool, Optional[str], Optional[st
         return False, "Lỗi hệ thống khi yêu cầu reset password", None
 
 
-def reset_password(token: str, new_password: str) -> Tuple[bool, Optional[str]]:
+def reset_password(token: str, new_password: str) -> Tuple[bool, Optional[str], Optional[int]]:
     """
     Reset password với token
     
     Returns:
-        (success, error_message)
+        (success, error_message, user_id)
     """
     try:
         # Validate password
         password_valid, password_error = validators.validate_password(new_password)
         if not password_valid:
-            return False, password_error
+            return False, password_error, None
         
         # Get token from database
         token_data = repository.get_password_reset_token(token)
         if not token_data:
-            return False, "Token không hợp lệ hoặc đã hết hạn"
+            return False, "Token không hợp lệ hoặc đã hết hạn", None
         
         # Check if token expired
         if token_data["password_reset_expires"] < datetime.now():
-            return False, "Token đã hết hạn. Vui lòng yêu cầu reset password mới."
+            return False, "Token đã hết hạn. Vui lòng yêu cầu reset password mới.", None
+        
+        user_id = token_data["id"]
         
         # Hash new password
         password_hash = utils.hash_password(new_password)
         
         # Update password
-        repository.update_password(token_data["id"], password_hash)
+        repository.update_password(user_id, password_hash)
         
-        return True, None
+        return True, None, user_id
     except Exception as e:
         logger.error(f"Error resetting password: {str(e)}", exc_info=True)
-        return False, "Lỗi hệ thống khi reset password"
+        return False, "Lỗi hệ thống khi reset password", None
 
 
 def verify_email(token: str) -> Tuple[bool, Optional[str]]:

@@ -351,9 +351,7 @@ def logout():
 @portal_bp.route("/verify-email/<token>")
 def verify_email(token: str):
     """Xác thực email với token"""
-    from services.user_service import verify_email as verify_email_service
-    
-    success, error_msg = verify_email_service(token)
+    success, error_msg = verify_email(token)
     
     if success:
         flash("Email đã được xác thực thành công! Bạn có thể tạo API key ngay bây giờ", "success")
@@ -367,7 +365,6 @@ def verify_email(token: str):
 @require_login
 def resend_verification():
     """Gửi lại email xác thực"""
-    from services.user_service import generate_new_verification_token, get_user_by_id
     from services.email_service import send_verification_email
     import os
     
@@ -386,8 +383,8 @@ def resend_verification():
         return redirect(url_for("portal.dashboard"))
     
     # Handle both GET and POST
-    # Generate new token
-    success, error_msg, verification_token = generate_new_verification_token(user_id)
+    # Resend verification email
+    success, error_msg, verification_token = resend_verification_email(user_id)
     
     if success and verification_token:
         # Send verification email

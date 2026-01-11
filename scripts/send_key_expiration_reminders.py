@@ -42,7 +42,7 @@ def send_key_expiration_reminders():
         
         with app.app_context():
             from services.email_service import send_key_expiration_warning_email
-            from services.user_service import get_user_by_id
+            from services.user import get_user_by_id
             
             conn = _get_db_connection()
             try:
