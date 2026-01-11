@@ -352,12 +352,17 @@ def admin_change_user_tier():
     from services.user_service import get_user_by_email
     from flask import current_app
     
+    # Check if AJAX request
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest" or request.is_json
+    
     user_email = request.form.get("user_email", "").strip()
     user_id = request.form.get("user_id", "").strip()
     target_tier = request.form.get("tier")
     notes = request.form.get("notes", "").strip()
     
     if not target_tier:
+        if is_ajax:
+            return jsonify({"error": "Tier không được để trống"}), 400
         flash("❌ Tier không được để trống", "error")
         return redirect(url_for("admin.admin_dashboard"))
     
@@ -365,16 +370,22 @@ def admin_change_user_tier():
     if user_email and not user_id:
         user = get_user_by_email(user_email)
         if not user:
+            if is_ajax:
+                return jsonify({"error": "Không tìm thấy user với email này"}), 404
             flash("❌ Không tìm thấy user với email này", "error")
             return redirect(url_for("admin.admin_dashboard"))
         user_id = user["id"]
     elif not user_id:
+        if is_ajax:
+            return jsonify({"error": "Vui lòng nhập email hoặc user ID"}), 400
         flash("❌ Vui lòng nhập email hoặc user ID", "error")
         return redirect(url_for("admin.admin_dashboard"))
     
     try:
         user_id = int(user_id)
     except ValueError:
+        if is_ajax:
+            return jsonify({"error": "User ID không hợp lệ"}), 400
         flash("❌ User ID không hợp lệ", "error")
         return redirect(url_for("admin.admin_dashboard"))
     
@@ -383,11 +394,17 @@ def admin_change_user_tier():
     success, message = manually_change_user_tier(user_id, target_tier, notes if notes else None)
     
     if success:
+        if is_ajax:
+            return jsonify({"success": True, "message": message}), 200
         flash(f"✅ {message}", "success")
     else:
+        if is_ajax:
+            return jsonify({"error": message}), 400
         flash(f"❌ {message}", "error")
         current_app.logger.error(f"Failed to change tier: {message}")
     
+    if is_ajax:
+        return jsonify({"success": True, "message": message}), 200
     return redirect(url_for("admin.admin_dashboard"))
 
 
