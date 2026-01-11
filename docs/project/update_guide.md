@@ -5,6 +5,50 @@
 
 ---
 
+## 0. Tại sao cần hệ thống CCCD API?
+
+### 0.1 Vấn đề thực tế
+
+**Người dùng phải nhập tay nhiều trường:**
+- Người dùng phải nhập số Căn cước công dân (CCCD), sau đó tiếp tục phải chọn thủ công: **Giới tính**, **Năm sinh**, và **Tỉnh/Thành phố** (Nơi đăng ký khai sinh).
+- Trong khi đó, các thông tin này đã nằm ngay trong chính số CCCD họ vừa nhập.
+
+**Rủi ro sai lệch dữ liệu:**
+- Việc nhập tay dẫn đến rủi ro sai lệch thông tin (ví dụ: Nhập số CCCD là nam, nhưng chọn giới tính là nữ do bấm nhầm).
+- Giảm thiểu trường hợp CCCD giả mạo (API có thể validate format và tính hợp lý).
+- Giảm sai sót dữ liệu được lưu trong Database.
+
+### 0.2 Lợi ích cho người dùng
+
+- **Tự điền nhanh**: Chỉ cần nhập CCCD → hệ thống tự động điền các trường còn lại.
+- **Tăng tỷ lệ hoàn tất**: Ít thao tác hơn → người dùng ít bỏ cuộc giữa chừng.
+- **Trải nghiệm nhất quán**: Mọi hệ thống đều hiển thị cùng một kết quả từ cùng một CCCD.
+
+### 0.3 Lợi ích cho vận hành/CSKH
+
+- **Giảm chi phí sửa dữ liệu**: Ít case sai thông tin → CSKH đỡ phải gọi/nhắn xác minh, đỡ thao tác chỉnh sửa.
+- **Dữ liệu đồng nhất**: Một CCCD ra một kết quả thống nhất ở mọi hệ thống → báo cáo ít lệch, ít tranh cãi.
+- **Giảm thời gian đối soát**: KYC/CRM/BI đồng nhất → số liệu báo cáo chính xác hơn.
+
+### 0.4 Lợi ích cho kỹ thuật/IT
+
+- **Chỉ cập nhật một nơi**: Khi có thay đổi quy tắc hoặc cập nhật tên tỉnh/thành (ví dụ: sáp nhập 64 → 34 tỉnh), chỉ cần cập nhật API.
+- **Tích hợp nhanh**: Ứng dụng/đối tác chỉ cần gọi API, không phải tự xây logic riêng.
+- **Tiết kiệm chi phí kỹ thuật**: Không phải duy trì "nhiều phiên bản xử lý CCCD" ở nhiều hệ thống.
+
+### 0.5 Giải quyết vấn đề "tỉnh/thành sáp nhập"
+
+- **Vấn đề**: Khi tỉnh/thành sáp nhập hoặc đổi tên, mỗi hệ thống cập nhật theo lịch khác nhau → cùng một người nhưng hiển thị tỉnh khác nhau ở các nơi.
+- **Giải pháp**: Bảng tên tỉnh/thành được cập nhật tập trung trong API. Các hệ thống khác chỉ "dùng kết quả từ API", không phải tự cập nhật danh sách tỉnh/thành ở từng nơi.
+
+### 0.6 Tiết kiệm chi phí tổng thể
+
+- **Tiết kiệm chi phí vận hành**: Giảm số lần CSKH phải hỗ trợ/sửa hồ sơ do sai thông tin cơ bản.
+- **Tiết kiệm chi phí kỹ thuật**: Không phải duy trì logic xử lý CCCD ở nhiều hệ thống.
+- **Tăng doanh thu gián tiếp**: Ít bước hơn, ít lỗi hơn → tỷ lệ hoàn tất quy trình cao hơn.
+
+---
+
 ## 1. Tổng quan hệ thống
 
 ### 1.1 Mục tiêu
