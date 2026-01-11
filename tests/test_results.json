@@ -1,0 +1,95 @@
+{
+  "timestamp": "2026-01-11T14:36:00.771544",
+  "base_url": "http://localhost:8000",
+  "summary": {
+    "passed": 13,
+    "failed": 0,
+    "skipped": 1
+  },
+  "details": [
+    {
+      "name": "1.1 GET /health",
+      "status": "PASS",
+      "message": "Status: ok",
+      "skip": false
+    },
+    {
+      "name": "2.1 Case 1: Valid CCCD",
+      "status": "PASS",
+      "message": "Province: Hà Nội",
+      "skip": false
+    },
+    {
+      "name": "2.1 Case 2: CCCD too short",
+      "status": "PASS",
+      "message": "Correctly rejected invalid format",
+      "skip": false
+    },
+    {
+      "name": "2.1 Case 3: CCCD too long",
+      "status": "PASS",
+      "message": "Correctly rejected invalid format",
+      "skip": false
+    },
+    {
+      "name": "2.1 Case 4: CCCD non-numeric",
+      "status": "PASS",
+      "message": "Correctly rejected invalid format",
+      "skip": false
+    },
+    {
+      "name": "2.1 Case 5: Missing field",
+      "status": "PASS",
+      "message": "Correctly rejected missing field",
+      "skip": false
+    },
+    {
+      "name": "2.1 Case 6: No API Key",
+      "status": "PASS",
+      "message": "Correctly rejected request without API key",
+      "skip": false
+    },
+    {
+      "name": "2.1 Case 7: Invalid API Key",
+      "status": "PASS",
+      "message": "Correctly rejected invalid API key",
+      "skip": false
+    },
+    {
+      "name": "2.1 Case 9: Rate Limit",
+      "status": "SKIP",
+      "message": "Rate limit not hit (may not be enabled or limit is higher)",
+      "skip": true
+    },
+    {
+      "name": "3.1 GET /portal/login",
+      "status": "PASS",
+      "message": "Status: 200",
+      "skip": false
+    },
+    {
+      "name": "3.3 GET /portal/register",
+      "status": "PASS",
+      "message": "Registration page accessible",
+      "skip": false
+    },
+    {
+      "name": "3.17 GET /portal/forgot-password",
+      "status": "PASS",
+      "message": "Forgot password page accessible",
+      "skip": false
+    },
+    {
+      "name": "4.1 GET /admin/",
+      "status": "PASS",
+      "message": "Admin dashboard page accessible",
+      "skip": false
+    },
+    {
+      "name": "4.2 GET /admin/stats (no key)",
+      "status": "PASS",
+      "message": "Correctly rejected without admin key",
+      "skip": false
+    }
+  ]
+}
