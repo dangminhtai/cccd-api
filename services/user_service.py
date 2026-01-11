@@ -472,12 +472,12 @@ def request_password_reset(email: str) -> Tuple[bool, Optional[str], Optional[st
         return False, f"Lỗi hệ thống: {str(e)}", None
 
 
-def reset_password(token: str, new_password: str) -> Tuple[bool, Optional[str]]:
+def reset_password(token: str, new_password: str) -> Tuple[bool, Optional[str], Optional[int]]:
     """
     Reset password với token
     
     Returns:
-        (success, error_message)
+        (success, error_message, user_id)
     """
     try:
         conn = _get_db_connection()
@@ -496,7 +496,7 @@ def reset_password(token: str, new_password: str) -> Tuple[bool, Optional[str]]:
                 has_reset_columns = cursor.fetchone() is not None
                 
                 if not has_reset_columns:
-                    return False, "Password reset feature chưa được kích hoạt. Vui lòng liên hệ hỗ trợ"
+                    return False, "Password reset feature chưa được kích hoạt. Vui lòng liên hệ hỗ trợ", None
                 
                 # Find user with valid token
                 cursor.execute(
@@ -511,7 +511,9 @@ def reset_password(token: str, new_password: str) -> Tuple[bool, Optional[str]]:
                 user = cursor.fetchone()
                 
                 if not user:
-                    return False, "Token không hợp lệ hoặc đã hết hạn"
+                    return False, "Token không hợp lệ hoặc đã hết hạn", None
+                
+                user_id = user["id"]
                 
                 # Hash new password
                 password_hash = hash_password(new_password)
@@ -525,15 +527,15 @@ def reset_password(token: str, new_password: str) -> Tuple[bool, Optional[str]]:
                         password_reset_expires = NULL
                     WHERE id = %s
                     """,
-                    (password_hash, user["id"]),
+                    (password_hash, user_id),
                 )
             conn.commit()
-            return True, None
+            return True, None, user_id
         finally:
             conn.close()
     except Exception as e:
         logger.error(f"Error resetting password: {str(e)}", exc_info=True)
-        return False, f"Lỗi hệ thống: {str(e)}"
+        return False, f"Lỗi hệ thống: {str(e)}", None
 
 
 def verify_email(token: str) -> Tuple[bool, Optional[str]]:
