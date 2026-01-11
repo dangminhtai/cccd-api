@@ -26,7 +26,21 @@ def create_app() -> Flask:
     import os
     from datetime import timedelta
     
-    app.secret_key = os.getenv("FLASK_SECRET_KEY", secrets.token_hex(32))
+    # IMPORTANT: FLASK_SECRET_KEY must be set in .env for "Remember Me" to work across server restarts
+    # If secret_key changes, all existing session cookies become invalid
+    flask_secret_key = os.getenv("FLASK_SECRET_KEY")
+    if not flask_secret_key:
+        # Generate a random key as fallback, but warn user
+        flask_secret_key = secrets.token_hex(32)
+        import warnings
+        warnings.warn(
+            "FLASK_SECRET_KEY not set in .env. "
+            "Sessions will be invalidated on server restart. "
+            "Set FLASK_SECRET_KEY in .env for persistent sessions.",
+            UserWarning
+        )
+    app.secret_key = flask_secret_key
+    
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=1)  # 24 hours (for remember me)
