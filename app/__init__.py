@@ -84,7 +84,7 @@ def create_app() -> Flask:
         # Allow Google Fonts for Material Symbols icons
         # Allow Tailwind CSS CDN for login page
         # In production, consider removing 'unsafe-inline' and using nonces/hashes
-        response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:;"
+        response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; worker-src 'self' blob:;"
         
         # Strict-Transport-Security: only add if using HTTPS
         # For local development (HTTP), we skip this header

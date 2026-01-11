@@ -282,8 +282,8 @@
                              data-key-id="{{ key_stat.key_id }}"
                              data-key-prefix="{{ key_stat.key_prefix }}"
                              data-key-label="{{ key_stat.label or '' }}"
-                             data-key-tier="{{ key_stat.tier }}"
-                             data-key-data="{{ key_stat|tojson|safe }}">
+                             data-key-tier="{{ key_stat.tier }}">
+                            <script type="application/json" class="key-data-json">{{ key_stat|tojson|safe }}</script>
                             <div class="col-span-4 flex items-center gap-3">
                                 <div class="size-8 rounded {% if key_stat.tier == 'ultra' %}bg-purple-500/20 text-purple-400{% elif key_stat.tier == 'premium' %}bg-amber-500/20 text-amber-400{% else %}bg-slate-500/20 text-slate-400{% endif %} flex items-center justify-center font-bold text-xs">
                                     {{ (key_stat.label or key_stat.key_prefix)[0]|upper }}
