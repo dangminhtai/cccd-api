@@ -619,3 +619,23 @@
   - **Backend routes**: Detect AJAX requests và return JSON thay vì redirect
   - **JavaScript**: Parse JSON response và handle errors đúng cách
   - **Test**: Verify cả success và error cases cho AJAX requests
+
+---
+
+## 38) Không thể nhấn vào nút Đổi Tier và Xóa user
+
+- **Hiện tượng**: Không thể click vào nút "🔄 Đổi Tier" hoặc "🗑️ Xóa" trong users table
+- **Nguyên nhân**: 
+  - **Vấn đề 1**: Function `deleteUser()` được định nghĩa sau khi nó được sử dụng (hoisting issue với async functions)
+  - **Vấn đề 2**: String escaping trong onclick handlers không đúng (single quotes trong email có thể break JavaScript string)
+  - **Vấn đề 3**: Có thể có JavaScript syntax error do quotes không được escape đúng cách
+- **Cách xử lý**: 
+  - **Vấn đề 1**: Di chuyển function `deleteUser()` lên trước khi nó được sử dụng (sau `clearUserSearch()`)
+  - **Vấn đề 2**: Escape cả single quotes (`'`) và double quotes (`"`) trong email và tier khi đưa vào onclick handler
+  - **Vấn đề 3**: Dùng `.replace(/'/g, "\\'").replace(/"/g, '&quot;')` để escape quotes đúng cách
+- **Cách tránh lần sau**: 
+  - **Khi dùng onclick handlers**: Luôn escape quotes trong strings (single và double quotes)
+  - **Function hoisting**: Async functions không được hoisted như regular functions, cần định nghĩa trước khi dùng
+  - **String interpolation**: Khi đưa user input vào JavaScript strings, luôn escape special characters
+  - **Test**: Verify buttons có thể click được và không có JavaScript errors trong console
+  - **Alternative**: Có thể dùng event listeners thay vì inline onclick để tránh string escaping issues
