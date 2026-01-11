@@ -262,10 +262,35 @@
                             <span class="material-symbols-outlined absolute left-3 top-2.5 text-slate-400">search</span>
                             <input id="key-search" class="w-full bg-slate-900/50 border border-slate-700 text-white rounded-lg pl-10 pr-4 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none placeholder:text-slate-500 font-mono text-sm" placeholder="Search by Key Prefix or Label..." type="text"/>
                         </div>
-                        <button class="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition-colors">
-                            <span class="material-symbols-outlined text-[18px]">filter_list</span>
-                            <span class="text-sm font-medium">Filter</span>
-                        </button>
+                        <div class="relative">
+                            <button id="filter-btn" class="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition-colors">
+                                <span class="material-symbols-outlined text-[18px]">filter_list</span>
+                                <span class="text-sm font-medium">Filter</span>
+                                <span class="material-symbols-outlined text-[14px]">expand_more</span>
+                            </button>
+                            <div id="filter-menu" class="absolute right-0 mt-2 w-48 glass-panel rounded-lg border border-slate-700 shadow-lg z-50 hidden">
+                                <div class="p-2">
+                                    <button class="filter-option w-full text-left px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" data-sort="none">
+                                        <span class="flex items-center gap-2">
+                                            <span class="material-symbols-outlined text-[16px]">sort</span>
+                                            <span>Tất cả</span>
+                                        </span>
+                                    </button>
+                                    <button class="filter-option w-full text-left px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" data-sort="high-low">
+                                        <span class="flex items-center gap-2">
+                                            <span class="material-symbols-outlined text-[16px]">arrow_downward</span>
+                                            <span>Nhiều → Ít requests</span>
+                                        </span>
+                                    </button>
+                                    <button class="filter-option w-full text-left px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" data-sort="low-high">
+                                        <span class="flex items-center gap-2">
+                                            <span class="material-symbols-outlined text-[16px]">arrow_upward</span>
+                                            <span>Ít → Nhiều requests</span>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <!-- Table Header -->
                     <div class="grid grid-cols-12 gap-4 px-6 py-3 bg-slate-800/50 text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-700/50">
@@ -605,31 +630,8 @@
             });
         }
         
-        // Handle key clicks
-        document.querySelectorAll('.key-item').forEach(function(item) {
-            item.addEventListener('click', function() {
-                var keyId = parseInt(this.dataset.keyId);
-                selectedKeyId = keyId;
-                
-                document.querySelectorAll('.key-item').forEach(function(i) {
-                    i.classList.remove('bg-primary/10', 'border-primary/30');
-                    i.classList.add('border-transparent');
-                });
-                this.classList.add('bg-primary/10', 'border-primary/30');
-                this.classList.remove('border-transparent');
-                
-                // Get data from script tag instead of data attribute
-                var dataScript = this.querySelector('.key-data-json');
-                if (!dataScript) return;
-                
-                try {
-                    var keyStat = JSON.parse(dataScript.textContent);
-                    updateDetailPanel(keyStat);
-                } catch(e) {
-                    console.error('Error parsing key data:', e);
-                }
-            });
-        });
+        // Attach key item listeners (will be called after initial render)
+        attachKeyItemListeners();
         
         // Auto-select first key
         function autoSelectFirstKey() {
