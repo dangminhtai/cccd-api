@@ -1,644 +1,739 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html class="dark" lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>CCCD API Documentation</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    
+    <!-- Tailwind Config -->
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#427cf0",
+                        "accent": "#8b5cf6",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#0f172a", 
+                        "surface-dark": "#1e293b",
+                        "code-bg": "#0B1120",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"],
+                        "body": ["Noto Sans", "sans-serif"],
+                        "mono": ["ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "Liberation Mono", "Courier New", "monospace"],
+                    },
+                    boxShadow: {
+                        'neon-blue': '0 0 10px rgba(66, 124, 240, 0.5), 0 0 20px rgba(66, 124, 240, 0.3)',
+                        'neon-purple': '0 0 10px rgba(139, 92, 246, 0.5), 0 0 20px rgba(139, 92, 246, 0.3)',
+                        'neon-green': '0 0 10px rgba(16, 185, 129, 0.5), 0 0 20px rgba(16, 185, 129, 0.3)',
+                        'neon-red': '0 0 10px rgba(239, 68, 68, 0.5), 0 0 20px rgba(239, 68, 68, 0.3)',
+                        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+                    }
+                },
+            },
+        }
+    </script>
+    
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: #f5f5f5;
+        /* Custom scrollbar for dark theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
         }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background: white;
-            min-height: 100vh;
+        ::-webkit-scrollbar-track {
+            background: #0f172a; 
         }
-        header {
-            border-bottom: 2px solid #e0e0e0;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
+        ::-webkit-scrollbar-thumb {
+            background: #334155; 
+            border-radius: 4px;
         }
-        h1 {
-            color: #1976d2;
-            margin-bottom: 10px;
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569; 
         }
-        .subtitle {
-            color: #666;
-            font-size: 16px;
+        
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
-        nav {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 30px;
+        
+        .glass-panel-active {
+            background: rgba(66, 124, 240, 0.15);
+            border: 1px solid rgba(66, 124, 240, 0.4);
+            box-shadow: 0 0 15px rgba(66, 124, 240, 0.15);
         }
-        nav a {
-            color: #1976d2;
-            text-decoration: none;
-            margin-right: 20px;
-            font-weight: 500;
+        
+        .bg-grid-pattern {
+            background-image: linear-gradient(to right, #334155 1px, transparent 1px),
+                              linear-gradient(to bottom, #334155 1px, transparent 1px);
+            background-size: 40px 40px;
         }
-        nav a:hover {
-            text-decoration: underline;
-        }
-        section {
-            margin-bottom: 40px;
-        }
-        h2 {
-            color: #1976d2;
-            border-bottom: 2px solid #e0e0e0;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-            margin-top: 30px;
-        }
-        h3 {
-            color: #424242;
-            margin-top: 25px;
-            margin-bottom: 15px;
-        }
-        .endpoint {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-            border-left: 4px solid #1976d2;
-        }
-        .method {
+        
+        .code-token-keyword { color: #c678dd; }
+        .code-token-string { color: #98c379; }
+        .code-token-number { color: #d19a66; }
+        .code-token-boolean { color: #56b6c2; }
+        .code-token-property { color: #e06c75; }
+        .code-token-comment { color: #5c6370; font-style: italic; }
+        
+        /* Material Symbols */
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
             display: inline-block;
-            padding: 4px 12px;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 14px;
-            margin-right: 10px;
-        }
-        .method.post {
-            background: #49cc90;
-            color: white;
-        }
-        .method.get {
-            background: #61affe;
-            color: white;
-        }
-        .path {
-            font-family: 'Courier New', monospace;
-            font-size: 18px;
-            color: #333;
-            font-weight: 600;
-        }
-        .description {
-            margin: 15px 0;
-            color: #555;
-        }
-        .params {
-            margin: 20px 0;
-        }
-        .params table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-        .params th, .params td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #e0e0e0;
-        }
-        .params th {
-            background: #f8f9fa;
-            font-weight: 600;
-            color: #424242;
-        }
-        .code-block {
-            background: #263238;
-            color: #aed581;
-            padding: 20px;
-            border-radius: 8px;
-            overflow-x: auto;
-            margin: 15px 0;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            line-height: 1.5;
-        }
-        .code-block pre {
-            margin: 0;
-        }
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #e0e0e0;
-        }
-        .tab {
-            padding: 10px 20px;
-            cursor: pointer;
-            background: none;
-            border: none;
-            font-size: 16px;
-            color: #666;
-            border-bottom: 2px solid transparent;
-            margin-bottom: -2px;
-        }
-        .tab.active {
-            color: #1976d2;
-            border-bottom-color: #1976d2;
-            font-weight: 600;
-        }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
-        .response {
-            margin: 20px 0;
-        }
-        .status-code {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 12px;
-            margin-right: 10px;
-        }
-        .status-code.success {
-            background: #4caf50;
-            color: white;
-        }
-        .status-code.error {
-            background: #f44336;
-            color: white;
-        }
-        .info-box {
-            background: #e3f2fd;
-            border-left: 4px solid #2196f3;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 4px;
-        }
-        .warning-box {
-            background: #fff3e0;
-            border-left: 4px solid #ff9800;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 4px;
-        }
-        .badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-left: 10px;
-        }
-        .badge.required {
-            background: #f44336;
-            color: white;
-        }
-        .badge.optional {
-            background: #9e9e9e;
-            color: white;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <header>
-            <h1>CCCD API Documentation</h1>
-            <p class="subtitle">API để parse thông tin từ số CCCD (Căn cước công dân) 12 chữ số của Việt Nam</p>
+<body class="bg-background-dark text-white font-display antialiased overflow-x-hidden selection:bg-primary selection:text-white">
+    <!-- Background Effects -->
+    <div class="fixed inset-0 pointer-events-none opacity-[0.08] bg-grid-pattern z-0"></div>
+    <div class="fixed top-[-10%] right-[-5%] w-[600px] h-[600px] bg-primary/20 rounded-full blur-[120px] pointer-events-none z-0"></div>
+    <div class="fixed bottom-[-10%] left-[-5%] w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[100px] pointer-events-none z-0"></div>
+    
+    <div class="relative z-10 flex min-h-screen w-full flex-col">
+        <!-- Top Navigation -->
+        <header class="glass-panel sticky top-0 z-50 w-full border-b border-white/10">
+            <div class="flex h-16 items-center justify-between px-6 lg:px-8">
+                <div class="flex items-center gap-4">
+                    <a href="{{ url_for('portal.dashboard') if session.get('user_id') else url_for('portal.login') }}" class="flex items-center gap-4">
+                        <div class="flex items-center justify-center size-10 rounded-lg bg-gradient-to-br from-primary to-blue-600 text-white shadow-lg shadow-blue-500/20">
+                            <span class="material-symbols-outlined">api</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <h1 class="text-lg font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">CCCD API Portal</h1>
+                            <span class="text-[10px] text-primary font-mono tracking-wider uppercase">Developer Docs v1.0</span>
+                        </div>
+                    </a>
+                </div>
+                <div class="flex items-center gap-4">
+                    {% if session.get('user_id') %}
+                        <a href="{{ url_for('portal.dashboard') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-colors">
+                            <span class="material-symbols-outlined text-[20px]">dashboard</span>
+                            <span>Dashboard</span>
+                        </a>
+                        <a href="{{ url_for('portal.keys') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-colors">
+                            <span class="material-symbols-outlined text-[20px]">vpn_key</span>
+                            <span>Keys</span>
+                        </a>
+                        <a href="{{ url_for('portal.usage') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-colors">
+                            <span class="material-symbols-outlined text-[20px]">bar_chart</span>
+                            <span>Usage</span>
+                        </a>
+                        <a href="{{ url_for('portal.billing') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-colors">
+                            <span class="material-symbols-outlined text-[20px]">payments</span>
+                            <span>Billing</span>
+                        </a>
+                        <a href="{{ url_for('portal.upgrade') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-colors">
+                            <span class="material-symbols-outlined text-[20px]">trending_up</span>
+                            <span>Upgrade</span>
+                        </a>
+                        <a href="/docs" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium bg-primary text-white transition-colors">
+                            <span class="material-symbols-outlined text-[20px]">menu_book</span>
+                            <span>Docs</span>
+                        </a>
+                        <div class="h-8 w-[1px] bg-white/10 mx-1"></div>
+                        <a href="{{ url_for('portal.logout') }}" class="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white hover:bg-blue-600 transition-colors shadow-lg shadow-primary/30">
+                            <span class="truncate">Đăng xuất</span>
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('portal.login') }}" class="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-colors">
+                            <span class="material-symbols-outlined text-[20px]">login</span>
+                            <span>Đăng nhập</span>
+                        </a>
+                        <a href="{{ url_for('portal.register') }}" class="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white hover:bg-blue-600 transition-colors shadow-lg shadow-primary/30">
+                            <span>Đăng ký</span>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
         </header>
-
-        <nav>
-            <a href="#overview">Overview</a>
-            <a href="#authentication">Authentication</a>
-            <a href="#endpoints">Endpoints</a>
-            <a href="#rate-limits">Rate Limits</a>
-            <a href="#error-codes">Error Codes</a>
-            <a href="#examples">Code Examples</a>
-        </nav>
-
-        <section id="overview">
-            <h2>Overview</h2>
-            <p>CCCD API cung cấp endpoint để parse số CCCD 12 chữ số và lấy thông tin:</p>
-            <ul style="margin-left: 30px; margin-top: 10px;">
-                <li><strong>Mã tỉnh/thành phố</strong> (province_code)</li>
-                <li><strong>Tên tỉnh/thành phố</strong> (province_name)</li>
-                <li><strong>Giới tính</strong> (gender)</li>
-                <li><strong>Năm sinh</strong> (birth_year)</li>
-                <li><strong>Thế kỷ</strong> (century)</li>
-                <li><strong>Tuổi</strong> (age)</li>
-            </ul>
-
-            <div class="info-box">
-                <strong>Base URL:</strong><br>
-                Development: <code>http://127.0.0.1:8000</code><br>
-                Production: <code>https://api.cccd-api.com</code>
-            </div>
-        </section>
-
-        <section id="authentication">
-            <h2>Authentication</h2>
-            <p>API sử dụng API key authentication qua header <code>X-API-Key</code>.</p>
+        
+        <!-- Main Content -->
+        <div class="flex flex-1 max-w-[1600px] mx-auto w-full pt-8 pb-12 px-4 lg:px-8 gap-8">
+            <!-- Sidebar Navigation -->
+            <aside class="hidden lg:block w-64 shrink-0 sticky top-24 h-[calc(100vh-8rem)] overflow-y-auto pr-2">
+                <nav class="space-y-8">
+                    <div>
+                        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 px-3">Getting Started</h3>
+                        <ul class="space-y-1">
+                            <li>
+                                <a class="block px-3 py-2 rounded-lg glass-panel-active" href="#overview">
+                                    Overview
+                                </a>
+                            </li>
+                            <li>
+                                <a class="block px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors" href="#authentication">
+                                    Authentication
+                                </a>
+                            </li>
+                            <li>
+                                <a class="block px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors" href="#rate-limits">
+                                    Rate Limits
+                                </a>
+                            </li>
+                            <li>
+                                <a class="block px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors" href="#error-codes">
+                                    Error Codes
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 px-3">API Endpoints</h3>
+                        <ul class="space-y-1">
+                            <li>
+                                <a class="group flex items-center justify-between px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors" href="#endpoints">
+                                    <span>Parse CCCD</span>
+                                    <span class="text-[10px] bg-green-500/10 text-green-400 px-1.5 py-0.5 rounded border border-green-500/20 group-hover:bg-green-500/20 transition-colors">POST</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="group flex items-center justify-between px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors" href="#health">
+                                    <span>Health Check</span>
+                                    <span class="text-[10px] bg-blue-500/10 text-blue-400 px-1.5 py-0.5 rounded border border-blue-500/20 group-hover:bg-blue-500/20 transition-colors">GET</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 px-3">Code Examples</h3>
+                        <ul class="space-y-1">
+                            <li>
+                                <a class="block px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors" href="#examples">
+                                    Python
+                                </a>
+                            </li>
+                            <li>
+                                <a class="block px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors" href="#examples">
+                                    JavaScript
+                                </a>
+                            </li>
+                            <li>
+                                <a class="block px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors" href="#examples">
+                                    cURL
+                                </a>
+                            </li>
+                            <li>
+                                <a class="block px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors" href="#examples">
+                                    PHP
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+            </aside>
             
-            <h3>Lấy API Key</h3>
-            <ol style="margin-left: 30px;">
-                <li>Đăng ký tài khoản tại <a href="/portal/register">Customer Portal</a></li>
-                <li>Đăng nhập và tạo API key tại <a href="/portal/keys">Keys Management</a></li>
-                <li>Copy API key và sử dụng trong requests</li>
-            </ol>
-
-            <div class="code-block">
-<pre>X-API-Key: your-api-key-here</pre>
-            </div>
-        </section>
-
-        <section id="endpoints">
-            <h2>API Endpoints</h2>
-
-            <!-- Health Check -->
-            <div class="endpoint">
-                <h3>
-                    <span class="method get">GET</span>
-                    <span class="path">/health</span>
-                </h3>
-                <p class="description">Kiểm tra trạng thái API server</p>
-
-                <h4>Request</h4>
-                <div class="code-block">
-<pre>GET /health
-Content-Type: application/json</pre>
-                </div>
-
-                <h4>Response (200 OK)</h4>
-                <div class="code-block">
-<pre>{
-  "status": "ok"
-}</pre>
-                </div>
-            </div>
-
-            <!-- Parse CCCD -->
-            <div class="endpoint">
-                <h3>
-                    <span class="method post">POST</span>
-                    <span class="path">/v1/cccd/parse</span>
-                </h3>
-                <p class="description">Parse số CCCD 12 chữ số để lấy thông tin</p>
-
-                <div class="warning-box">
-                    <strong>Lưu ý:</strong> Chỉ chấp nhận POST method. OPTIONS trả về 405.
-                </div>
-
-                <h4>Headers</h4>
-                <div class="params">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Header</th>
-                                <th>Type</th>
-                                <th>Required</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>X-API-Key</code></td>
-                                <td>string</td>
-                                <td><span class="badge required">Required</span></td>
-                                <td>API key để authenticate</td>
-                            </tr>
-                            <tr>
-                                <td><code>Content-Type</code></td>
-                                <td>string</td>
-                                <td><span class="badge required">Required</span></td>
-                                <td>Must be <code>application/json</code></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <h4>Request Body</h4>
-                <div class="params">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Field</th>
-                                <th>Type</th>
-                                <th>Required</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>cccd</code></td>
-                                <td>string</td>
-                                <td><span class="badge required">Required</span></td>
-                                <td>Số CCCD 12 chữ số (pattern: <code>^[0-9]{12}$</code>)</td>
-                            </tr>
-                            <tr>
-                                <td><code>province_version</code></td>
-                                <td>string</td>
-                                <td><span class="badge optional">Optional</span></td>
-                                <td>Phiên bản mapping tỉnh/thành phố: <code>legacy_63</code> hoặc <code>current_34</code> (mặc định: <code>current_34</code>)</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <h4>Request Example</h4>
-                <div class="code-block">
-<pre>{
-  "cccd": "079203012345",
-  "province_version": "current_34"
-}</pre>
-                </div>
-
-                <h4>Response (200 OK)</h4>
-                <div class="response">
-                    <span class="status-code success">200 OK</span>
-                    <div class="code-block">
-<pre>{
-  "success": true,
-  "data": {
-    "province_code": "079",
-    "province_name": "Tp. Hồ Chí Minh",
-    "gender": "Nam",
-    "birth_year": 2003,
-    "century": 21,
-    "age": 21
+            <!-- Main Documentation Content -->
+            <main class="flex-1 min-w-0 space-y-12">
+                <!-- Overview Section -->
+                <section id="overview">
+                    <div class="mb-6">
+                        <div class="flex items-center gap-2 text-primary text-sm mb-2 font-mono">
+                            <span class="bg-primary/10 px-2 py-0.5 rounded border border-primary/20">v1.0.0</span>
+                            <span class="text-slate-500">API Documentation</span>
+                        </div>
+                        <h1 class="text-4xl lg:text-5xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-100 to-slate-400 drop-shadow-[0_0_15px_rgba(66,124,240,0.3)] mb-4">
+                            CCCD API Documentation
+                        </h1>
+                        <p class="text-slate-400 text-lg leading-relaxed max-w-3xl">
+                            API để parse thông tin từ số CCCD (Căn cước công dân) 12 chữ số của Việt Nam. Lấy thông tin về mã tỉnh/thành phố, giới tính, năm sinh, thế kỷ và tuổi.
+                        </p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                        <div class="glass-panel p-6 rounded-xl border border-white/5 hover:border-primary/30 transition-all group">
+                            <div class="size-10 rounded-lg bg-blue-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                                <span class="material-symbols-outlined text-blue-400">bolt</span>
+                            </div>
+                            <h3 class="text-lg font-bold text-white mb-2">High Performance</h3>
+                            <p class="text-sm text-slate-400">Fast response times với rate limiting theo tier.</p>
+                        </div>
+                        <div class="glass-panel p-6 rounded-xl border border-white/5 hover:border-purple-500/30 transition-all group">
+                            <div class="size-10 rounded-lg bg-purple-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                                <span class="material-symbols-outlined text-purple-400">security</span>
+                            </div>
+                            <h3 class="text-lg font-bold text-white mb-2">Secure API Keys</h3>
+                            <p class="text-sm text-slate-400">API key authentication với tier-based rate limiting.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-panel rounded-xl p-6 border border-primary/20">
+                        <h3 class="text-lg font-bold text-white mb-3 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">link</span>
+                            Base URL
+                        </h3>
+                        <div class="space-y-2 font-mono text-sm">
+                            <div class="flex items-center gap-2">
+                                <span class="text-slate-400">Development:</span>
+                                <code class="text-primary">http://127.0.0.1:8000</code>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-slate-400">Production:</span>
+                                <code class="text-primary">https://api.cccd-api.com</code>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <div class="h-[1px] w-full bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+                
+                <!-- Authentication Section -->
+                <section id="authentication">
+                    <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">key</span>
+                        Authentication
+                    </h2>
+                    <p class="text-slate-400 mb-6">
+                        API sử dụng API key authentication qua header <code class="text-primary">X-API-Key</code>. Bạn có thể lấy API key tại <a class="text-primary hover:underline" href="{{ url_for('portal.keys') if session.get('user_id') else url_for('portal.register') }}">Customer Portal</a>.
+                    </p>
+                    
+                    <div class="glass-panel rounded-xl overflow-hidden border border-white/10">
+                        <div class="flex items-center justify-between px-4 py-3 bg-white/5 border-b border-white/5">
+                            <span class="text-xs font-mono text-slate-400">Request Headers</span>
+                            <div class="flex gap-1.5">
+                                <div class="size-2.5 rounded-full bg-red-500/20 border border-red-500/50"></div>
+                                <div class="size-2.5 rounded-full bg-yellow-500/20 border border-yellow-500/50"></div>
+                                <div class="size-2.5 rounded-full bg-green-500/20 border border-green-500/50"></div>
+                            </div>
+                        </div>
+                        <div class="p-6 bg-code-bg font-mono text-sm overflow-x-auto">
+                            <pre><code><span class="code-token-property">X-API-Key</span>: <span class="code-token-string">your-api-key-here</span>
+<span class="code-token-property">Content-Type</span>: <span class="code-token-string">application/json</span></code></pre>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-panel rounded-xl p-4 mt-6 border-l-4 border-l-primary">
+                        <div class="flex items-start gap-3">
+                            <span class="material-symbols-outlined text-primary text-[24px]">info</span>
+                            <div>
+                                <p class="text-white font-semibold mb-1">Lấy API Key</p>
+                                <ol class="text-slate-400 text-sm space-y-1 list-decimal list-inside">
+                                    <li>Đăng ký tài khoản tại <a class="text-primary hover:underline" href="{{ url_for('portal.register') }}">Customer Portal</a></li>
+                                    <li>Đăng nhập và tạo API key tại <a class="text-primary hover:underline" href="{{ url_for('portal.keys') if session.get('user_id') else url_for('portal.login') }}">Keys Management</a></li>
+                                    <li>Copy API key và sử dụng trong requests</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <div class="h-[1px] w-full bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+                
+                <!-- Endpoints Section -->
+                <section class="space-y-8" id="endpoints">
+                    <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">webhook</span>
+                        API Endpoints
+                    </h2>
+                    
+                    <!-- Health Check Endpoint -->
+                    <div class="glass-panel rounded-2xl border border-white/10 overflow-hidden hover:shadow-neon-blue transition-shadow duration-500" id="health">
+                        <div class="p-6 lg:p-8 border-b border-white/5">
+                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                                <div class="flex items-center gap-3">
+                                    <span class="px-3 py-1 rounded bg-blue-500/20 border border-blue-500/40 text-blue-400 font-bold text-sm tracking-wide shadow-neon-blue">GET</span>
+                                    <code class="text-lg text-white font-mono bg-white/5 px-2 py-1 rounded">/health</code>
+                                </div>
+                            </div>
+                            <p class="text-slate-400">Kiểm tra trạng thái API server</p>
+                        </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-white/10">
+                            <div class="p-6 bg-white/[0.02]">
+                                <h4 class="text-sm font-bold text-white uppercase tracking-wider mb-4">Response</h4>
+                                <div class="space-y-4">
+                                    <div class="group">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <span class="text-xs text-green-400 font-mono font-bold">200 OK</span>
+                                        </div>
+                                        <p class="text-sm text-slate-400">Server đang hoạt động bình thường</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-0 bg-code-bg">
+                                <div class="p-6 font-mono text-sm overflow-x-auto">
+                                    <pre><code>{
+  <span class="code-token-property">"status"</span>: <span class="code-token-string">"ok"</span>
+}</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Parse CCCD Endpoint -->
+                    <div class="glass-panel rounded-2xl border border-white/10 overflow-hidden hover:shadow-neon-blue transition-shadow duration-500">
+                        <div class="p-6 lg:p-8 border-b border-white/5">
+                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                                <div class="flex items-center gap-3">
+                                    <span class="px-3 py-1 rounded bg-green-500/20 border border-green-500/40 text-green-400 font-bold text-sm tracking-wide shadow-neon-green">POST</span>
+                                    <code class="text-lg text-white font-mono bg-white/5 px-2 py-1 rounded">/v1/cccd/parse</code>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="px-2 py-1 rounded bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-[14px]">verified</span> Official
+                                    </span>
+                                </div>
+                            </div>
+                            <p class="text-slate-400">Parse số CCCD 12 chữ số để lấy thông tin về mã tỉnh/thành phố, giới tính, năm sinh, thế kỷ và tuổi.</p>
+                            
+                            <div class="glass-panel rounded-lg p-4 mt-4 border-l-4 border-l-yellow-500">
+                                <div class="flex items-start gap-3">
+                                    <span class="material-symbols-outlined text-yellow-400 text-[20px]">warning</span>
+                                    <p class="text-sm text-slate-300"><strong>Lưu ý:</strong> Chỉ chấp nhận POST method. OPTIONS trả về 405.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-white/10">
+                            <div class="p-6 bg-white/[0.02]">
+                                <h4 class="text-sm font-bold text-white uppercase tracking-wider mb-4">Body Parameters</h4>
+                                <div class="space-y-4">
+                                    <div class="group">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <code class="text-purple-400 font-bold text-sm">cccd</code>
+                                            <span class="text-xs text-slate-500 font-mono">string(12)</span>
+                                        </div>
+                                        <p class="text-sm text-slate-400">Số CCCD 12 chữ số (pattern: <code class="text-slate-300">^[0-9]{12}$</code>)</p>
+                                        <p class="text-xs text-red-400 mt-1">Required</p>
+                                    </div>
+                                    <div class="h-[1px] bg-white/5"></div>
+                                    <div class="group">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <code class="text-purple-400 font-bold text-sm">province_version</code>
+                                            <span class="text-xs text-slate-500 font-mono">string</span>
+                                        </div>
+                                        <p class="text-sm text-slate-400">Phiên bản mapping: <code class="text-slate-300">legacy_63</code> hoặc <code class="text-slate-300">current_34</code> (mặc định: <code class="text-slate-300">current_34</code>)</p>
+                                        <p class="text-xs text-slate-500 mt-1">Optional</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-0 bg-code-bg">
+                                <div class="flex border-b border-white/10">
+                                    <button class="tab-button active px-4 py-2 text-xs font-medium text-white border-b-2 border-primary bg-white/5" onclick="showTab('request-example')">Example Request</button>
+                                    <button class="tab-button px-4 py-2 text-xs font-medium text-slate-500 hover:text-white transition-colors" onclick="showTab('response-200')">200 OK</button>
+                                    <button class="tab-button px-4 py-2 text-xs font-medium text-slate-500 hover:text-white transition-colors" onclick="showTab('response-400')">400 Error</button>
+                                </div>
+                                <div id="request-example" class="tab-content active p-6 font-mono text-sm overflow-x-auto">
+                                    <pre><code><span class="code-token-keyword">curl</span> -X POST http://127.0.0.1:8000/v1/cccd/parse \
+  -H <span class="code-token-string">"Content-Type: application/json"</span> \
+  -H <span class="code-token-string">"X-API-Key: your-api-key-here"</span> \
+  -d <span class="code-token-string">'{
+    <span class="code-token-property">"cccd"</span>: <span class="code-token-string">"079203012345"</span>,
+    <span class="code-token-property">"province_version"</span>: <span class="code-token-string">"current_34"</span>
+  }'</span></code></pre>
+                                </div>
+                                <div id="response-200" class="tab-content hidden p-6 font-mono text-sm overflow-x-auto">
+                                    <pre><code>{
+  <span class="code-token-property">"success"</span>: <span class="code-token-boolean">true</span>,
+  <span class="code-token-property">"data"</span>: {
+    <span class="code-token-property">"province_code"</span>: <span class="code-token-string">"079"</span>,
+    <span class="code-token-property">"province_name"</span>: <span class="code-token-string">"Tp. Hồ Chí Minh"</span>,
+    <span class="code-token-property">"gender"</span>: <span class="code-token-string">"Nam"</span>,
+    <span class="code-token-property">"birth_year"</span>: <span class="code-token-number">2003</span>,
+    <span class="code-token-property">"century"</span>: <span class="code-token-number">21</span>,
+    <span class="code-token-property">"age"</span>: <span class="code-token-number">21</span>
   },
-  "is_valid_format": true,
-  "is_plausible": true,
-  "province_version": "current_34",
-  "warnings": null
-}</pre>
+  <span class="code-token-property">"is_valid_format"</span>: <span class="code-token-boolean">true</span>,
+  <span class="code-token-property">"is_plausible"</span>: <span class="code-token-boolean">true</span>,
+  <span class="code-token-property">"province_version"</span>: <span class="code-token-string">"current_34"</span>,
+  <span class="code-token-property">"warnings"</span>: <span class="code-token-keyword">null</span>
+}</code></pre>
+                                </div>
+                                <div id="response-400" class="tab-content hidden p-6 font-mono text-sm overflow-x-auto">
+                                    <pre><code>{
+  <span class="code-token-property">"success"</span>: <span class="code-token-boolean">false</span>,
+  <span class="code-token-property">"is_valid_format"</span>: <span class="code-token-boolean">false</span>,
+  <span class="code-token-property">"data"</span>: <span class="code-token-keyword">null</span>,
+  <span class="code-token-property">"message"</span>: <span class="code-token-string">"CCCD không hợp lệ (cần là chuỗi số, độ dài 12)."</span>
+}</code></pre>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-
-                <h4>Response với Warnings</h4>
-                <div class="response">
-                    <span class="status-code success">200 OK</span>
-                    <div class="code-block">
-<pre>{
-  "success": true,
-  "data": {
-    "province_code": "079",
-    "province_name": null,
-    "gender": "Nam",
-    "birth_year": 2025,
-    "century": 21,
-    "age": null
-  },
-  "is_valid_format": true,
-  "is_plausible": false,
-  "province_version": "current_34",
-  "warnings": [
-    "province_code_not_found",
-    "birth_year_in_future"
-  ]
-}</pre>
+                </section>
+                
+                <div class="h-[1px] w-full bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+                
+                <!-- Rate Limits & Error Codes Section -->
+                <section class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                    <div id="rate-limits">
+                        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-accent">speed</span>
+                            Rate Limits
+                        </h3>
+                        <div class="glass-panel rounded-xl overflow-hidden border border-white/10 relative">
+                            <div class="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-purple-500 to-transparent shadow-neon-purple"></div>
+                            <table class="w-full text-left">
+                                <thead class="bg-white/5 text-xs text-slate-400 uppercase font-bold tracking-wider">
+                                    <tr>
+                                        <th class="p-4">Tier</th>
+                                        <th class="p-4">Requests/Min</th>
+                                        <th class="p-4">Requests/Day</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-white/5 text-sm">
+                                    <tr>
+                                        <td class="p-4 text-white font-medium">Free</td>
+                                        <td class="p-4 text-slate-400 font-mono">10</td>
+                                        <td class="p-4 text-slate-400 font-mono">1,000</td>
+                                    </tr>
+                                    <tr class="bg-primary/5">
+                                        <td class="p-4 text-primary font-bold">Premium</td>
+                                        <td class="p-4 text-slate-300 font-mono">100</td>
+                                        <td class="p-4 text-slate-300 font-mono">Unlimited</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-4 text-purple-400 font-bold">Ultra</td>
+                                        <td class="p-4 text-slate-300 font-mono">1,000</td>
+                                        <td class="p-4 text-slate-300 font-mono">Unlimited</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="glass-panel rounded-xl p-4 mt-4 border border-primary/20">
+                            <p class="text-xs text-slate-400">
+                                <strong class="text-white">Rate Limit Headers:</strong> Response headers chứa <code class="text-primary">X-RateLimit-Remaining</code>, <code class="text-primary">X-RateLimit-Reset</code>, <code class="text-primary">Retry-After</code>
+                            </p>
+                        </div>
                     </div>
-                </div>
-
-                <h4>Error Responses</h4>
-                <div class="response">
-                    <span class="status-code error">400 Bad Request</span>
-                    <p style="margin: 10px 0;">CCCD format không hợp lệ hoặc thiếu field</p>
-                    <div class="code-block">
-<pre>{
-  "success": false,
-  "is_valid_format": false,
-  "data": null,
-  "message": "CCCD không hợp lệ (cần là chuỗi số, độ dài 12)."
-}</pre>
+                    
+                    <div id="error-codes">
+                        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-red-400">warning</span>
+                            Common Error Codes
+                        </h3>
+                        <div class="glass-panel rounded-xl overflow-hidden border border-white/10 relative">
+                            <div class="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-red-500 to-transparent shadow-neon-red"></div>
+                            <table class="w-full text-left">
+                                <thead class="bg-white/5 text-xs text-slate-400 uppercase font-bold tracking-wider">
+                                    <tr>
+                                        <th class="p-4">Code</th>
+                                        <th class="p-4">Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-white/5 text-sm">
+                                    <tr>
+                                        <td class="p-4 font-mono text-green-400 font-bold">200</td>
+                                        <td class="p-4 text-slate-400">Request thành công</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-4 font-mono text-red-400 font-bold">400</td>
+                                        <td class="p-4 text-slate-400">Validation error - CCCD format không hợp lệ hoặc thiếu field</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-4 font-mono text-red-400 font-bold">401</td>
+                                        <td class="p-4 text-slate-400">API key không hợp lệ hoặc thiếu</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-4 font-mono text-yellow-400 font-bold">405</td>
+                                        <td class="p-4 text-slate-400">Method không được hỗ trợ (chỉ POST được phép cho /v1/cccd/parse)</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-4 font-mono text-orange-400 font-bold">429</td>
+                                        <td class="p-4 text-slate-400">Vượt quá rate limit</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-4 font-mono text-red-500 font-bold">500</td>
+                                        <td class="p-4 text-slate-400">Lỗi server</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
+                </section>
+                
+                <div class="h-[1px] w-full bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+                
+                <!-- Code Examples Section -->
+                <section id="examples">
+                    <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">code</span>
+                        Code Examples
+                    </h2>
+                    
+                    <div class="glass-panel rounded-xl overflow-hidden border border-white/10">
+                        <div class="flex border-b border-white/10">
+                            <button class="tab-button active px-6 py-3 text-sm font-medium text-white border-b-2 border-primary bg-white/5" onclick="showExampleTab('python')">Python</button>
+                            <button class="tab-button px-6 py-3 text-sm font-medium text-slate-500 hover:text-white transition-colors" onclick="showExampleTab('javascript')">JavaScript</button>
+                            <button class="tab-button px-6 py-3 text-sm font-medium text-slate-500 hover:text-white transition-colors" onclick="showExampleTab('curl')">cURL</button>
+                            <button class="tab-button px-6 py-3 text-sm font-medium text-slate-500 hover:text-white transition-colors" onclick="showExampleTab('php')">PHP</button>
+                        </div>
+                        
+                        <div id="python" class="tab-content active p-6 bg-code-bg font-mono text-sm overflow-x-auto">
+                            <pre><code><span class="code-token-comment"># Using requests library</span>
+<span class="code-token-keyword">import</span> requests
 
-                <div class="response">
-                    <span class="status-code error">401 Unauthorized</span>
-                    <p style="margin: 10px 0;">API key không hợp lệ hoặc thiếu</p>
-                    <div class="code-block">
-<pre>{
-  "success": false,
-  "is_valid_format": false,
-  "data": null,
-  "message": "API key không hợp lệ hoặc thiếu."
-}</pre>
-                    </div>
-                </div>
-
-                <div class="response">
-                    <span class="status-code error">429 Too Many Requests</span>
-                    <p style="margin: 10px 0;">Vượt quá rate limit</p>
-                    <div class="code-block">
-<pre>{
-  "success": false,
-  "is_valid_format": false,
-  "data": null,
-  "message": "Quá nhiều request. Giới hạn: 10 per 1 minute"
-}</pre>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="rate-limits">
-            <h2>Rate Limits</h2>
-            <p>Rate limits được áp dụng theo tier của API key:</p>
-            <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
-                <thead>
-                    <tr>
-                        <th style="padding: 12px; background: #f8f9fa; border-bottom: 2px solid #e0e0e0;">Tier</th>
-                        <th style="padding: 12px; background: #f8f9fa; border-bottom: 2px solid #e0e0e0;">Requests per Minute</th>
-                        <th style="padding: 12px; background: #f8f9fa; border-bottom: 2px solid #e0e0e0;">Requests per Day</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;"><strong>Free</strong></td>
-                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;">10</td>
-                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;">1,000</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;"><strong>Premium</strong></td>
-                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;">100</td>
-                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;">Unlimited</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;"><strong>Ultra</strong></td>
-                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;">1,000</td>
-                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;">Unlimited</td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <div class="info-box" style="margin-top: 20px;">
-                <strong>Rate Limit Headers:</strong><br>
-                Response headers chứa: <code>X-RateLimit-Remaining</code>, <code>X-RateLimit-Reset</code>, <code>Retry-After</code>
-            </div>
-        </section>
-
-        <section id="error-codes">
-            <h2>Error Codes</h2>
-            <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
-                <thead>
-                    <tr>
-                        <th style="padding: 12px; background: #f8f9fa; border-bottom: 2px solid #e0e0e0;">Status Code</th>
-                        <th style="padding: 12px; background: #f8f9fa; border-bottom: 2px solid #e0e0e0;">Description</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;"><span class="status-code success">200</span></td>
-                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;">Request thành công</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;"><span class="status-code error">400</span></td>
-                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;">Validation error - CCCD format không hợp lệ hoặc thiếu field</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;"><span class="status-code error">401</span></td>
-                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;">API key không hợp lệ hoặc thiếu</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;"><span class="status-code error">405</span></td>
-                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;">Method không được hỗ trợ (chỉ POST được phép cho /v1/cccd/parse)</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;"><span class="status-code error">429</span></td>
-                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;">Vượt quá rate limit</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;"><span class="status-code error">500</span></td>
-                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;">Lỗi server</td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
-
-        <section id="examples">
-            <h2>Code Examples</h2>
-
-            <div class="tabs">
-                <button class="tab active" onclick="showTab('python')">Python</button>
-                <button class="tab" onclick="showTab('javascript')">JavaScript</button>
-                <button class="tab" onclick="showTab('curl')">cURL</button>
-                <button class="tab" onclick="showTab('php')">PHP</button>
-            </div>
-
-            <div id="python" class="tab-content active">
-                <h3>Python (requests library)</h3>
-                <div class="code-block">
-<pre>import requests
-
-url = "http://127.0.0.1:8000/v1/cccd/parse"
+url = <span class="code-token-string">"http://127.0.0.1:8000/v1/cccd/parse"</span>
 headers = {
-    "X-API-Key": "your-api-key-here",
-    "Content-Type": "application/json"
+    <span class="code-token-property">"X-API-Key"</span>: <span class="code-token-string">"your-api-key-here"</span>,
+    <span class="code-token-property">"Content-Type"</span>: <span class="code-token-string">"application/json"</span>
 }
 data = {
-    "cccd": "079203012345"
+    <span class="code-token-property">"cccd"</span>: <span class="code-token-string">"079203012345"</span>
 }
 
 response = requests.post(url, json=data, headers=headers)
-print(response.json())</pre>
-                </div>
+<span class="code-token-keyword">print</span>(response.json())
 
-                <h3>Using Python SDK</h3>
-                <div class="code-block">
-<pre>from sdk.python.cccd_api import CCCDAPI
+<span class="code-token-comment"># Using Python SDK</span>
+<span class="code-token-keyword">from</span> sdk.python.cccd_api <span class="code-token-keyword">import</span> CCCDAPI
 
-with CCCDAPI(api_key="your-api-key-here") as api:
-    result = api.parse("079203012345")
-    print(result.data['province_name'])  # Tp. Hồ Chí Minh</pre>
-                </div>
-            </div>
-
-            <div id="javascript" class="tab-content">
-                <h3>JavaScript (fetch API)</h3>
-                <div class="code-block">
-<pre>fetch('http://127.0.0.1:8000/v1/cccd/parse', {
-  method: 'POST',
-  headers: {
-    'X-API-Key': 'your-api-key-here',
-    'Content-Type': 'application/json'
+<span class="code-token-keyword">with</span> CCCDAPI(api_key=<span class="code-token-string">"your-api-key-here"</span>) <span class="code-token-keyword">as</span> api:
+    result = api.parse(<span class="code-token-string">"079203012345"</span>)
+    <span class="code-token-keyword">print</span>(result.data[<span class="code-token-string">'province_name'</span>])  <span class="code-token-comment"># Tp. Hồ Chí Minh</span></code></pre>
+                        </div>
+                        
+                        <div id="javascript" class="tab-content hidden p-6 bg-code-bg font-mono text-sm overflow-x-auto">
+                            <pre><code><span class="code-token-comment">// Using fetch API</span>
+fetch(<span class="code-token-string">'http://127.0.0.1:8000/v1/cccd/parse'</span>, {
+  <span class="code-token-property">method</span>: <span class="code-token-string">'POST'</span>,
+  <span class="code-token-property">headers</span>: {
+    <span class="code-token-property">'X-API-Key'</span>: <span class="code-token-string">'your-api-key-here'</span>,
+    <span class="code-token-property">'Content-Type'</span>: <span class="code-token-string">'application/json'</span>
   },
-  body: JSON.stringify({
-    cccd: '079203012345'
+  <span class="code-token-property">body</span>: <span class="code-token-property">JSON</span>.<span class="code-token-property">stringify</span>({
+    <span class="code-token-property">cccd</span>: <span class="code-token-string">'079203012345'</span>
   })
 })
-.then(response => response.json())
-.then(data => console.log(data))
-.catch(error => console.error('Error:', error));</pre>
-                </div>
-            </div>
-
-            <div id="curl" class="tab-content">
-                <h3>cURL</h3>
-                <div class="code-block">
-<pre>curl -X POST http://127.0.0.1:8000/v1/cccd/parse \
-  -H "X-API-Key: your-api-key-here" \
-  -H "Content-Type: application/json" \
-  -d '{"cccd": "079203012345"}'</pre>
-                </div>
-            </div>
-
-            <div id="php" class="tab-content">
-                <h3>PHP (cURL)</h3>
-                <div class="code-block">
-<pre>&lt;?php
-$url = 'http://127.0.0.1:8000/v1/cccd/parse';
-$data = json_encode(['cccd' => '079203012345']);
+.<span class="code-token-property">then</span>(response => response.json())
+.<span class="code-token-property">then</span>(data => <span class="code-token-property">console</span>.<span class="code-token-property">log</span>(data))
+.<span class="code-token-property">catch</span>(error => <span class="code-token-property">console</span>.<span class="code-token-property">error</span>(<span class="code-token-string">'Error:'</span>, error));</code></pre>
+                        </div>
+                        
+                        <div id="curl" class="tab-content hidden p-6 bg-code-bg font-mono text-sm overflow-x-auto">
+                            <pre><code><span class="code-token-keyword">curl</span> -X POST http://127.0.0.1:8000/v1/cccd/parse \
+  -H <span class="code-token-string">"X-API-Key: your-api-key-here"</span> \
+  -H <span class="code-token-string">"Content-Type: application/json"</span> \
+  -d <span class="code-token-string">'{"cccd": "079203012345"}'</span></code></pre>
+                        </div>
+                        
+                        <div id="php" class="tab-content hidden p-6 bg-code-bg font-mono text-sm overflow-x-auto">
+                            <pre><code>&lt;?php
+$url = <span class="code-token-string">'http://127.0.0.1:8000/v1/cccd/parse'</span>;
+$data = json_encode([<span class="code-token-string">'cccd'</span> => <span class="code-token-string">'079203012345'</span>]);
 
 $ch = curl_init($url);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, <span class="code-token-boolean">true</span>);
+curl_setopt($ch, CURLOPT_POST, <span class="code-token-boolean">true</span>);
 curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    'X-API-Key: your-api-key-here',
-    'Content-Type: application/json'
+    <span class="code-token-string">'X-API-Key: your-api-key-here'</span>,
+    <span class="code-token-string">'Content-Type: application/json'</span>
 ]);
 
 $response = curl_exec($ch);
 curl_close($ch);
-echo $response;
-?&gt;</pre>
+<span class="code-token-keyword">echo</span> $response;
+?&gt;</code></pre>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Footer -->
+                <div class="pt-12 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-slate-500 text-sm">
+                    <p>© 2024 CCCD API Services. All rights reserved.</p>
+                    <div class="flex gap-6">
+                        <a class="hover:text-white transition-colors" href="/docs/api/README.md">Full Documentation</a>
+                        <a class="hover:text-white transition-colors" href="/docs/api/ERROR_CODES.md">Error Codes</a>
+                        <a class="hover:text-white transition-colors" href="/docs/api/RATE_LIMITS.md">Rate Limits</a>
+                    </div>
                 </div>
-            </div>
-        </section>
-
-        <footer style="margin-top: 50px; padding-top: 30px; border-top: 2px solid #e0e0e0; color: #666; text-align: center;">
-            <p>CCCD API Documentation v1.0.0</p>
-            <p style="margin-top: 10px;">
-                <a href="/docs/api/README.md" style="color: #1976d2;">Full Documentation</a> |
-                <a href="/docs/api/ERROR_CODES.md" style="color: #1976d2;">Error Codes</a> |
-                <a href="/docs/api/RATE_LIMITS.md" style="color: #1976d2;">Rate Limits</a>
-            </p>
-        </footer>
+            </main>
+        </div>
     </div>
-
+    
     <script>
         function showTab(tabName) {
             // Hide all tab contents
             document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
                 content.classList.remove('active');
             });
             
-            // Remove active class from all tabs
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
+            // Remove active class from all tab buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active', 'bg-white/5', 'border-b-2', 'border-primary', 'text-white');
+                btn.classList.add('text-slate-500');
             });
             
             // Show selected tab content
-            document.getElementById(tabName).classList.add('active');
+            const targetContent = document.getElementById(tabName);
+            if (targetContent) {
+                targetContent.classList.remove('hidden');
+                targetContent.classList.add('active');
+            }
             
-            // Add active class to clicked tab
-            event.target.classList.add('active');
+            // Add active class to clicked tab button
+            if (event && event.target) {
+                event.target.classList.add('active', 'bg-white/5', 'border-b-2', 'border-primary', 'text-white');
+                event.target.classList.remove('text-slate-500');
+            }
         }
+        
+        function showExampleTab(tabName) {
+            // Hide all example tab contents
+            document.querySelectorAll('#examples .tab-content').forEach(content => {
+                content.classList.add('hidden');
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all example tab buttons
+            document.querySelectorAll('#examples .tab-button').forEach(btn => {
+                btn.classList.remove('active', 'bg-white/5', 'border-b-2', 'border-primary', 'text-white');
+                btn.classList.add('text-slate-500');
+            });
+            
+            // Show selected tab content
+            const targetContent = document.getElementById(tabName);
+            if (targetContent) {
+                targetContent.classList.remove('hidden');
+                targetContent.classList.add('active');
+            }
+            
+            // Add active class to clicked tab button
+            if (event && event.target) {
+                event.target.classList.add('active', 'bg-white/5', 'border-b-2', 'border-primary', 'text-white');
+                event.target.classList.remove('text-slate-500');
+            }
+        }
+        
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
     </script>
 </body>
 </html>
