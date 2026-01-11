@@ -175,7 +175,7 @@ def check_admin_auth():
     # Nếu không có session và không có valid header key
     if admin_secret:
         provided_key = request.headers.get("X-Admin-Key", "")
-        if provided_key:
+        if provided_key and provided_key != admin_secret:
             # Có key nhưng sai → ghi lại failed attempt
             endpoint = request.endpoint or request.path
             record_failed_attempt(ip_address, endpoint)
@@ -197,6 +197,10 @@ def check_admin_auth():
             is_blocked, unblock_time = is_ip_blocked(ip_address)
             if is_blocked:
                 remaining_seconds = int(unblock_time - time.time())
+                # Web request → redirect đến login
+                if request.endpoint and "admin" in request.endpoint:
+                    flash(f"IP bị tạm khóa do quá nhiều lần thử sai. Vui lòng thử lại sau {remaining_seconds} giây.", "error")
+                    return redirect(url_for("admin.admin_login"))
                 return jsonify({
                     "error": f"IP bị tạm khóa do quá nhiều lần thử sai. Vui lòng thử lại sau {remaining_seconds} giây.",
                     "blocked_until": int(unblock_time),
@@ -204,7 +208,7 @@ def check_admin_auth():
                 }), 429
     
     # Không có session và không có valid key → redirect đến login (web) hoặc 403 (API)
-    if request.endpoint and "admin" in request.endpoint:
+    if request.endpoint and "admin" in str(request.endpoint):
         # Web request → redirect đến login
         flash("Vui lòng đăng nhập để truy cập trang admin", "warning")
         return redirect(url_for("admin.admin_login"))
