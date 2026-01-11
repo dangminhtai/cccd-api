@@ -19,10 +19,11 @@ CREATE TABLE IF NOT EXISTS admin_users (
 -- Insert default admin user (password: admin123 - CHANGE THIS IN PRODUCTION!)
 -- Password hash for "admin123" (bcrypt, rounds=12)
 -- IMPORTANT: Change this password immediately after first login!
+-- To generate new hash: python -c "import bcrypt; print(bcrypt.hashpw(b'admin123', bcrypt.gensalt(rounds=12)).decode())"
 INSERT INTO admin_users (username, password_hash, email, full_name, is_active) 
 VALUES (
     'admin',
-    '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYqJ5q5q5qG',  -- admin123 - CHANGE THIS!
+    '$2b$12$IG8fmVh1MYHk92w488Ipr.GW6Coba2qcvzlT02vCdV5x/ULJ4dCcW',  -- admin123 - CHANGE THIS!
     'admin@cccd-api.local',
     'System Administrator',
     TRUE
