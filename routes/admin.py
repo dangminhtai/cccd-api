@@ -427,7 +427,7 @@ def admin_search_user():
 @admin_bp.get("/users")
 def admin_list_users():
     """Admin API: List users with pagination (JSON)"""
-    from services.user_service import get_users_list
+        from services.user import get_users_list
     
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 20, type=int)
@@ -456,7 +456,7 @@ def admin_list_users():
 @admin_bp.post("/users/<int:user_id>/delete")
 def admin_delete_user(user_id: int):
     """Admin: Delete user (hard delete)"""
-    from services.user_service import delete_user
+        from services.user import delete_user
     from flask import current_app
     
     # Check if AJAX request
