@@ -8,13 +8,13 @@ USE cccd_api;
 -- Password: admin123
 -- Hash được generate bằng: python -c "import bcrypt; print(bcrypt.hashpw(b'admin123', bcrypt.gensalt(rounds=12)).decode())"
 UPDATE admin_users 
-SET password_hash = '$2b$12$IG8fmVh1MYHk92w488Ipr.GW6Coba2qcvzlT02vCdV5x/ULJ4dCcW'
+SET password_hash = '$2b$12$CENlNM5pFX8lY5doiUP8dOpbKS0oXdQ0hYc7IimzZQx4hHlOfRmLO'
 WHERE username = 'admin';
 
 -- Verify update
 SELECT id, username, email, is_active, 
        CASE 
-           WHEN password_hash = '$2b$12$IG8fmVh1MYHk92w488Ipr.GW6Coba2qcvzlT02vCdV5x/ULJ4dCcW' 
+           WHEN password_hash = '$2b$12$CENlNM5pFX8lY5doiUP8dOpbKS0oXdQ0hYc7IimzZQx4hHlOfRmLO' 
            THEN 'Password updated successfully' 
            ELSE 'Password NOT updated' 
        END as status

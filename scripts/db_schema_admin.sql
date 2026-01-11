@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS admin_users (
 INSERT INTO admin_users (username, password_hash, email, full_name, is_active) 
 VALUES (
     'admin',
-    '$2b$12$IG8fmVh1MYHk92w488Ipr.GW6Coba2qcvzlT02vCdV5x/ULJ4dCcW',  -- admin123 - CHANGE THIS!
+    '$2b$12$CENlNM5pFX8lY5doiUP8dOpbKS0oXdQ0hYc7IimzZQx4hHlOfRmLO',  -- admin123 - CHANGE THIS!
     'admin@cccd-api.local',
     'System Administrator',
     TRUE
