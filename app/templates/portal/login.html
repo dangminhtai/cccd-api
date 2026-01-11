@@ -3,84 +3,566 @@
 {% block title %}Đăng nhập - CCCD API{% endblock %}
 
 {% block extra_css %}
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
 <style>
+/* Login Page Styles */
 body {
-    background: var(--color-primary-gradient);
+    background: #0B1120;
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: var(--spacing-5);
+    position: relative;
+    overflow: hidden;
+    margin: 0;
 }
 
-.login-container {
-    max-width: 450px;
+/* Abstract Tech Background */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background: linear-gradient(to bottom right, #02040a, #0f172a, #1e3a8a);
+    opacity: 0.9;
+}
+
+body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    background-image: 
+        radial-gradient(#667eea 1px, transparent 1px),
+        radial-gradient(#667eea 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-position: 0 0, 20px 20px;
+    opacity: 0.1;
+    pointer-events: none;
+}
+
+/* Glowing Orbs Animation */
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+}
+
+.glow-orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(100px);
+    pointer-events: none;
+    z-index: 1;
+    animation: float 6s ease-in-out infinite;
+}
+
+.glow-orb-1 {
+    top: -10%;
+    left: -10%;
+    width: 500px;
+    height: 500px;
+    background: rgba(102, 126, 234, 0.3);
+}
+
+.glow-orb-2 {
+    bottom: -10%;
+    right: -10%;
+    width: 600px;
+    height: 600px;
+    background: rgba(59, 130, 246, 0.2);
+    animation-delay: 2s;
+    animation-duration: 8s;
+}
+
+/* Tech Grid Lines */
+body {
+    background-image: 
+        linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
+    background-size: 100px 100px;
+    background-position: 0 0, 0 0;
+}
+
+/* Main Content Container */
+.login-wrapper {
+    position: relative;
+    z-index: 10;
     width: 100%;
-    background: var(--color-bg-primary);
-    padding: var(--spacing-8);
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-xl);
+    max-width: 480px;
+    padding: var(--spacing-5);
 }
 
-.login-container h1 {
+/* Glassmorphism Card */
+.login-container {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+/* Decorative Top Bar */
+.login-container::before {
+    content: '';
+    display: block;
+    height: 4px;
+    width: 100%;
+    background: linear-gradient(to right, #3b82f6, var(--color-primary));
+}
+
+.login-content {
+    padding: var(--spacing-8);
+}
+
+@media (min-width: 768px) {
+    .login-content {
+        padding: var(--spacing-10);
+    }
+}
+
+/* Header / Logo Area */
+.login-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    margin-bottom: var(--spacing-8);
+}
+
+.login-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-lg);
+    background: rgba(102, 126, 234, 0.1);
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-4);
+    box-shadow: inset 0 0 0 1px rgba(102, 126, 234, 0.2);
+}
+
+.login-icon .material-symbols-outlined {
+    font-size: 32px;
+}
+
+.login-header h2 {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+    margin: 0;
+    letter-spacing: -0.5px;
+}
+
+.login-header .subtitle {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+    margin-top: var(--spacing-1);
+}
+
+/* Title Section */
+.login-title {
+    margin-bottom: var(--spacing-8);
+    text-align: center;
+}
+
+.login-title h1 {
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
     color: var(--color-text-primary);
     margin-bottom: var(--spacing-2);
-    font-size: var(--font-size-3xl);
-    text-align: center;
 }
 
-.login-container .subtitle {
+.login-title p {
+    font-size: var(--font-size-base);
     color: var(--color-text-secondary);
-    margin-bottom: var(--spacing-6);
-    text-align: center;
+}
+
+/* Form Styles */
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-6);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+}
+
+.form-label {
+    display: block;
     font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+}
+
+/* Input with Icon */
+.input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-group .material-symbols-outlined {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 44px;
+    width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-tertiary);
+    pointer-events: none;
+    font-size: 20px;
+    transition: color var(--transition-base);
+}
+
+.input-group:focus-within .material-symbols-outlined {
+    color: var(--color-primary);
+}
+
+.input-group input {
+    width: 100%;
+    height: 44px;
+    padding: 0 var(--spacing-4) 0 44px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: rgba(255, 255, 255, 0.5);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-base);
+    transition: all var(--transition-base);
+    outline: none;
+}
+
+.input-group input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.input-group input::placeholder {
+    color: var(--color-text-tertiary);
+}
+
+/* Password Toggle Button */
+.password-toggle {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 44px;
+    width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-tertiary);
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color var(--transition-base);
+}
+
+.password-toggle:hover {
+    color: var(--color-text-primary);
+}
+
+.password-toggle .material-symbols-outlined {
+    font-size: 20px;
+    position: static;
+}
+
+/* Utility Row */
+.form-utility {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: calc(var(--spacing-2) * -1);
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    cursor: pointer;
+}
+
+.checkbox-group input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    cursor: pointer;
+    accent-color: var(--color-primary);
+}
+
+.checkbox-group label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    user-select: none;
+}
+
+.checkbox-group:hover label {
+    color: var(--color-primary);
+}
+
+.form-link {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary);
+    text-decoration: none;
+    transition: color var(--transition-base);
+}
+
+.form-link:hover {
+    color: var(--color-primary-dark);
+    text-decoration: underline;
+}
+
+/* Submit Button */
+.btn-login {
+    width: 100%;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-lg);
+    background: var(--color-primary);
+    color: white;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: 0.5px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+    transition: all var(--transition-base);
+}
+
+.btn-login:hover {
+    background: var(--color-primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-login:active {
+    transform: translateY(0);
+}
+
+/* Divider */
+.login-divider {
+    position: relative;
+    margin: var(--spacing-8) 0;
+}
+
+.login-divider::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    border-top: 1px solid var(--color-border);
+}
+
+.login-divider span {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    padding: 0 var(--spacing-2);
+    background: rgba(255, 255, 255, 0);
+    backdrop-filter: blur(8px);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+/* Footer Link */
+.login-footer {
+    text-align: center;
+    margin-top: var(--spacing-8);
+}
+
+.login-footer p {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.login-footer a {
+    color: var(--color-primary);
+    font-weight: var(--font-weight-bold);
+    text-decoration: none;
+    margin-left: var(--spacing-1);
+}
+
+.login-footer a:hover {
+    text-decoration: underline;
+}
+
+/* Security Badge */
+.security-badge {
+    margin-top: var(--spacing-8);
+    padding-top: var(--spacing-6);
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-2);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
+}
+
+.security-badge .material-symbols-outlined {
+    font-size: 16px;
+}
+
+/* Flash Messages */
+.flash-messages {
+    margin-bottom: var(--spacing-6);
+}
+
+.flash {
+    padding: var(--spacing-3) var(--spacing-4);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-3);
+    font-size: var(--font-size-sm);
+}
+
+.flash-success {
+    background: var(--color-success-bg);
+    color: var(--color-success-text);
+    border: 1px solid var(--color-success-border);
+}
+
+.flash-error {
+    background: var(--color-error-bg);
+    color: var(--color-error-text);
+    border: 1px solid var(--color-error-border);
+}
+
+.flash-warning {
+    background: var(--color-warning-bg);
+    color: var(--color-warning-text);
+    border: 1px solid var(--color-warning-border);
+}
+
+.flash-info {
+    background: var(--color-info-bg);
+    color: var(--color-info-text);
+    border: 1px solid var(--color-info-border);
 }
 </style>
 {% endblock %}
 
 {% block body %}
-<div class="login-container">
-    <h1>Đăng nhập</h1>
-    <p class="subtitle">Đăng nhập vào tài khoản của bạn</p>
-    
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="flash-messages">
-                {% for category, message in messages %}
-                    <div class="flash flash-{{ category }}">{{ message }}</div>
-                {% endfor %}
+<!-- Background Elements -->
+<div class="glow-orb glow-orb-1"></div>
+<div class="glow-orb glow-orb-2"></div>
+
+<div class="login-wrapper">
+    <div class="login-container">
+        <div class="login-content">
+            <!-- Header / Logo Area -->
+            <div class="login-header">
+                <div class="login-icon">
+                    <span class="material-symbols-outlined">fingerprint</span>
+                </div>
+                <h2>CCCD API Portal</h2>
+                <p class="subtitle">Identity Verification Service</p>
             </div>
-        {% endif %}
-    {% endwith %}
-    
-    <form method="POST" action="{{ url_for('portal.login') }}">
-        <div class="form-group">
-            <label for="email" class="form-label">Email</label>
-            <input type="email" id="email" name="email" class="form-control" required autofocus>
-        </div>
-        
-        <div class="form-group">
-            <label for="password" class="form-label">Mật khẩu</label>
-            <input type="password" id="password" name="password" class="form-control" required>
-        </div>
-        
-        <div class="form-check">
-            <input type="checkbox" id="remember_me" name="remember_me" class="form-check-input">
-            <label for="remember_me" class="form-check-label">Ghi nhớ đăng nhập</label>
-        </div>
-        
-        <button type="submit" class="btn btn-primary btn-block">Đăng nhập</button>
-    </form>
-    
-    <div style="text-align: center; margin-top: var(--spacing-5); color: var(--color-text-secondary); font-size: var(--font-size-sm);">
-        <div style="margin-bottom: var(--spacing-2);">
-            <a href="{{ url_for('portal.forgot_password') }}" style="color: var(--color-primary); text-decoration: none;">
-                Quên mật khẩu?
-            </a>
-        </div>
-        <div>
-            Chưa có tài khoản? <a href="{{ url_for('portal.register') }}" style="color: var(--color-primary);">Đăng ký ngay</a>
+            
+            <!-- Title Section -->
+            <div class="login-title">
+                <h1>Đăng nhập</h1>
+                <p>Đăng nhập vào tài khoản của bạn</p>
+            </div>
+            
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for category, message in messages %}
+                            <div class="flash flash-{{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            
+            <!-- Login Form -->
+            <form method="POST" action="{{ url_for('portal.login') }}" class="login-form">
+                <!-- Email Input -->
+                <div class="form-group">
+                    <label for="email" class="form-label">Email</label>
+                    <div class="input-group">
+                        <span class="material-symbols-outlined">mail</span>
+                        <input type="email" id="email" name="email" placeholder="nhà_phát_triển@example.com" required autofocus>
+                    </div>
+                </div>
+                
+                <!-- Password Input -->
+                <div class="form-group">
+                    <label for="password" class="form-label">Mật khẩu</label>
+                    <div class="input-group">
+                        <span class="material-symbols-outlined">lock</span>
+                        <input type="password" id="password" name="password" placeholder="••••••••" required>
+                        <button type="button" class="password-toggle" id="passwordToggle" aria-label="Toggle password visibility">
+                            <span class="material-symbols-outlined">visibility_off</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Utility Row -->
+                <div class="form-utility">
+                    <label class="checkbox-group">
+                        <input type="checkbox" id="remember_me" name="remember_me">
+                        <span>Ghi nhớ đăng nhập</span>
+                    </label>
+                    <a href="{{ url_for('portal.forgot_password') }}" class="form-link">Quên mật khẩu?</a>
+                </div>
+                
+                <!-- Submit Button -->
+                <button type="submit" class="btn-login">Đăng nhập</button>
+            </form>
+            
+            <!-- Divider -->
+            <div class="login-divider">
+                <span>hoặc</span>
+            </div>
+            
+            <!-- Footer Link -->
+            <div class="login-footer">
+                <p>
+                    Chưa có tài khoản?
+                    <a href="{{ url_for('portal.register') }}">Đăng ký ngay</a>
+                </p>
+            </div>
+            
+            <!-- Security Badge -->
+            <div class="security-badge">
+                <span class="material-symbols-outlined">verified_user</span>
+                <span>Bảo mật bởi CCCD Infrastructure</span>
+            </div>
         </div>
     </div>
 </div>
+
+<script>
+// Password visibility toggle
+document.getElementById('passwordToggle')?.addEventListener('click', function() {
+    const passwordInput = document.getElementById('password');
+    const toggleIcon = this.querySelector('span');
+    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+    passwordInput.setAttribute('type', type);
+    toggleIcon.textContent = type === 'password' ? 'visibility_off' : 'visibility';
+});
+</script>
 {% endblock %}
