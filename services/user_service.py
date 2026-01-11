@@ -698,3 +698,14 @@ def get_user_subscription(user_id: int) -> Optional[dict]:
     except Exception as e:
         logger.error(f"Error getting user subscription: {str(e)}", exc_info=True)
         return None
+
+
+def invalidate_user_sessions(user_id: int) -> None:
+    """
+    Invalidate user sessions (clear session data in database if using session store)
+    Note: Flask default sessions are cookie-based, so we can't invalidate them server-side
+    This function is a placeholder for future session management if needed
+    """
+    # For now, Flask sessions are cookie-based, so we can't invalidate them server-side
+    # If using server-side session store (Redis, database), clear sessions here
+    pass
