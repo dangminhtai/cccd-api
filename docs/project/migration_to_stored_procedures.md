@@ -1,324 +1,358 @@
-# Kế Hoạch Migration: Chuyển SQL Queries Sang Stored Procedures & Functions
+# Kế Hoạch Migration: Chuyển từ SQL Queries Cứng sang Stored Procedures & Functions
 
-## Tổng Quan
+## 📋 Tổng Quan
 
-Hiện tại, dự án đang sử dụng **hardcoded SQL queries** trong Python code (services layer). Kế hoạch này đề xuất chuyển đổi sang **MySQL Stored Procedures và Functions** để:
-- Tăng hiệu suất (queries được compile và cache)
-- Tăng bảo mật (giảm SQL injection risks)
-- Dễ bảo trì (logic tập trung ở database layer)
-- Tái sử dụng code (có thể gọi từ nhiều nơi)
+Hiện tại, dự án đang sử dụng **SQL queries cứng** (hardcoded) trong Python code. Kế hoạch này đề xuất chuyển sang sử dụng **Stored Procedures** và **Functions** trong MySQL để:
 
-## Phân Tích Hiện Trạng
+- **Tối ưu hiệu suất**: Database engine có thể cache và optimize execution plans
+- **Bảo mật tốt hơn**: Tránh SQL injection, centralized security
+- **Dễ bảo trì**: Logic database tập trung, dễ thay đổi schema
+- **Tái sử dụng**: Có thể gọi từ nhiều nơi (Python, admin tools, reports)
+- **Transaction management**: Dễ quản lý transactions phức tạp
 
-### 1. Services Layer Hiện Tại
+---
 
-#### `services/user_service.py`
-- **Số lượng queries**: ~15-20 queries
-- **Các operations chính**:
-  - User registration (`register_user`)
-  - User authentication (`authenticate_user`)
-  - Get user by ID/email (`get_user_by_id`, `get_user_by_email`)
-  - Get users list với pagination (`get_users_list`)
-  - Password reset (`request_password_reset`, `reset_password`)
-  - Email verification (`verify_email`, `resend_verification_email`)
-  - Delete user (`delete_user`)
+## 🔍 Phân Tích Hiện Trạng
 
-#### `services/billing_service.py`
-- **Số lượng queries**: ~10-15 queries
-- **Các operations chính**:
-  - Create payment (`create_payment`)
-  - Approve payment (`approve_payment`)
-  - Get pending payments (`get_pending_payments`)
-  - Get user payments (`get_user_payments`)
-  - Manually change tier (`manually_change_user_tier`)
-  - Get tier pricing (`get_tier_pricing`)
+### Thống Kê SQL Queries Hiện Tại
 
-#### `services/api_key_service.py`
-- **Số lượng queries**: ~8-12 queries
-- **Các operations chính**:
-  - Create API key (`create_api_key`)
-  - Get user API keys (`get_user_api_keys`)
-  - Validate API key (`validate_api_key`)
-  - Update key label (`update_key_label`)
-  - Delete key (`delete_key_by_id`)
-  - Get key usage stats (`get_key_usage_stats`)
+Dựa trên codebase hiện tại:
 
-#### `services/logging_service.py`
-- **Số lượng queries**: ~3-5 queries
-- **Các operations chính**:
-  - Log request to database (`log_request_to_database`)
-  - Get usage statistics
+- **`services/user_service.py`**: ~33 SQL queries
+- **`services/billing_service.py`**: ~21 SQL queries  
+- **`services/api_key_service.py`**: ~22 SQL queries
+- **Tổng cộng**: ~76 SQL queries cứng
 
-### 2. Vấn Đề Hiện Tại
+### Các Loại Operations Hiện Tại
 
-#### Performance Issues
-- Mỗi query phải được parse và compile mỗi lần execute
-- Không có query plan caching
-- Network overhead cho mỗi query statement
+1. **User Management** (`user_service.py`):
+   - User registration, login, authentication
+   - Email verification
+   - Password reset
+   - User profile management
+   - User search và pagination
 
-#### Security Concerns
-- SQL injection risks (dù đã dùng parameterized queries)
-- Business logic exposed trong application code
-- Khó audit và track database changes
+2. **Billing & Subscriptions** (`billing_service.py`):
+   - Payment creation và approval
+   - Subscription management
+   - Tier changes
+   - Payment history
 
-#### Maintenance Challenges
-- SQL queries rải rác trong nhiều files
-- Khó thay đổi schema mà không sửa code
-- Khó optimize queries mà không touch application code
-- Backward compatibility issues (try/except cho optional columns)
+3. **API Key Management** (`api_key_service.py`):
+   - API key generation và validation
+   - Key rotation và history
+   - Usage tracking
+   - Key expiration
 
-#### Code Duplication
-- Similar queries ở nhiều nơi (ví dụ: get user subscription)
-- Logic phức tạp lặp lại (ví dụ: pagination, search)
+4. **Logging** (`logging_service.py`):
+   - Request logging
+   - Audit trails
 
-## Kế Hoạch Migration
+---
 
-### Phase 1: Thiết Kế Database Layer (1-2 tuần)
+## 🎯 Mục Tiêu Migration
 
-#### 1.1 Phân Loại Queries
+### Phase 1: Critical Operations (Ưu tiên cao)
+- User authentication (login, registration)
+- Payment approval (transaction-critical)
+- API key validation (high-frequency)
 
-**Stored Procedures** (cho operations có side effects):
-- `sp_user_register` - Đăng ký user mới
+### Phase 2: Core Operations (Ưu tiên trung bình)
+- User management (CRUD)
+- Subscription management
+- API key management
+
+### Phase 3: Supporting Operations (Ưu tiên thấp)
+- Logging operations
+- Reporting queries
+- Admin operations
+
+---
+
+## 📐 Kiến Trúc Đề Xuất
+
+### 1. Naming Convention
+
+**Stored Procedures:**
+- Prefix: `sp_` cho stored procedures
+- Format: `sp_{module}_{operation}`
+- Ví dụ: `sp_user_create`, `sp_payment_approve`, `sp_api_key_validate`
+
+**Functions:**
+- Prefix: `fn_` cho functions
+- Format: `fn_{module}_{operation}`
+- Ví dụ: `fn_user_exists`, `fn_get_tier_rate_limit`, `fn_calculate_expiry`
+
+### 2. Module Organization
+
+Tổ chức theo modules:
+
+```
+sp_user_*          - User operations
+sp_payment_*       - Payment operations
+sp_subscription_*  - Subscription operations
+sp_api_key_*       - API key operations
+sp_log_*           - Logging operations
+fn_user_*          - User helper functions
+fn_billing_*       - Billing helper functions
+```
+
+### 3. Error Handling
+
+- Stored procedures trả về `OUT` parameters cho success/error
+- Hoặc dùng `SIGNAL SQLSTATE` để raise errors
+- Python code catch và handle errors appropriately
+
+---
+
+## 🔄 Migration Strategy
+
+### Bước 1: Tạo Stored Procedures (Database Layer)
+
+**Cách làm:**
+1. Tạo file SQL migration mới: `scripts/db_schema_stored_procedures.sql`
+2. Định nghĩa stored procedures cho từng operation
+3. Test stored procedures trực tiếp trong MySQL
+4. Verify với sample data
+
+**Lưu ý:**
+- Giữ nguyên logic business hiện tại
+- Đảm bảo backward compatibility
+- Test kỹ với edge cases
+
+### Bước 2: Tạo Wrapper Functions (Python Layer)
+
+**Cách làm:**
+1. Tạo module mới: `services/db_procedures.py`
+2. Mỗi stored procedure có 1 Python wrapper function
+3. Wrapper function:
+   - Kết nối database
+   - Gọi stored procedure với `CALL sp_name(...)`
+   - Parse kết quả
+   - Handle errors
+   - Return Python objects
+
+**Lưu ý:**
+- Giữ nguyên function signatures hiện tại (nếu có thể)
+- Đảm bảo type safety
+- Proper error handling và logging
+
+### Bước 3: Refactor Service Layer
+
+**Cách làm:**
+1. Thay thế từng `cursor.execute()` bằng wrapper function
+2. Test từng function sau khi refactor
+3. Giữ nguyên unit tests (nếu có)
+4. Verify integration tests
+
+**Lưu ý:**
+- Refactor từng module một (user → billing → api_key)
+- Không refactor tất cả cùng lúc
+- Có rollback plan nếu cần
+
+### Bước 4: Cleanup & Optimization
+
+**Cách làm:**
+1. Xóa SQL queries cứng không còn dùng
+2. Optimize stored procedures (indexes, query plans)
+3. Update documentation
+4. Performance testing
+
+---
+
+## 📝 Chi Tiết Migration Plan
+
+### Module 1: User Management
+
+**Stored Procedures cần tạo:**
+- `sp_user_create` - Tạo user mới
 - `sp_user_authenticate` - Xác thực login
-- `sp_user_change_tier` - Admin đổi tier user
+- `sp_user_get_by_email` - Lấy user theo email
+- `sp_user_get_by_id` - Lấy user theo ID
+- `sp_user_update_password` - Đổi password
+- `sp_user_list` - Danh sách users (pagination)
 - `sp_user_delete` - Xóa user
+
+**Functions cần tạo:**
+- `fn_user_exists` - Kiểm tra user tồn tại
+- `fn_user_email_verified` - Kiểm tra email đã verify chưa
+
+**Migration order:**
+1. Authentication (critical)
+2. User CRUD
+3. Email verification
+4. Password reset
+
+### Module 2: Billing & Payments
+
+**Stored Procedures cần tạo:**
 - `sp_payment_create` - Tạo payment request
-- `sp_payment_approve` - Admin approve payment
-- `sp_payment_reject` - Admin reject payment
+- `sp_payment_approve` - Approve payment (transaction-critical)
+- `sp_payment_reject` - Reject payment
+- `sp_payment_get_by_id` - Lấy payment details
+- `sp_payment_list_by_user` - Lịch sử payments
+- `sp_subscription_create` - Tạo subscription
+- `sp_subscription_update_tier` - Đổi tier
+- `sp_subscription_expire_old` - Expire subscriptions cũ
+
+**Functions cần tạo:**
+- `fn_has_pending_payment` - Kiểm tra pending payment
+- `fn_get_tier_pricing` - Lấy giá tier
+- `fn_calculate_subscription_expiry` - Tính ngày hết hạn
+
+**Migration order:**
+1. Payment approval (critical transaction)
+2. Payment CRUD
+3. Subscription management
+4. Tier changes
+
+### Module 3: API Key Management
+
+**Stored Procedures cần tạo:**
 - `sp_api_key_create` - Tạo API key mới
-- `sp_api_key_delete` - Xóa API key
+- `sp_api_key_validate` - Validate API key (high-frequency)
+- `sp_api_key_get_by_hash` - Lấy key theo hash
+- `sp_api_key_list_by_user` - Danh sách keys của user
 - `sp_api_key_update_label` - Update label
-- `sp_request_log` - Log API request
+- `sp_api_key_delete` - Xóa key
+- `sp_api_key_extend_expiry` - Gia hạn key
+- `sp_api_key_log_history` - Log key history
 
-**Stored Functions** (cho read-only operations):
-- `fn_get_user_by_id` - Lấy user theo ID
-- `fn_get_user_by_email` - Lấy user theo email
-- `fn_get_users_list` - Lấy danh sách users (pagination)
-- `fn_get_user_subscription` - Lấy subscription hiện tại
-- `fn_get_pending_payments` - Lấy pending payments
-- `fn_get_user_payments` - Lấy payments của user
-- `fn_validate_api_key` - Validate API key
-- `fn_get_key_usage_stats` - Lấy usage statistics
+**Functions cần tạo:**
+- `fn_api_key_is_valid` - Kiểm tra key hợp lệ
+- `fn_get_key_tier` - Lấy tier của key
+- `fn_get_rate_limit` - Lấy rate limit theo tier
 
-**Views** (cho complex queries):
-- `vw_user_subscriptions` - User với subscription info
-- `vw_api_key_stats` - API key statistics
-- `vw_payment_summary` - Payment summary
+**Migration order:**
+1. API key validation (high-frequency, critical)
+2. API key CRUD
+3. Key history logging
+4. Expiration management
 
-#### 1.2 Thiết Kế Parameters & Return Values
+### Module 4: Logging
 
-**Ví dụ cho Stored Procedure:**
-```sql
--- Input: email, password_hash, full_name
--- Output: user_id, verification_token, success_flag, error_message
-```
+**Stored Procedures cần tạo:**
+- `sp_log_request` - Log API request
+- `sp_log_get_usage_stats` - Lấy usage statistics
+- `sp_log_get_by_key` - Lấy logs theo API key
 
-**Ví dụ cho Stored Function:**
-```sql
--- Input: user_id
--- Output: JSON object với user info + subscription
-```
+**Migration order:**
+1. Request logging
+2. Usage statistics
+3. Audit trails
 
-### Phase 2: Tạo Stored Procedures & Functions (2-3 tuần)
+---
 
-#### 2.1 Priority Order
+## ⚠️ Rủi Ro & Giảm Thiểu
 
-**High Priority** (dùng nhiều, performance critical):
-1. `sp_user_authenticate` - Login được gọi mỗi request
-2. `fn_validate_api_key` - Validate key được gọi mỗi API request
-3. `sp_request_log` - Logging được gọi mỗi API call
-4. `fn_get_user_subscription` - Get tier cho rate limiting
+### Rủi Ro 1: Performance Degradation
+**Nguyên nhân:** Stored procedures có thể chậm hơn nếu không optimize
+**Giảm thiểu:**
+- Test performance trước khi deploy
+- Sử dụng EXPLAIN để analyze query plans
+- Tối ưu indexes
+- Có rollback plan
 
-**Medium Priority** (dùng thường xuyên):
-5. `sp_user_register` - Registration flow
-6. `sp_payment_approve` - Admin operations
-7. `fn_get_users_list` - Admin dashboard
-8. `fn_get_pending_payments` - Admin dashboard
+### Rủi Ro 2: Breaking Changes
+**Nguyên nhân:** Thay đổi behavior không mong muốn
+**Giảm thiểu:**
+- Test kỹ với sample data
+- Giữ nguyên business logic
+- Integration tests
+- Staged rollout (test → staging → production)
 
-**Low Priority** (dùng ít):
-9. `sp_user_change_tier` - Admin operations
-10. `sp_user_delete` - Admin operations
-11. Các functions khác
+### Rủi Ro 3: Migration Complexity
+**Nguyên nhân:** Quá nhiều thay đổi cùng lúc
+**Giảm thiểu:**
+- Migration từng module một
+- Có thể chạy song song (old + new code)
+- Feature flags để toggle
 
-#### 2.2 Migration Strategy
+### Rủi Ro 4: Database Lock
+**Nguyên nhân:** Stored procedures có thể lock tables
+**Giảm thiểu:**
+- Sử dụng appropriate isolation levels
+- Tránh long-running transactions
+- Monitor lock waits
 
-**Approach 1: Big Bang** (không khuyến nghị)
-- Tạo tất cả procedures/functions cùng lúc
-- Thay đổi toàn bộ application code
-- Risk cao, khó rollback
+---
 
-**Approach 2: Incremental** (khuyến nghị)
-- Tạo procedure/function cho 1 operation
-- Update application code để dùng procedure
-- Test kỹ trước khi tiếp tục
-- Repeat cho từng operation
+## ✅ Definition of Done
 
-**Approach 3: Parallel** (an toàn nhất)
-- Tạo procedure/function mới
-- Giữ code cũ hoạt động
-- Thêm feature flag để switch
-- Test với procedure mới
-- Khi stable, remove code cũ
+### Phase 1 (Critical Operations)
+- [ ] Tất cả stored procedures cho authentication được tạo và test
+- [ ] Payment approval stored procedure hoạt động đúng
+- [ ] API key validation stored procedure hoạt động đúng
+- [ ] Python wrappers được implement
+- [ ] Service layer đã refactor
+- [ ] Integration tests pass
+- [ ] Performance không giảm > 10%
 
-### Phase 3: Update Application Code (2-3 tuần)
+### Phase 2 (Core Operations)
+- [ ] Tất cả stored procedures cho user management được tạo
+- [ ] Tất cả stored procedures cho billing được tạo
+- [ ] Tất cả stored procedures cho API key management được tạo
+- [ ] Service layer đã refactor hoàn toàn
+- [ ] Unit tests pass
+- [ ] Documentation updated
 
-#### 3.1 Tạo Database Service Layer
+### Phase 3 (Supporting Operations)
+- [ ] Logging stored procedures được tạo
+- [ ] Tất cả SQL queries cứng đã được thay thế
+- [ ] Code cleanup hoàn tất
+- [ ] Performance optimization
+- [ ] Final testing và verification
 
-**File mới: `services/db_procedures.py`**
-- Wrapper functions để gọi stored procedures
-- Error handling và logging
-- Type hints và documentation
-- Backward compatibility layer
+---
 
-**Ví dụ structure:**
-```python
-# services/db_procedures.py
-def call_user_register(email, password_hash, full_name):
-    """Wrapper để gọi sp_user_register"""
-    # Call procedure
-    # Handle errors
-    # Return formatted result
-```
+## 📚 Tài Liệu Tham Khảo
 
-#### 3.2 Migration Path cho Mỗi Service
+### MySQL Stored Procedures
+- Syntax: `CREATE PROCEDURE sp_name(...) BEGIN ... END`
+- Parameters: `IN`, `OUT`, `INOUT`
+- Error handling: `SIGNAL SQLSTATE`
+- Transactions: `START TRANSACTION`, `COMMIT`, `ROLLBACK`
 
-**Step 1**: Tạo procedure/function trong database
-**Step 2**: Tạo wrapper function trong `db_procedures.py`
-**Step 3**: Update service function để dùng wrapper
-**Step 4**: Test thoroughly
-**Step 5**: Remove old SQL code
+### Best Practices
+- Sử dụng prepared statements trong stored procedures
+- Validate inputs
+- Proper error handling
+- Logging important operations
+- Document parameters và return values
 
-#### 3.3 Backward Compatibility
+### Testing Strategy
+- Unit test stored procedures với sample data
+- Integration test với Python wrappers
+- Performance test với realistic load
+- Security test (SQL injection, privilege escalation)
 
-- Giữ old functions hoạt động trong transition period
-- Feature flag để switch giữa old/new implementation
-- Gradual migration (migrate 1 service at a time)
+---
 
-### Phase 4: Testing & Optimization (1-2 tuần)
+## 🚀 Timeline Ước Tính
 
-#### 4.1 Testing Strategy
+- **Phase 1 (Critical)**: 1-2 tuần
+- **Phase 2 (Core)**: 2-3 tuần
+- **Phase 3 (Supporting)**: 1 tuần
+- **Total**: 4-6 tuần
 
-**Unit Tests:**
-- Test từng stored procedure/function
-- Test error cases
-- Test edge cases
+**Lưu ý:** Timeline có thể thay đổi tùy vào complexity và testing requirements.
 
-**Integration Tests:**
-- Test application code với procedures
-- Test transaction handling
-- Test concurrent access
+---
 
-**Performance Tests:**
-- Benchmark old vs new implementation
-- Test với high load
-- Monitor query execution time
-
-#### 4.2 Optimization
-
-- Analyze query execution plans
-- Add indexes nếu cần
-- Optimize procedure logic
-- Cache results nếu phù hợp
-
-### Phase 5: Documentation & Rollout (1 tuần)
-
-#### 5.1 Documentation
-
-- Document tất cả stored procedures/functions
-- Parameter descriptions
-- Return value formats
-- Error codes và meanings
-- Usage examples
-
-#### 5.2 Rollout Plan
-
-- Deploy procedures/functions to staging
-- Test với production-like data
-- Gradual rollout to production
-- Monitor performance và errors
-- Rollback plan nếu có issues
-
-## Lợi Ích Dự Kiến
-
-### Performance
-- **Query caching**: Procedures được compile và cache
-- **Reduced network traffic**: 1 call thay vì nhiều queries
-- **Optimized execution plans**: Database optimizer có thể optimize tốt hơn
-
-### Security
-- **SQL injection protection**: Parameters được validate ở database level
-- **Access control**: Có thể set permissions cho procedures
-- **Audit trail**: Dễ track database operations
-
-### Maintainability
-- **Centralized logic**: Business logic ở database layer
-- **Schema changes**: Dễ update mà không touch application code
-- **Version control**: Procedures có thể version
-
-### Reusability
-- **Multiple applications**: Có thể dùng procedures từ nhiều apps
-- **API consistency**: Đảm bảo logic nhất quán
-- **Testing**: Dễ test procedures độc lập
-
-## Rủi Ro & Giảm Thiểu
-
-### Rủi Ro 1: Vendor Lock-in
-- **Vấn đề**: Stored procedures là MySQL-specific, khó migrate sang database khác
-- **Giảm thiểu**: 
-  - Chỉ dùng procedures cho business logic
-  - Giữ application code database-agnostic
-  - Có migration plan nếu cần đổi database
-
-### Rủi Ro 2: Debugging Khó Khăn
-- **Vấn đề**: Debug stored procedures khó hơn application code
-- **Giảm thiểu**:
-  - Comprehensive logging trong procedures
-  - Good error messages
-  - Debug tools và techniques
-
-### Rủi Ro 3: Version Control
-- **Vấn đề**: Procedures không nằm trong Git (phải export/import)
-- **Giảm thiểu**:
-  - Tạo migration scripts cho procedures
-  - Version control cho SQL files
-  - Automated deployment
-
-### Rủi Ro 4: Testing Complexity
-- **Vấn đề**: Test procedures cần database setup
-- **Giảm thiểu**:
-  - Test database với sample data
-  - Automated tests
-  - Integration test suite
-
-## Timeline Tổng Thể
-
-- **Week 1-2**: Phase 1 - Thiết kế database layer
-- **Week 3-5**: Phase 2 - Tạo stored procedures/functions (high priority)
-- **Week 6-8**: Phase 3 - Update application code (incremental)
-- **Week 9-10**: Phase 4 - Testing & optimization
-- **Week 11**: Phase 5 - Documentation & rollout
-
-**Tổng thời gian**: ~11 tuần (2.5-3 tháng)
-
-## Success Metrics
-
-- **Performance**: Giảm 20-30% query execution time
-- **Code reduction**: Giảm 30-40% SQL code trong application
-- **Maintainability**: Dễ update schema mà không sửa code
-- **Security**: Zero SQL injection vulnerabilities
-- **Test coverage**: 90%+ test coverage cho procedures
-
-## Next Steps
+## 📌 Next Steps
 
 1. **Review và approve** kế hoạch này
-2. **Setup test database** để develop procedures
-3. **Bắt đầu Phase 1**: Thiết kế procedures cho high-priority operations
-4. **Create migration scripts** để version control procedures
-5. **Implement first procedure** (ví dụ: `sp_user_authenticate`) như proof of concept
+2. **Tạo database migration script** cho Phase 1
+3. **Implement Python wrappers** cho Phase 1
+4. **Test và verify** Phase 1
+5. **Tiếp tục** với Phase 2 và 3
 
-## Notes
+---
 
-- **Không bắt buộc migrate tất cả**: Có thể chỉ migrate các operations quan trọng
-- **Hybrid approach**: Có thể giữ một số queries trong code, dùng procedures cho complex operations
-- **Gradual migration**: Không cần migrate hết cùng lúc, có thể làm từng phần
-- **Backward compatibility**: Đảm bảo không break existing functionality
+## 💡 Lưu Ý Quan Trọng
+
+- **KHÔNG viết code SQL trong file markdown này** - chỉ hướng dẫn và kế hoạch
+- **Migration từng bước một** - không rush
+- **Test kỹ trước khi deploy** - đặc biệt là critical operations
+- **Giữ backward compatibility** - có thể rollback nếu cần
+- **Document mọi thay đổi** - để dễ maintain sau này
