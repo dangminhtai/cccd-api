@@ -458,7 +458,7 @@ def request_password_reset(email: str) -> Tuple[bool, Optional[str], Optional[st
                     """
                     UPDATE users
                     SET password_reset_token = %s,
-                        password_reset_token_expires = %s
+                        password_reset_expires = %s
                     WHERE id = %s
                     """,
                     (reset_token, reset_expires, user["id"]),
@@ -504,7 +504,7 @@ def reset_password(token: str, new_password: str) -> Tuple[bool, Optional[str]]:
                     SELECT id, email
                     FROM users
                     WHERE password_reset_token = %s
-                    AND password_reset_token_expires > NOW()
+                    AND password_reset_expires > NOW()
                     """,
                     (token,),
                 )
@@ -522,7 +522,7 @@ def reset_password(token: str, new_password: str) -> Tuple[bool, Optional[str]]:
                     UPDATE users
                     SET password_hash = %s,
                         password_reset_token = NULL,
-                        password_reset_token_expires = NULL
+                        password_reset_expires = NULL
                     WHERE id = %s
                     """,
                     (password_hash, user["id"]),
