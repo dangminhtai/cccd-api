@@ -318,3 +318,35 @@
   - **Prevent spam**: User có thể click nhiều lần
   - **Business logic validation**: Không phải mọi thứ đều hợp lệ
   - **User experience**: Message rõ ràng hơn là tạo duplicate silently
+
+---
+
+## 24) Code files quá dài (>500 dòng) khó đọc và maintain - Cần clean code và module organization
+
+- **Issue**: Một số file Python có >500-1000 dòng code (ví dụ: `user_service.py` 712 dòng, `billing_service.py` 556 dòng, `admin.html` 990 dòng). Rất khó đọc, khó maintain, khó test.
+- **Nguyên nhân**: 
+  - Tất cả logic đặt trong 1 file lớn
+  - Không tách concerns (models, services, repositories, utils)
+  - Không có module organization rõ ràng
+  - Copy-paste thay vì reuse
+- **Cách xử lý**:
+  - **Giới hạn file size**: 1 file Python nên <= 300-500 dòng (best practice)
+  - **Tách concerns**: Models, Services, Repositories, Utils, Validators
+  - **Module organization**: Chia theo domain (user, billing, api_key) hoặc feature
+  - **Single Responsibility Principle**: Mỗi module/class chỉ làm 1 việc
+  - **DRY**: Tái sử dụng code thay vì duplicate
+- **Ví dụ refactor**:
+  - `user_service.py` (712 dòng) → tách thành:
+    - `services/user/models.py` - User data models
+    - `services/user/repository.py` - Database queries (raw SQL)
+    - `services/user/service.py` - Business logic
+    - `services/user/validators.py` - Input validation
+    - `services/user/utils.py` - Helper functions (hash_password, etc.)
+  - `billing_service.py` (556 dòng) → tách tương tự
+  - `admin.html` (990 dòng) → tách thành components, dùng includes
+- **Bài học**: 
+  - **File size matters**: File >500 dòng = red flag, cần refactor
+  - **Clean code = Professional**: Dự án chuyên nghiệp phải có code organization tốt
+  - **Module organization**: Dễ đọc, dễ test, dễ maintain
+  - **Tách concerns**: Mỗi file chỉ làm 1 việc, dễ hiểu hơn
+  - **Refactor từng bước**: Không cần refactor hết cùng lúc, làm từng module một
