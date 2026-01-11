@@ -512,10 +512,10 @@ def manually_change_user_tier(user_id: int, target_tier: str, notes: Optional[st
                 # Create new subscription
                 cursor.execute(
                     """
-                    INSERT INTO subscriptions (user_id, tier, status, payment_method, notes)
-                    VALUES (%s, %s, 'active', 'manual', %s)
+                    INSERT INTO subscriptions (user_id, tier, status, payment_method)
+                    VALUES (%s, %s, 'active', 'manual')
                     """,
-                    (user_id, target_tier, notes or f"Admin manually changed to {target_tier}"),
+                    (user_id, target_tier),
                 )
             conn.commit()
             return True, f"Đã đổi tier user sang {target_tier}"
