@@ -271,3 +271,26 @@
   - **Ít file > Nhiều file**: Dễ tìm hơn, ít duplicate hơn
   - **Markdown là documentation**, không phải tutorial dài
   - **Lần sau đọc là hiểu** - đó là mục tiêu của documentation
+
+---
+
+## 22) Tuân thủ nguyên tắc DRY (Don't Repeat Yourself)
+
+- **Issue**: Code trùng lặp ở nhiều nơi (ví dụ: navigation menu xuất hiện ở header và trong content của mỗi page).
+- **Nguyên nhân**: 
+  - Copy-paste code thay vì reuse component/template
+  - Không nhận ra code đã có ở chỗ khác
+- **Cách xử lý**:
+  - **Định nghĩa 1 lần, dùng nhiều lần**: Navigation chỉ định nghĩa ở header, templates khác extend base.html
+  - **Dùng template inheritance**: `{% extends "base.html" %}` thay vì copy code
+  - **Dùng includes**: `{% include "component.html" %}` cho reusable components
+  - **DRY check**: Trước khi thêm code mới, kiểm tra xem đã có chưa
+- **Ví dụ**:
+  - Navigation menu: Chỉ ở `portal/header.html`, không lặp lại ở dashboard/usage/billing
+  - CSS classes: Dùng design system (variables.css) thay vì inline styles
+  - Form validation: Dùng shared JavaScript (forms.js) thay vì copy code
+- **Bài học**: 
+  - **DRY = Don't Repeat Yourself**: Mỗi logic chỉ viết 1 lần
+  - **Template inheritance** giúp tránh duplicate code
+  - **Component-based**: Tách reusable parts thành components
+  - **Code duplication = Maintenance nightmare**: Sửa 1 chỗ phải sửa nhiều chỗ
