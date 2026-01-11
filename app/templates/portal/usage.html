@@ -1,134 +1,19 @@
-<!DOCTYPE html>
-<html class="dark" lang="vi">
-<head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Usage Statistics - CCCD API</title>
-    
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com" rel="preconnect"/>
-    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-    
-    <!-- Material Symbols -->
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    
-    <!-- Tailwind Config -->
-    <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#427cf0",
-                        "background-light": "#f6f6f8",
-                        "background-dark": "#0f172a",
-                        "surface-dark": "#1e293b",
-                    },
-                    fontFamily: {
-                        "display": ["Space Grotesk", "sans-serif"],
-                        "body": ["Noto Sans", "sans-serif"],
-                    },
-                    boxShadow: {
-                        'neon-blue': '0 0 10px rgba(66, 124, 240, 0.5), 0 0 20px rgba(66, 124, 240, 0.3)',
-                        'neon-green': '0 0 10px rgba(16, 185, 129, 0.5), 0 0 20px rgba(16, 185, 129, 0.3)',
-                        'neon-red': '0 0 10px rgba(239, 68, 68, 0.5), 0 0 20px rgba(239, 68, 68, 0.3)',
-                        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
-                    }
-                },
-            },
-        }
-    </script>
-    
-    <style>
-        /* Custom scrollbar for dark theme */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #0f172a; 
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #334155; 
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #475569; 
-        }
-        
-        .glass-panel {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
+{% extends "portal/base_portal.html" %}
 
-        .bg-grid-pattern {
-            background-image: linear-gradient(to right, #1e293b 1px, transparent 1px),
-                              linear-gradient(to bottom, #1e293b 1px, transparent 1px);
-            background-size: 40px 40px;
-        }
-        
-        /* Material Symbols */
-        .material-symbols-outlined {
-            font-family: 'Material Symbols Outlined';
-            font-weight: normal;
-            font-style: normal;
-            font-size: 24px;
-            line-height: 1;
-            letter-spacing: normal;
-            text-transform: none;
-            display: inline-block;
-            white-space: nowrap;
-            word-wrap: normal;
-            direction: ltr;
-            -webkit-font-feature-settings: 'liga';
-            font-feature-settings: 'liga';
-            -webkit-font-smoothing: antialiased;
-        }
-    </style>
-</head>
-<body class="bg-background-dark text-white font-display antialiased overflow-x-hidden selection:bg-primary selection:text-white">
-    <!-- Background Grid Effect -->
-    <div class="fixed inset-0 pointer-events-none opacity-[0.15] bg-grid-pattern z-0"></div>
-    <div class="relative z-10 flex min-h-screen w-full flex-col">
-        <!-- Top Navigation -->
-        <header class="glass-panel sticky top-0 z-50 w-full border-b border-white/10">
-            <div class="flex h-16 items-center justify-between px-6 lg:px-8">
-                <div class="flex items-center gap-4">
-                    <a href="{{ url_for('portal.dashboard') }}" class="flex items-center gap-4">
-                        <div class="flex items-center justify-center size-8 rounded bg-primary/20 text-primary">
-                            <span class="material-symbols-outlined">api</span>
-                        </div>
-                        <h1 class="text-xl font-bold tracking-tight">CCCD API Portal</h1>
-                    </a>
-                </div>
-                <div class="flex items-center gap-4">
-                    <a href="{{ url_for('portal.dashboard') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-colors">
-                        <span class="material-symbols-outlined text-[20px]">dashboard</span>
-                        <span>Dashboard</span>
-                    </a>
-                    <a href="{{ url_for('portal.keys') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-colors">
-                        <span class="material-symbols-outlined text-[20px]">vpn_key</span>
-                        <span>Keys</span>
-                    </a>
-                    <div class="h-8 w-[1px] bg-white/10 mx-1"></div>
-                    <span class="text-sm font-medium text-slate-400">
-                        Xin chào, <span class="font-bold text-white">{{ user.full_name }}</span>
-                    </span>
-                    <a href="{{ url_for('portal.logout') }}" class="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white hover:bg-blue-600 transition-colors shadow-neon-blue">
-                        <span class="truncate">Đăng xuất</span>
-                    </a>
-                </div>
-            </div>
-        </header>
-        
-        <!-- Main Content -->
-        <main class="flex-1 p-6 lg:p-8 max-w-[1600px] mx-auto w-full space-y-8">
+{% block title %}Usage Statistics - CCCD API{% endblock %}
+
+{% block extra_css %}
+<style>
+    .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
             <!-- Flash Messages -->
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
@@ -392,9 +277,9 @@
                 </div>
             </div>
             {% endif %}
-        </main>
-    </div>
-    
+{% endblock %}
+
+{% block extra_js %}
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script type="application/json" id="daily-stats-data">{{ stats.daily_stats|tojson|safe }}</script>
@@ -630,6 +515,227 @@
             });
         }
         
+        // Filter functionality
+        var currentSort = 'none';
+        var filterBtn = document.getElementById('filter-btn');
+        var filterMenu = document.getElementById('filter-menu');
+        var keyListContainer = document.getElementById('key-list');
+        
+        // Toggle filter menu
+        if (filterBtn && filterMenu) {
+            filterBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                filterMenu.classList.toggle('hidden');
+            });
+            
+            // Close menu when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!filterBtn.contains(e.target) && !filterMenu.contains(e.target)) {
+                    filterMenu.classList.add('hidden');
+                }
+            });
+            
+            // Handle filter options
+            document.querySelectorAll('.filter-option').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    currentSort = this.dataset.sort;
+                    
+                    // Update active state
+                    document.querySelectorAll('.filter-option').forEach(function(b) {
+                        b.classList.remove('bg-primary/20', 'text-primary');
+                        b.classList.add('text-slate-300');
+                    });
+                    this.classList.add('bg-primary/20', 'text-primary');
+                    this.classList.remove('text-slate-300');
+                    
+                    // Sort and re-render
+                    sortAndRenderKeys(currentSort);
+                    filterMenu.classList.add('hidden');
+                });
+            });
+        }
+        
+        // Sort and render keys
+        function sortAndRenderKeys(sortType) {
+            if (!keyListContainer) return;
+            
+            var items = Array.from(keyListContainer.querySelectorAll('.key-item'));
+            
+            if (sortType === 'none') {
+                // Original order - reload from statsByKey
+                keyListContainer.innerHTML = '';
+                statsByKey.forEach(function(keyStat) {
+                    var item = createKeyItem(keyStat);
+                    keyListContainer.appendChild(item);
+                });
+                // Re-attach event listeners
+                attachKeyItemListeners();
+            } else {
+                // Sort by total_requests
+                items.sort(function(a, b) {
+                    var aData = JSON.parse(a.querySelector('.key-data-json').textContent);
+                    var bData = JSON.parse(b.querySelector('.key-data-json').textContent);
+                    var aRequests = aData.total_requests || 0;
+                    var bRequests = bData.total_requests || 0;
+                    
+                    if (sortType === 'high-low') {
+                        return bRequests - aRequests;
+                    } else {
+                        return aRequests - bRequests;
+                    }
+                });
+                
+                // Re-append in sorted order
+                items.forEach(function(item) {
+                    keyListContainer.appendChild(item);
+                });
+            }
+            
+            // Re-draw sparklines after reordering
+            drawSparklines();
+        }
+        
+        // Create key item element (for re-rendering)
+        function createKeyItem(keyStat) {
+            var div = document.createElement('div');
+            div.className = 'key-item grid grid-cols-12 gap-4 items-center px-4 py-3 rounded-lg hover:bg-slate-800/50 cursor-pointer border border-transparent hover:border-slate-700 transition-all group';
+            div.setAttribute('data-key-id', keyStat.key_id);
+            div.setAttribute('data-key-prefix', keyStat.key_prefix);
+            div.setAttribute('data-key-label', keyStat.label || '');
+            div.setAttribute('data-key-tier', keyStat.tier);
+            
+            var tierColor = keyStat.tier === 'ultra' ? 'bg-purple-500/20 text-purple-400' : 
+                           keyStat.tier === 'premium' ? 'bg-amber-500/20 text-amber-400' : 
+                           'bg-slate-500/20 text-slate-400';
+            var tierStroke = keyStat.tier === 'ultra' ? '#a855f7' : 
+                            keyStat.tier === 'premium' ? '#f59e0b' : 
+                            '#64748b';
+            var tierProgress = keyStat.tier === 'ultra' ? 'bg-purple-500' : 
+                              keyStat.tier === 'premium' ? 'bg-amber-500' : 
+                              'bg-slate-400';
+            
+            var successRate = keyStat.total_requests > 0 ? (keyStat.success_requests / keyStat.total_requests * 100) : 0;
+            var successColor = successRate >= 99 ? 'text-emerald-400' : 
+                             successRate >= 95 ? 'text-yellow-400' : 
+                             'text-red-400';
+            
+            var maxRequests = Math.max.apply(null, statsByKey.map(function(k) { return k.total_requests || 0; }));
+            var percentage = maxRequests > 0 ? (keyStat.total_requests / maxRequests * 100) : 0;
+            
+            // Create script element for JSON data
+            var scriptEl = document.createElement('script');
+            scriptEl.type = 'application/json';
+            scriptEl.className = 'key-data-json';
+            scriptEl.textContent = JSON.stringify(keyStat);
+            div.appendChild(scriptEl);
+            
+            // Create main content
+            var mainContent = document.createElement('div');
+            mainContent.className = 'grid grid-cols-12 gap-4 items-center';
+            
+            // Column 1: Key info
+            var col1 = document.createElement('div');
+            col1.className = 'col-span-4 flex items-center gap-3';
+            var avatar = document.createElement('div');
+            avatar.className = 'size-8 rounded ' + tierColor + ' flex items-center justify-center font-bold text-xs';
+            avatar.textContent = (keyStat.label || keyStat.key_prefix)[0].toUpperCase();
+            var info = document.createElement('div');
+            var labelP = document.createElement('p');
+            labelP.className = 'font-bold text-white text-sm';
+            labelP.textContent = keyStat.label || '(Không có label)';
+            var prefixP = document.createElement('p');
+            prefixP.className = 'font-mono text-xs text-slate-400';
+            prefixP.textContent = keyStat.key_prefix + '...';
+            info.appendChild(labelP);
+            info.appendChild(prefixP);
+            col1.appendChild(avatar);
+            col1.appendChild(info);
+            
+            // Column 2: Sparkline
+            var col2 = document.createElement('div');
+            col2.className = 'col-span-3 h-8 flex items-center';
+            var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.className = 'w-full h-full sparkline';
+            svg.setAttribute('data-key-id', keyStat.key_id);
+            svg.setAttribute('preserveAspectRatio', 'none');
+            svg.setAttribute('viewBox', '0 0 100 30');
+            var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.className = 'sparkline-path';
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke', tierStroke);
+            path.setAttribute('stroke-width', '2');
+            svg.appendChild(path);
+            col2.appendChild(svg);
+            
+            // Column 3: Volume
+            var col3 = document.createElement('div');
+            col3.className = 'col-span-2 text-right';
+            var volumeP = document.createElement('p');
+            volumeP.className = 'text-sm font-bold text-white';
+            volumeP.textContent = keyStat.total_requests.toLocaleString();
+            var progressContainer = document.createElement('div');
+            progressContainer.className = 'w-full bg-slate-700 h-1 mt-1 rounded-full overflow-hidden';
+            var progressBar = document.createElement('div');
+            progressBar.className = tierProgress + ' h-full progress-bar';
+            progressBar.setAttribute('data-percentage', percentage);
+            progressBar.style.width = percentage + '%';
+            progressContainer.appendChild(progressBar);
+            col3.appendChild(volumeP);
+            col3.appendChild(progressContainer);
+            
+            // Column 4: Success rate
+            var col4 = document.createElement('div');
+            col4.className = 'col-span-2 text-right';
+            var successSpan = document.createElement('span');
+            successSpan.className = 'text-sm font-medium ' + successColor;
+            successSpan.textContent = successRate.toFixed(1) + '%';
+            col4.appendChild(successSpan);
+            
+            // Column 5: Chevron
+            var col5 = document.createElement('div');
+            col5.className = 'col-span-1 flex justify-end opacity-0 group-hover:opacity-100 transition-opacity';
+            var chevron = document.createElement('span');
+            chevron.className = 'material-symbols-outlined text-slate-400';
+            chevron.textContent = 'chevron_right';
+            col5.appendChild(chevron);
+            
+            mainContent.appendChild(col1);
+            mainContent.appendChild(col2);
+            mainContent.appendChild(col3);
+            mainContent.appendChild(col4);
+            mainContent.appendChild(col5);
+            div.appendChild(mainContent);
+            
+            return div;
+        }
+        
+        // Attach event listeners to key items
+        function attachKeyItemListeners() {
+            document.querySelectorAll('.key-item').forEach(function(item) {
+                item.addEventListener('click', function() {
+                    var keyId = parseInt(this.dataset.keyId);
+                    selectedKeyId = keyId;
+                    
+                    document.querySelectorAll('.key-item').forEach(function(i) {
+                        i.classList.remove('bg-primary/10', 'border-primary/30');
+                        i.classList.add('border-transparent');
+                    });
+                    this.classList.add('bg-primary/10', 'border-primary/30');
+                    this.classList.remove('border-transparent');
+                    
+                    var dataScript = this.querySelector('.key-data-json');
+                    if (!dataScript) return;
+                    
+                    try {
+                        var keyStat = JSON.parse(dataScript.textContent);
+                        updateDetailPanel(keyStat);
+                    } catch(e) {
+                        console.error('Error parsing key data:', e);
+                    }
+                });
+            });
+        }
+        
         // Attach key item listeners (will be called after initial render)
         attachKeyItemListeners();
         
@@ -671,5 +777,4 @@
             autoSelectFirstKey();
         }
     </script>
-</body>
-</html>
+{% endblock %}
