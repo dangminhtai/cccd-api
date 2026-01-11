@@ -476,10 +476,13 @@
         function drawSparklines() {
             document.querySelectorAll('.sparkline').forEach(function(svg) {
                 try {
-                    var dailyStr = svg.dataset.daily;
+                    // Get data from data-daily attribute
+                    var dailyStr = svg.getAttribute('data-daily');
                     if (!dailyStr) return;
                     
-                    var daily = JSON.parse(dailyStr);
+                    // Handle HTML entities that might be escaped
+                    var dailyStrDecoded = dailyStr.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+                    var daily = JSON.parse(dailyStrDecoded);
                     if (!daily || daily.length < 2) {
                         // Draw flat line if no data
                         var path = svg.querySelector('.sparkline-path');
@@ -611,8 +614,16 @@
                 this.classList.add('bg-primary/10', 'border-primary/30');
                 this.classList.remove('border-transparent');
                 
-                var keyStat = JSON.parse(this.dataset.keyData);
-                updateDetailPanel(keyStat);
+                // Get data from script tag instead of data attribute
+                var dataScript = this.querySelector('.key-data-json');
+                if (!dataScript) return;
+                
+                try {
+                    var keyStat = JSON.parse(dataScript.textContent);
+                    updateDetailPanel(keyStat);
+                } catch(e) {
+                    console.error('Error parsing key data:', e);
+                }
             });
         });
         
