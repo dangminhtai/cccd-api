@@ -155,3 +155,116 @@ def get_user_usage_stats(user_id: int, days: int = 30) -> dict:
             "status_code_breakdown": {},
             "error": str(e),
         }
+
+
+def get_usage_stats_by_key(user_id: int, days: int = 30) -> list[dict]:
+    """
+    Lấy usage statistics theo từng API key của user
+    
+    Returns:
+        [
+            {
+                "key_id": int,
+                "key_prefix": str,
+                "tier": str,
+                "label": str | None,
+                "total_requests": int,
+                "success_requests": int,
+                "error_requests": int,
+                "avg_response_time_ms": float,
+                "daily_stats": [
+                    {"date": "2024-01-01", "count": 100, "success": 95, "error": 5}
+                ]
+            },
+            ...
+        ]
+    """
+    try:
+        conn = _get_db_connection()
+        try:
+            with conn.cursor() as cursor:
+                # Get all API keys của user với prefix và tier
+                cursor.execute(
+                    """
+                    SELECT 
+                        ak.id,
+                        ak.key_prefix,
+                        ak.tier,
+                        ak.label
+                    FROM api_keys ak
+                    WHERE ak.user_id = %s AND ak.active = 1
+                    ORDER BY ak.created_at DESC
+                    """,
+                    (user_id,),
+                )
+                keys = cursor.fetchall()
+                
+                if not keys:
+                    return []
+                
+                result = []
+                for key in keys:
+                    key_id = key["id"]
+                    
+                    # Daily stats for this key
+                    cursor.execute(
+                        """
+                        SELECT 
+                            DATE(created_at) as date,
+                            COUNT(*) as count,
+                            SUM(CASE WHEN status_code = 200 THEN 1 ELSE 0 END) as success,
+                            SUM(CASE WHEN status_code >= 400 THEN 1 ELSE 0 END) as error
+                        FROM request_logs
+                        WHERE api_key_id = %s
+                        AND created_at >= DATE_SUB(NOW(), INTERVAL %s DAY)
+                        GROUP BY DATE(created_at)
+                        ORDER BY date DESC
+                        """,
+                        (key_id, days),
+                    )
+                    daily_rows = cursor.fetchall()
+                    
+                    # Total stats for this key
+                    cursor.execute(
+                        """
+                        SELECT 
+                            COUNT(*) as total_requests,
+                            SUM(CASE WHEN status_code = 200 THEN 1 ELSE 0 END) as success_requests,
+                            SUM(CASE WHEN status_code >= 400 THEN 1 ELSE 0 END) as error_requests,
+                            AVG(response_time_ms) as avg_response_time_ms
+                        FROM request_logs
+                        WHERE api_key_id = %s
+                        AND created_at >= DATE_SUB(NOW(), INTERVAL %s DAY)
+                        """,
+                        (key_id, days),
+                    )
+                    total_row = cursor.fetchone()
+                    
+                    daily_stats = [
+                        {
+                            "date": str(row["date"]),
+                            "count": row["count"],
+                            "success": row["success"] or 0,
+                            "error": row["error"] or 0,
+                        }
+                        for row in daily_rows
+                    ]
+                    
+                    result.append({
+                        "key_id": key_id,
+                        "key_prefix": key["key_prefix"],
+                        "tier": key["tier"],
+                        "label": key["label"],
+                        "total_requests": total_row["total_requests"] or 0,
+                        "success_requests": total_row["success_requests"] or 0,
+                        "error_requests": total_row["error_requests"] or 0,
+                        "avg_response_time_ms": float(total_row["avg_response_time_ms"] or 0),
+                        "daily_stats": daily_stats,
+                    })
+                
+        finally:
+            conn.close()
+        
+        return result
+    except Exception as e:
+        return []

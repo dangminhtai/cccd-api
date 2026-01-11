@@ -295,19 +295,68 @@
                     
                     <!-- Daily Chart -->
                     <div class="dashboard-card p-6 border border-white/10">
-                        <h3 class="text-lg font-semibold text-white mb-4">Requests theo ngày</h3>
+                        <h3 class="text-lg font-semibold text-white mb-4">Requests theo ngày (Tổng hợp)</h3>
                         <div class="chart-container">
                             <canvas id="dailyChart"></canvas>
                         </div>
                     </div>
                     
-                    <!-- Status Code Chart -->
-                    {% if stats.status_code_breakdown %}
-                    <div class="dashboard-card p-6 border border-white/10">
-                        <h3 class="text-lg font-semibold text-white mb-4">Phân bổ Status Code</h3>
-                        <div class="chart-container">
-                            <canvas id="statusChart"></canvas>
+                    <!-- Stats by Key -->
+                    {% if stats_by_key %}
+                    <div class="space-y-6">
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                            <span class="material-symbols-outlined text-electric-blue">vpn_key</span>
+                            Thống kê theo API Key
+                        </h2>
+                        {% for key_stat in stats_by_key %}
+                        <div class="dashboard-card p-6 border border-white/10">
+                            <div class="mb-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="flex items-center gap-3">
+                                        <span class="material-symbols-outlined text-electric-blue">key</span>
+                                        <div>
+                                            <h3 class="text-lg font-semibold text-white">
+                                                {{ key_stat.key_prefix }}...
+                                                {% if key_stat.label %}
+                                                <span class="text-sm font-normal text-slate-400">({{ key_stat.label }})</span>
+                                                {% endif %}
+                                            </h3>
+                                            <div class="flex items-center gap-2 mt-1">
+                                                {% if key_stat.tier == 'ultra' %}
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20 uppercase tracking-wide">Ultra</span>
+                                                {% elif key_stat.tier == 'premium' %}
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 uppercase tracking-wide">Premium</span>
+                                                {% else %}
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-500/20 text-slate-400 border border-slate-500/30 uppercase tracking-wide">Free</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-2xl font-bold text-white">{{ key_stat.total_requests }}</div>
+                                        <div class="text-xs text-slate-400">Total requests</div>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-3 gap-4 mt-4">
+                                    <div>
+                                        <div class="text-sm text-slate-400 mb-1">Thành công</div>
+                                        <div class="text-lg font-bold text-emerald-400">{{ key_stat.success_requests }}</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-sm text-slate-400 mb-1">Lỗi</div>
+                                        <div class="text-lg font-bold text-red-400">{{ key_stat.error_requests }}</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-sm text-slate-400 mb-1">Avg Response</div>
+                                        <div class="text-lg font-bold text-blue-400">{{ "%.0f"|format(key_stat.avg_response_time_ms) }}ms</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="keyChart{{ key_stat.key_id }}"></canvas>
+                            </div>
                         </div>
+                        {% endfor %}
                     </div>
                     {% endif %}
                 </div>
@@ -319,15 +368,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <!-- Pass data from Jinja2 to JavaScript -->
     <script type="application/json" id="daily-stats-data">{{ stats.daily_stats|tojson|safe }}</script>
-    {% if stats.status_code_breakdown %}
-    <script type="application/json" id="status-code-data">{{ stats.status_code_breakdown|tojson|safe }}</script>
-    {% endif %}
+    <script type="application/json" id="stats-by-key-data">{{ stats_by_key|tojson|safe }}</script>
     <script>
         // Parse data from JSON script tags
         var dailyDataElement = document.getElementById('daily-stats-data');
         var dailyData = dailyDataElement ? JSON.parse(dailyDataElement.textContent) : [];
-        var statusDataElement = document.getElementById('status-code-data');
-        var statusData = statusDataElement ? JSON.parse(statusDataElement.textContent) : null;
+        var statsByKeyElement = document.getElementById('stats-by-key-data');
+        var statsByKey = statsByKeyElement ? JSON.parse(statsByKeyElement.textContent) : [];
         
         // Daily requests chart
         if (dailyData && dailyData.length > 0) {
@@ -397,58 +444,85 @@
             });
         }
         
-        // Status code chart
-        if (statusData) {
-            const statusCtx = document.getElementById('statusChart').getContext('2d');
-            new Chart(statusCtx, {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(statusData),
-                    datasets: [{
-                        label: 'Số lượng',
-                        data: Object.values(statusData),
-                        backgroundColor: [
-                            '#28a745',  // 200
-                            '#ffc107',  // 400
-                            '#fd7e14',  // 401
-                            '#dc3545'   // 500
+        // Charts for each key
+        if (statsByKey && statsByKey.length > 0) {
+            statsByKey.forEach(function(keyStat) {
+                var keyId = keyStat.key_id;
+                var canvasId = 'keyChart' + keyId;
+                var canvas = document.getElementById(canvasId);
+                if (!canvas) return;
+                
+                var keyDailyData = keyStat.daily_stats || [];
+                if (keyDailyData.length === 0) {
+                    canvas.parentElement.innerHTML = '<p class="text-center text-slate-400 py-8">Chưa có dữ liệu</p>';
+                    return;
+                }
+                
+                var ctx = canvas.getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: keyDailyData.map(function(d) { return d.date; }).reverse(),
+                        datasets: [
+                            {
+                                label: 'Tổng requests',
+                                data: keyDailyData.map(function(d) { return d.count; }).reverse(),
+                                borderColor: '#667eea',
+                                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                                tension: 0.4
+                            },
+                            {
+                                label: 'Thành công',
+                                data: keyDailyData.map(function(d) { return d.success; }).reverse(),
+                                borderColor: '#28a745',
+                                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                                tension: 0.4
+                            },
+                            {
+                                label: 'Lỗi',
+                                data: keyDailyData.map(function(d) { return d.error; }).reverse(),
+                                borderColor: '#dc3545',
+                                backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                                tension: 0.4
+                            }
                         ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Phân bổ Status Code'
-                        },
-                        legend: {
-                            labels: {
-                                color: '#e2e8f0'
-                            }
-                        }
                     },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                color: '#94a3b8'
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Requests theo ngày',
+                                color: '#e2e8f0'
                             },
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.05)'
+                            legend: {
+                                labels: {
+                                    color: '#e2e8f0'
+                                }
                             }
                         },
-                        x: {
-                            ticks: {
-                                color: '#94a3b8'
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    color: '#94a3b8'
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.05)'
+                                }
                             },
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.05)'
+                            x: {
+                                ticks: {
+                                    color: '#94a3b8'
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.05)'
+                                }
                             }
                         }
                     }
-                }
+                });
             });
         }
         

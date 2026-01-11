@@ -649,13 +649,15 @@ def usage():
         days = 30
     
     # Get usage stats
-    from services.usage_service import get_user_usage_stats
+    from services.usage_service import get_user_usage_stats, get_usage_stats_by_key
     stats = get_user_usage_stats(user_id, days=days)
+    stats_by_key = get_usage_stats_by_key(user_id, days=days)
     
     return render_template(
         "portal/usage.html",
         user=user,
         stats=stats,
+        stats_by_key=stats_by_key,
         days=days,
     )
 
