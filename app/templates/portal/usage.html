@@ -474,15 +474,19 @@
         
         // Draw sparklines
         function drawSparklines() {
+            if (!statsByKey || statsByKey.length === 0) return;
+            
             document.querySelectorAll('.sparkline').forEach(function(svg) {
                 try {
-                    // Get data from data-daily attribute
-                    var dailyStr = svg.getAttribute('data-daily');
-                    if (!dailyStr) return;
+                    // Get key_id from data attribute
+                    var keyId = parseInt(svg.getAttribute('data-key-id'));
+                    if (!keyId) return;
                     
-                    // Handle HTML entities that might be escaped
-                    var dailyStrDecoded = dailyStr.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
-                    var daily = JSON.parse(dailyStrDecoded);
+                    // Find key data from statsByKey array
+                    var keyStat = statsByKey.find(function(k) { return k.key_id === keyId; });
+                    if (!keyStat) return;
+                    
+                    var daily = keyStat.daily_stats || [];
                     if (!daily || daily.length < 2) {
                         // Draw flat line if no data
                         var path = svg.querySelector('.sparkline-path');
