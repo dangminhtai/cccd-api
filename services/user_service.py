@@ -274,14 +274,26 @@ def get_user_by_email(email: str) -> Optional[dict]:
         conn = _get_db_connection()
         try:
             with conn.cursor() as cursor:
-                cursor.execute(
-                    """
-                    SELECT id, email, full_name, status, created_at, last_login_at
-                    FROM users
-                    WHERE email = %s
-                    """,
-                    (email,),
-                )
+                # Try with email_verified first, fallback if column doesn't exist
+                try:
+                    cursor.execute(
+                        """
+                        SELECT id, email, full_name, status, email_verified, created_at, last_login_at
+                        FROM users
+                        WHERE email = %s
+                        """,
+                        (email,),
+                    )
+                except Exception:
+                    # Column doesn't exist, query without email_verified
+                    cursor.execute(
+                        """
+                        SELECT id, email, full_name, status, created_at, last_login_at
+                        FROM users
+                        WHERE email = %s
+                        """,
+                        (email,),
+                    )
                 user = cursor.fetchone()
                 if not user:
                     return None
@@ -305,14 +317,15 @@ def get_user_by_email(email: str) -> Optional[dict]:
                     "full_name": user["full_name"],
                     "status": user["status"],
                     "created_at": user["created_at"],
-                    "last_login_at": user["last_login_at"],
+                    "last_login_at": user.get("last_login_at"),
                     "current_tier": subscription["tier"] if subscription else None,
                     "subscription_status": subscription["status"] if subscription else None,
                     "expires_at": subscription["expires_at"] if subscription else None,
                 }
         finally:
             conn.close()
-    except Exception:
+    except Exception as e:
+        logger.error(f"Error getting user by email: {str(e)}", exc_info=True)
         return None
 
 

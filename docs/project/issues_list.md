@@ -544,3 +544,25 @@
   - **JavaScript error handling** phải check content-type trước khi parse JSON
   - **Test** với Network tab để verify response là JSON, không phải HTML redirect
   - **Kiểm tra** redirects (302) trong browser DevTools để phát hiện sớm
+
+---
+
+## 35) Admin search user by email không tìm thấy user có tồn tại
+
+- **Hiện tượng**: Admin nhập email user có tồn tại (ví dụ `dmt826321@gmail.com`) nhưng báo lỗi "Không tìm thấy user"
+- **Nguyên nhân**: 
+  - Function `get_user_by_email()` không có error handling cho trường hợp column `email_verified` không tồn tại (backward compatibility)
+  - Database có thể chưa có migration cho email verification columns
+  - Exception xảy ra nhưng bị catch và return None mà không log error
+  - SQL query có thể fail nếu table schema không đầy đủ
+- **Cách xử lý**: 
+  - Thêm try/except trong SQL query để handle backward compatibility giống như `get_user_by_id()`
+  - Try query với `email_verified` column trước, nếu fail thì query without `email_verified`
+  - Thêm logging error để debug
+  - Dùng `user.get("last_login_at")` thay vì `user["last_login_at"]` để tránh KeyError nếu column không tồn tại
+- **Cách tránh lần sau**: Khi viết function query database:
+  - **Luôn** handle backward compatibility cho optional columns (email_verified, last_login_at, etc.)
+  - **Try/except** trong SQL query để fallback khi column không tồn tại
+  - **Thêm logging** error để debug khi function return None
+  - **Dùng `.get()`** cho dictionary access nếu key có thể không tồn tại
+  - **Test** với database schema cũ và mới để đảm bảo backward compatibility
