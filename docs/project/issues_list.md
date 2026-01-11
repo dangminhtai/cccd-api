@@ -763,18 +763,22 @@
   - Container div bên ngoài cũng có class `overflow-y-auto` từ Tailwind
   - Cả 2 elements đều tạo scrollbar riêng → 2 scrollbars hiển thị
   - `min-h-screen` với `overflow-y-auto` trên container tạo scrollbar không cần thiết
+  - HTML và body đều có thể tạo scrollbar riêng nếu cả 2 đều có `overflow-y`
 - **Cách xử lý**: 
-  - **Xóa overflow-y từ body CSS**: Chỉ giữ `overflow-x: hidden`, xóa `overflow-y: auto`
-  - **Xóa overflow-y-auto từ container**: Xóa class `overflow-y-auto` khỏi container div
-  - **Chỉ giữ overflow-x-hidden**: Để tránh scroll ngang, chỉ cần `overflow-x-hidden` trên container
-  - **Set height: 100% cho html/body**: Đảm bảo body chiếm full height, không tạo scrollbar thừa
-  - **Browser tự động scroll**: Browser sẽ tự động tạo scrollbar khi cần (khi content > viewport)
+  - **Body overflow hidden**: Set `body { overflow: hidden; height: 100vh; }` để body không tạo scrollbar
+  - **HTML overflow-y auto**: Set `html { overflow-x: hidden; overflow-y: auto; }` để browser tự tạo scrollbar khi cần
+  - **Container tự scroll**: Đổi container từ `min-h-screen` sang `h-full` với `overflow-y-auto` để container tự scroll
+  - **Chỉ một scrollbar**: Đảm bảo chỉ có 1 scrollbar từ container, không có từ body
+  - **Padding inline style**: Dùng `style="padding: 1.5rem 0;"` thay vì `py-6` để tránh conflict với height
 - **Cách tránh lần sau**: 
-  - **Tránh duplicate overflow**: Không set `overflow-y` trên cả body và container
-  - **Chỉ một scrollbar**: Chỉ để browser tự động tạo scrollbar từ body/html
-  - **Test scrollbar**: Luôn test để đảm bảo chỉ có 1 scrollbar
+  - **Body không scroll**: Luôn set `body { overflow: hidden; height: 100vh; }` để body không tạo scrollbar
+  - **HTML scroll khi cần**: Set `html { overflow-y: auto; }` để browser tự tạo scrollbar
+  - **Container scroll**: Container chính dùng `h-full` với `overflow-y-auto` để tự scroll
+  - **Chỉ một scrollbar source**: Chỉ để một element (html hoặc container) tạo scrollbar, không để cả 2
+  - **Test scrollbar**: Luôn test để đảm bảo chỉ có 1 scrollbar hiển thị
   - **Overflow strategy**: 
-    - Body: `overflow-x: hidden` (tránh scroll ngang)
-    - Container: `overflow-x-hidden` (nếu cần), không set `overflow-y`
-    - Để browser tự xử lý scroll dọc khi cần
-  - **Min-height vs overflow**: `min-h-screen` không cần `overflow-y-auto` - browser tự scroll khi content > viewport
+    - Body: `overflow: hidden` + `height: 100vh` (không scroll)
+    - HTML: `overflow-y: auto` (browser tự scroll)
+    - Container: `h-full` + `overflow-y-auto` (container scroll)
+    - Chỉ một trong số này tạo scrollbar, không phải cả 3
+  - **Min-height vs height**: Dùng `h-full` thay vì `min-h-screen` khi container cần scroll riêng
