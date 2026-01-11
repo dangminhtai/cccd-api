@@ -671,8 +671,10 @@
           users.forEach(user => {
             const currentTier = user.current_tier ? tierLabels[user.current_tier] || user.current_tier : 'Chưa có';
             const dateStr = user.created_at ? new Date(user.created_at).toLocaleDateString('vi-VN') : 'N/A';
-            const userEmail = (user.email || '').replace(/'/g, "\\'");
-            const userTier = (user.current_tier || 'free').replace(/'/g, "\\'");
+            
+            // Escape quotes for JavaScript string
+            const userEmailEscaped = (user.email || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            const userTierEscaped = (user.current_tier || 'free').replace(/'/g, "\\'").replace(/"/g, '&quot;');
             
             html += `
               <tr id="user-row-${user.id}">
@@ -683,10 +685,10 @@
                 <td>${user.status}</td>
                 <td>${dateStr}</td>
                 <td>
-                  <button class="btn-approve" onclick="showChangeTierModal(${user.id}, '${userEmail}', '${userTier}')" style="margin-right: 8px;">
+                  <button class="btn-approve" onclick="showChangeTierModal(${user.id}, '${userEmailEscaped}', '${userTierEscaped}')" style="margin-right: 8px;">
                     🔄 Đổi Tier
                   </button>
-                  <button class="btn-reject" onclick="deleteUser(${user.id}, '${userEmail}')">
+                  <button class="btn-reject" onclick="deleteUser(${user.id}, '${userEmailEscaped}')">
                     🗑️ Xóa
                   </button>
                 </td>
