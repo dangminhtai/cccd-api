@@ -108,6 +108,39 @@ def create_app() -> Flask:
             429,
         )
 
+    # Custom 404 handler: return HTML page for web requests, JSON for API requests
+    @app.errorhandler(404)
+    def not_found_handler(e):
+        req_id = g.get("request_id", "-")
+        app.logger.warning(f"404_not_found | request_id={req_id} | path={request.path}")
+        
+        # Check if this is an API request (expects JSON)
+        is_api_request = (
+            request.path.startswith("/v1/") or
+            request.path.startswith("/api/") or
+            request.headers.get("Accept", "").startswith("application/json") or
+            request.is_json
+        )
+        
+        if is_api_request:
+            # Return JSON for API requests
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "is_valid_format": False,
+                        "data": None,
+                        "message": "Endpoint không tồn tại. Vui lòng kiểm tra lại đường dẫn.",
+                        "request_id": req_id,
+                    }
+                ),
+                404,
+            )
+        else:
+            # Return HTML page for web requests
+            from flask import render_template
+            return render_template("404.html"), 404
+
     # Custom 500 handler: generic message to client, concise log
     @app.errorhandler(500)
     def internal_error_handler(e):
