@@ -364,7 +364,7 @@
                                         <div class="w-full bg-slate-700 h-1 mt-1 rounded-full overflow-hidden">
                                             {% set max_requests = stats_by_key|map(attribute='total_requests')|max %}
                                             {% set percentage = (key_stat.total_requests / max_requests * 100) if max_requests > 0 else 0 %}
-                                            <div class="{% if key_stat.tier == 'ultra' %}bg-purple-500{% elif key_stat.tier == 'premium' %}bg-amber-500{% else %}bg-slate-400{% endif %} h-full" style="width: {{ percentage }}%"></div>
+                                            <div class="{% if key_stat.tier == 'ultra' %}bg-purple-500{% elif key_stat.tier == 'premium' %}bg-amber-500{% else %}bg-slate-400{% endif %} h-full progress-bar" data-percentage="{{ percentage }}"></div>
                                         </div>
                                     </div>
                                     <div class="col-span-2 text-right">
