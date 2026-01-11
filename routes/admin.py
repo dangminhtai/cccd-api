@@ -427,7 +427,7 @@ def admin_search_user():
 @admin_bp.get("/users")
 def admin_list_users():
     """Admin API: List users with pagination (JSON)"""
-        from services.user import get_users_list
+    from services.user import get_users_list
     
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 20, type=int)
