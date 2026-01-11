@@ -782,3 +782,58 @@
     - Container: `h-full` + `overflow-y-auto` (container scroll)
     - Chỉ một trong số này tạo scrollbar, không phải cả 3
   - **Min-height vs height**: Dùng `h-full` thay vì `min-h-screen` khi container cần scroll riêng
+
+---
+
+## Issue #44: Decorative top bar trên login page bị sai styling do overflow conflict
+
+- **Mức độ nghiêm trọng**: 🟡 MEDIUM (UX)
+- **Mô tả**: 
+  - Thanh decorative top bar (gradient bar ở trên cùng của card) có `rounded-t-3xl` nhưng không hiển thị đúng
+  - Thanh này bị cắt hoặc không khớp với border-radius của card
+  - Card có `overflow-visible` để fix flash message nhưng làm border-radius của decorative bar không hoạt động
+- **Nguyên nhân**: 
+  - Card có `overflow-visible` để flash message không bị cắt
+  - Nhưng decorative top bar cần card có `overflow-hidden` để border-radius hoạt động đúng
+  - Conflict giữa việc fix flash message (cần overflow-visible) và decorative bar (cần overflow-hidden)
+  - Decorative bar có `rounded-t-3xl` nhưng không cần thiết vì card đã có `rounded-3xl` và `overflow-hidden` sẽ tự động clip
+- **Cách xử lý**: 
+  - **Card overflow hidden**: Đổi card từ `overflow-visible` về `overflow-hidden` để border-radius hoạt động đúng
+  - **Remove rounded-t-3xl**: Xóa `rounded-t-3xl` khỏi decorative bar vì card đã có `rounded-3xl` và `overflow-hidden` sẽ tự động clip bar theo border-radius của card
+  - **Flash message trong card**: Flash message vẫn hiển thị đúng trong card với `overflow-hidden` vì nó nằm trong padding area, không bị cắt
+  - **Word-wrap cho flash**: Thêm `word-wrap: break-word` và `overflow-wrap: break-word` cho flash message để text dài không bị overflow
+- **Cách tránh lần sau**: 
+  - **Overflow strategy**: Khi có decorative elements (bars, borders) cần border-radius, card phải có `overflow-hidden`
+  - **Flash messages**: Flash messages nằm trong padding area sẽ không bị cắt bởi `overflow-hidden`
+  - **Decorative elements**: Không cần thêm `rounded-t-*` cho decorative bar nếu card đã có `rounded-*` và `overflow-hidden`
+  - **Test visual**: Luôn test để đảm bảo decorative elements hiển thị đúng với border-radius
+  - **Conflict resolution**: Khi có conflict giữa overflow cho flash message và decorative elements, ưu tiên decorative elements (dùng overflow-hidden) và đảm bảo flash message nằm trong safe area
+
+---
+
+## Issue #45: Trang login và register vẫn có 2 thanh cuộn sau khi fix lần 1
+
+- **Mức độ nghiêm trọng**: 🟡 MEDIUM (UX)
+- **Mô tả**: 
+  - Sau khi thêm custom scrollbar CSS và fix overflow strategy, trang login và register vẫn hiển thị 2 thanh cuộn
+  - Một thanh cuộn từ body, một từ container div
+  - User phàn nàn "lỗi gì mà lắm vậy"
+- **Nguyên nhân**: 
+  - Container div có `min-h-screen` và có thể tạo scrollbar riêng khi content vượt quá viewport
+  - Body có `min-height: 100vh` cũng có thể tạo scrollbar
+  - Cả 2 elements đều có thể scroll → 2 scrollbars hiển thị
+  - Container không được set `overflow: visible` rõ ràng → browser có thể tạo scrollbar cho nó
+  - Dùng `min-height` thay vì `height` trên html/body → tạo scrollbar không cần thiết
+- **Cách xử lý**: 
+  - **HTML và Body height 100%**: Set `html { height: 100%; }` và `body { height: 100%; }` thay vì `min-height: 100vh` để tránh tạo scrollbar không cần thiết
+  - **Container overflow visible**: Thêm class `.login-container` và `.register-container` với `overflow: visible` để container không tạo scrollbar
+  - **Chỉ body scroll**: Browser tự tạo scrollbar từ body khi content vượt quá viewport, container chỉ là wrapper
+  - **Test kỹ**: Luôn test với content dài (zoom out hoặc thêm nhiều content) để đảm bảo chỉ có 1 scrollbar
+- **Cách tránh lần sau**: 
+  - **Container không scroll**: Container div chỉ là wrapper, không được set `overflow-y-auto` hoặc để browser tự tạo scrollbar
+  - **Body scroll tự nhiên**: Chỉ để body scroll tự nhiên, không force scrollbar trên container
+  - **Height vs min-height**: Dùng `height: 100%` trên html/body thay vì `min-height: 100vh` để tránh scrollbar thừa
+  - **Overflow visible cho container**: Luôn set `overflow: visible` cho container wrapper để đảm bảo không tạo scrollbar riêng
+  - **Test với content dài**: Luôn test với content vượt quá viewport để verify chỉ có 1 scrollbar
+  - **Debug scrollbar**: Dùng browser DevTools để kiểm tra element nào đang tạo scrollbar (check computed styles)
+  - **Học từ usage.html**: `usage.html` làm đúng - container không scroll, chỉ body scroll

@@ -380,3 +380,110 @@
   - **Production code**: Không bao giờ có debug code (print/return raw data) trong production
   - **Defense in depth**: Kiểm tra mọi routes để đảm bảo không leak raw data
   - **Code review critical**: Lỗi này rất dễ miss trong code review, cần rà soát kỹ
+
+---
+
+## 26) Overflow strategy cho decorative elements và flash messages - Ưu tiên decorative elements
+
+- **Issue**: Khi fix flash message bị khuất, đổi card từ `overflow-hidden` sang `overflow-visible`, nhưng làm decorative top bar (gradient bar) không hiển thị đúng border-radius.
+- **Nguyên nhân**: 
+  - Decorative elements (bars, borders) cần card có `overflow-hidden` để border-radius hoạt động đúng
+  - Flash messages cần không bị cắt, nhưng thực ra flash messages nằm trong padding area sẽ không bị cắt bởi `overflow-hidden`
+  - Conflict giữa việc fix flash message (nghĩ cần overflow-visible) và decorative bar (cần overflow-hidden)
+- **Cách xử lý**:
+  - **Card overflow hidden**: Card phải có `overflow-hidden` để decorative elements hiển thị đúng border-radius
+  - **Flash messages safe**: Flash messages nằm trong padding area (không phải edge) sẽ không bị cắt bởi `overflow-hidden`
+  - **Word-wrap cho flash**: Thêm `word-wrap: break-word` và `overflow-wrap: break-word` cho flash message để text dài không bị overflow
+  - **Decorative elements**: Không cần thêm `rounded-t-*` cho decorative bar nếu card đã có `rounded-*` và `overflow-hidden` (sẽ tự động clip)
+- **Bài học**: 
+  - **Overflow strategy**: Khi có decorative elements cần border-radius, card phải có `overflow-hidden`
+  - **Flash messages**: Flash messages nằm trong padding area sẽ không bị cắt bởi `overflow-hidden`
+  - **Conflict resolution**: Khi có conflict, ưu tiên decorative elements (dùng overflow-hidden) và đảm bảo flash message nằm trong safe area
+  - **Test visual**: Luôn test để đảm bảo cả decorative elements và flash messages đều hiển thị đúng
+  - **Don't overthink**: Flash messages trong padding area không cần `overflow-visible`, `overflow-hidden` vẫn hoạt động tốt
+
+---
+
+## 27) Custom scrollbar design và overflow strategy - Chỉ có 1 thanh cuộn, đẹp như usage.html
+
+- **Issue**: Trang login và các trang khác có 2 thanh cuộn (scrollbar) - một từ html, một từ body hoặc container. Scrollbar mặc định của browser trông phèn, không đẹp như `usage.html`.
+- **Nguyên nhân**: 
+  - Thiếu custom scrollbar CSS styling
+  - Có nhiều elements cùng set `overflow-y: auto` (html, body, container) → tạo nhiều scrollbars
+  - Dùng inline style `overflow-y: auto; height: calc(100vh - 80px)` trên main tag tạo scrollbar riêng
+- **Cách xử lý**:
+  - **Custom scrollbar CSS**: Thêm CSS giống `usage.html`:
+    ```css
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+        background: #0f172a; /* hoặc #0B1120 cho login/register */
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #334155; 
+        border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: #475569; 
+    }
+    ```
+  - **Overflow strategy**: 
+    - `html`: Chỉ `overflow-x: hidden` (không set `overflow-y`)
+    - `body`: Chỉ `overflow-x: hidden` và `min-height: 100vh` (không set `overflow-y`, không set `height: 100vh`)
+    - Container: Không set `overflow-y-auto` nếu không cần thiết
+    - Main: Xóa inline style `overflow-y: auto; height: calc(100vh - 80px)` → để body tự scroll
+  - **Chỉ 1 scrollbar**: Browser tự tạo scrollbar từ body khi content vượt quá viewport
+- **Bài học**: 
+  - **Custom scrollbar**: Luôn thêm custom scrollbar CSS cho dark theme (đẹp hơn, nhất quán)
+  - **Overflow strategy**: Chỉ để body scroll tự nhiên, không set overflow-y trên nhiều elements
+  - **Chỉ 1 scrollbar source**: Browser tự tạo scrollbar từ body, không cần force trên html/container/main
+  - **Học từ usage.html**: `usage.html` làm đúng - chỉ có custom scrollbar CSS, body scroll tự nhiên
+  - **Test visual**: Luôn test để đảm bảo chỉ có 1 scrollbar đẹp, không có scrollbar thừa
+
+---
+
+## 28) Fix 2 scrollbars trên login/register - Container không được scroll, chỉ body scroll
+
+- **Issue**: Trang login và register vẫn hiển thị 2 thanh cuộn dù đã thêm custom scrollbar CSS. Một từ body, một từ container div.
+- **Nguyên nhân**: 
+  - Container div có `min-h-screen` và có thể tạo scrollbar riêng khi content vượt quá viewport
+  - Body có `min-height: 100vh` cũng có thể tạo scrollbar
+  - Cả 2 elements đều có thể scroll → 2 scrollbars hiển thị
+  - Container không được set `overflow: visible` rõ ràng → browser có thể tạo scrollbar cho nó
+- **Cách xử lý**:
+  - **HTML và Body height 100%**: Set `html { height: 100%; }` và `body { height: 100%; }` thay vì `min-height: 100vh` để tránh tạo scrollbar không cần thiết
+  - **Container overflow visible**: Thêm class `.login-container` và `.register-container` với `overflow: visible` để container không tạo scrollbar
+  - **Chỉ body scroll**: Browser tự tạo scrollbar từ body khi content vượt quá viewport, container chỉ là wrapper
+  - **Test kỹ**: Luôn test với content dài (zoom out hoặc thêm nhiều content) để đảm bảo chỉ có 1 scrollbar
+- **Bài học**: 
+  - **Container không scroll**: Container div chỉ là wrapper, không được set `overflow-y-auto` hoặc để browser tự tạo scrollbar
+  - **Body scroll tự nhiên**: Chỉ để body scroll tự nhiên, không force scrollbar trên container
+  - **Height vs min-height**: Dùng `height: 100%` trên html/body thay vì `min-height: 100vh` để tránh scrollbar thừa
+  - **Overflow visible cho container**: Luôn set `overflow: visible` cho container wrapper để đảm bảo không tạo scrollbar riêng
+  - **Test với content dài**: Luôn test với content vượt quá viewport để verify chỉ có 1 scrollbar
+  - **Debug scrollbar**: Dùng browser DevTools để kiểm tra element nào đang tạo scrollbar (check computed styles)
+
+---
+
+## 29) Fix 2 scrollbars - Nguyên nhân cốt lõi: 100vh + padding làm dư chiều cao
+
+- **Issue**: Trang login và register vẫn có 2 thanh cuộn dù đã thử nhiều cách. Một từ body, một từ container.
+- **Nguyên nhân cốt lõi**: 
+  - **Body được phép scroll** (có `overflow-y: auto` hoặc mặc định)
+  - **Container có `min-height: 100vh` + `py-6` (padding top + bottom)** → tổng chiều cao = 100vh + padding → vượt 100vh
+  - Browser tạo scrollbar thứ 2 cho container vì chiều cao vượt viewport
+  - Cả body và container đều có thể scroll → 2 scrollbars hiển thị
+- **Cách xử lý đúng**:
+  - **HTML overflow hidden**: Set `html { overflow: hidden; height: 100%; }` để html không scroll
+  - **Body overflow-y auto**: Set `body { overflow-y: auto; overflow-x: hidden; height: 100%; }` để chỉ body scroll
+  - **Container giữ nguyên**: Container có thể giữ `min-height: 100vh` và `py-6` vì html đã không scroll
+  - **Kết quả**: Chỉ body scroll, html và container không scroll → chỉ có 1 scrollbar
+- **Bài học**: 
+  - **Nguyên nhân cốt lõi**: `100vh + padding` làm dư chiều cao → tạo scrollbar thứ 2
+  - **Giải pháp đúng**: `html { overflow: hidden; }` + `body { overflow-y: auto; }` → chỉ body scroll
+  - **Không cần xóa padding**: Có thể giữ `py-6` và `min-height: 100vh` trên container vì html đã không scroll
+  - **Test kỹ**: Luôn test với content dài để verify chỉ có 1 scrollbar
+  - **Debug scrollbar**: Dùng DevTools check computed styles của html, body, và container để tìm element nào đang tạo scrollbar
+  - **Học từ user feedback**: User chỉ ra nguyên nhân chính xác (100vh + padding) → giải pháp đúng là set html overflow hidden
