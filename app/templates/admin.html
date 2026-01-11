@@ -628,6 +628,128 @@
           setTimeout(() => div.remove(), 5000);
         }
       }
+      
+      let currentUserIdForTierChange = null;
+      
+      async function searchUserForTierChange() {
+        const adminKey = document.getElementById('adminKey').value.trim();
+        const email = document.getElementById('changeTierEmail').value.trim();
+        
+        if (!adminKey) {
+          document.getElementById('changeTierError').textContent = 'Vui lòng nhập Admin Secret Key ở trên';
+          document.getElementById('changeTierError').style.display = 'block';
+          return;
+        }
+        
+        if (!email) {
+          document.getElementById('changeTierError').textContent = 'Vui lòng nhập email user';
+          document.getElementById('changeTierError').style.display = 'block';
+          return;
+        }
+        
+        document.getElementById('changeTierError').style.display = 'none';
+        document.getElementById('changeTierSuccess').style.display = 'none';
+        document.getElementById('changeTierUserInfo').style.display = 'none';
+        document.getElementById('changeTierBtn').style.display = 'none';
+        
+        try {
+          const resp = await fetch(`/admin/users/search?email=${encodeURIComponent(email)}`, {
+            headers: { 'X-Admin-Key': adminKey }
+          });
+          
+          if (!resp.ok) {
+            const data = await resp.json();
+            throw new Error(data.error || 'Không tìm thấy user');
+          }
+          
+          const data = await resp.json();
+          const user = data.user;
+          currentUserIdForTierChange = user.id;
+          
+          // Display user info
+          const tierLabels = { free: 'Free', premium: 'Premium', ultra: 'Ultra' };
+          const currentTier = user.current_tier ? tierLabels[user.current_tier] || user.current_tier : 'Chưa có';
+          
+          document.getElementById('changeTierUserDetails').innerHTML = `
+            <p><strong>ID:</strong> ${user.id}</p>
+            <p><strong>Email:</strong> ${user.email}</p>
+            <p><strong>Tên:</strong> ${user.full_name || 'N/A'}</p>
+            <p><strong>Tier hiện tại:</strong> <span class="badge badge-${user.current_tier || 'free'}">${currentTier}</span></p>
+            <p><strong>Status:</strong> ${user.status}</p>
+          `;
+          
+          document.getElementById('changeTierUserInfo').style.display = 'block';
+          document.getElementById('changeTierBtn').style.display = 'inline-block';
+          
+        } catch (error) {
+          document.getElementById('changeTierError').textContent = 'Lỗi: ' + error.message;
+          document.getElementById('changeTierError').style.display = 'block';
+        }
+      }
+      
+      async function changeUserTier() {
+        if (!currentUserIdForTierChange) {
+          alert('Vui lòng tìm user trước');
+          return;
+        }
+        
+        const adminKey = document.getElementById('adminKey').value.trim();
+        const targetTier = document.getElementById('changeTierSelect').value;
+        const notes = document.getElementById('changeTierNotes').value.trim();
+        
+        if (!adminKey) {
+          alert('Vui lòng nhập Admin Secret Key ở trên');
+          return;
+        }
+        
+        if (!confirm(`Xác nhận đổi tier user ID ${currentUserIdForTierChange} sang ${targetTier.toUpperCase()}?`)) {
+          return;
+        }
+        
+        const btn = document.getElementById('changeTierBtn');
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'Đang xử lý...';
+        
+        try {
+          const formData = new FormData();
+          formData.append('user_id', currentUserIdForTierChange);
+          formData.append('tier', targetTier);
+          if (notes) formData.append('notes', notes);
+          
+          const resp = await fetch('/admin/users/change-tier', {
+            method: 'POST',
+            headers: { 'X-Admin-Key': adminKey },
+            body: formData
+          });
+          
+          if (resp.ok || resp.redirected) {
+            document.getElementById('changeTierSuccess').textContent = '✅ Đã đổi tier thành công!';
+            document.getElementById('changeTierSuccess').style.display = 'block';
+            document.getElementById('changeTierError').style.display = 'none';
+            
+            // Reset form
+            document.getElementById('changeTierEmail').value = '';
+            document.getElementById('changeTierNotes').value = '';
+            document.getElementById('changeTierUserInfo').style.display = 'none';
+            document.getElementById('changeTierBtn').style.display = 'none';
+            currentUserIdForTierChange = null;
+            
+            // Reload after 2 seconds
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
+          } else {
+            const text = await resp.text();
+            throw new Error('Lỗi khi đổi tier');
+          }
+        } catch (error) {
+          document.getElementById('changeTierError').textContent = 'Lỗi: ' + error.message;
+          document.getElementById('changeTierError').style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = originalText;
+        }
+      }
     </script>
   </body>
 </html>
