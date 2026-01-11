@@ -1,10 +1,22 @@
-{% extends "base.html" %}
-
-{% block title %}Đăng nhập - CCCD API{% endblock %}
-
-{% block extra_css %}
-<!-- Material Symbols -->
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Đăng nhập - CCCD API</title>
+    
+    <!-- Design System CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/utilities.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/animations.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/accessibility.css') }}">
+    
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
 <style>
 /* Login Page Styles */
 body {
@@ -461,9 +473,8 @@ body {
     border: 1px solid var(--color-info-border);
 }
 </style>
-{% endblock %}
-
-{% block body %}
+</head>
+<body>
 <!-- Background Elements -->
 <div class="glow-orb glow-orb-1"></div>
 <div class="glow-orb glow-orb-2"></div>
@@ -565,4 +576,5 @@ document.getElementById('passwordToggle')?.addEventListener('click', function() 
     toggleIcon.textContent = type === 'password' ? 'visibility_off' : 'visibility';
 });
 </script>
-{% endblock %}
+</body>
+</html>
