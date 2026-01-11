@@ -789,17 +789,21 @@
           
           const resp = await fetch('/admin/users/change-tier', {
             method: 'POST',
-            headers: { 'X-Admin-Key': adminKey },
+            headers: { 
+              'X-Admin-Key': adminKey,
+              'X-Requested-With': 'XMLHttpRequest'
+            },
             body: formData
           });
           
-          if (resp.ok || resp.redirected) {
-            alert('✅ Đã đổi tier thành công!');
+          const data = await resp.json();
+          
+          if (resp.ok && data.success) {
+            alert('✅ ' + (data.message || 'Đã đổi tier thành công!'));
             // Reload users list
             loadUsersList(currentUsersPage);
           } else {
-            const data = await resp.json();
-            throw new Error(data.error || 'Lỗi khi đổi tier');
+            throw new Error(data.error || data.message || 'Lỗi khi đổi tier');
           }
         } catch (error) {
           alert('Lỗi: ' + error.message);
