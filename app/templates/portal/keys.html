@@ -693,8 +693,183 @@
         </div>
     </div>
     
+    <!-- Custom Modal System -->
+    <div id="customModal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div class="glass-panel rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl transform transition-all modal-animate">
+            <div class="flex items-center justify-between mb-4">
+                <h3 id="modalTitle" class="text-xl font-bold text-white"></h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div id="modalContent" class="text-slate-300 mb-6"></div>
+            <div id="modalInput" class="hidden mb-4">
+                <input type="text" id="modalInputField" class="glass-input w-full rounded-lg py-2.5 px-4 text-sm focus:border-electric-blue focus:ring-2 focus:ring-electric-blue/20" placeholder="Nhập..."/>
+            </div>
+            <div id="modalButtons" class="flex gap-3 justify-end"></div>
+        </div>
+    </div>
+    
     <!-- AJAX Helpers and JavaScript -->
     <script src="{{ url_for('static', filename='js/ajax-helpers.js') }}"></script>
+    <script>
+        // Custom Modal System
+        let modalResolve = null;
+
+        function showModal(title, content, showInput = false, inputPlaceholder = '', defaultValue = '') {
+            return new Promise((resolve) => {
+                modalResolve = resolve;
+                const modal = document.getElementById('customModal');
+                const modalTitle = document.getElementById('modalTitle');
+                const modalContent = document.getElementById('modalContent');
+                const modalInput = document.getElementById('modalInput');
+                const modalInputField = document.getElementById('modalInputField');
+                const modalButtons = document.getElementById('modalButtons');
+                
+                if (modalTitle) modalTitle.textContent = title;
+                if (modalContent) modalContent.innerHTML = content;
+                
+                if (showInput) {
+                    if (modalInput) modalInput.classList.remove('hidden');
+                    if (modalInputField) {
+                        modalInputField.value = defaultValue;
+                        modalInputField.placeholder = inputPlaceholder;
+                        setTimeout(() => modalInputField.focus(), 100);
+                    }
+                } else {
+                    if (modalInput) modalInput.classList.add('hidden');
+                }
+                
+                if (modalButtons) {
+                    modalButtons.innerHTML = `
+                        <button onclick="handleModalOk()" class="px-4 py-2 bg-electric-blue hover:bg-blue-600 text-white font-semibold rounded-lg transition-all">
+                            OK
+                        </button>
+                        <button onclick="handleModalCancel()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-lg transition-all">
+                            Hủy
+                        </button>
+                    `;
+                }
+                
+                if (modal) modal.classList.remove('hidden');
+            });
+        }
+
+        function showConfirmModal(title, content) {
+            return new Promise((resolve) => {
+                modalResolve = resolve;
+                const modal = document.getElementById('customModal');
+                const modalTitle = document.getElementById('modalTitle');
+                const modalContent = document.getElementById('modalContent');
+                const modalInput = document.getElementById('modalInput');
+                const modalButtons = document.getElementById('modalButtons');
+                
+                if (modalTitle) modalTitle.textContent = title;
+                if (modalContent) modalContent.innerHTML = content;
+                if (modalInput) modalInput.classList.add('hidden');
+                
+                if (modalButtons) {
+                    modalButtons.innerHTML = `
+                        <button onclick="handleModalOk()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg transition-all">
+                            Xác nhận
+                        </button>
+                        <button onclick="handleModalCancel()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-lg transition-all">
+                            Hủy
+                        </button>
+                    `;
+                }
+                
+                if (modal) modal.classList.remove('hidden');
+            });
+        }
+
+        function showAlertModal(title, content, type = 'info') {
+            return new Promise((resolve) => {
+                modalResolve = resolve;
+                const modal = document.getElementById('customModal');
+                const modalTitle = document.getElementById('modalTitle');
+                const modalContent = document.getElementById('modalContent');
+                const modalInput = document.getElementById('modalInput');
+                const modalButtons = document.getElementById('modalButtons');
+                
+                const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+                const buttonColor = type === 'success' ? 'bg-emerald-600 hover:bg-emerald-500' : type === 'error' ? 'bg-red-600 hover:bg-red-500' : 'bg-electric-blue hover:bg-blue-600';
+                
+                if (modalTitle) modalTitle.textContent = title;
+                if (modalContent) modalContent.innerHTML = `${icon} ${content}`;
+                if (modalInput) modalInput.classList.add('hidden');
+                
+                if (modalButtons) {
+                    modalButtons.innerHTML = `
+                        <button onclick="handleModalOk()" class="px-4 py-2 ${buttonColor} text-white font-semibold rounded-lg transition-all">
+                            OK
+                        </button>
+                    `;
+                }
+                
+                if (modal) modal.classList.remove('hidden');
+            });
+        }
+
+        function handleModalOk() {
+            const modal = document.getElementById('customModal');
+            const modalInput = document.getElementById('modalInput');
+            const modalInputField = document.getElementById('modalInputField');
+            
+            let value = null;
+            if (!modalInput || !modalInput.classList.contains('hidden')) {
+                if (modalInputField) {
+                    value = modalInputField.value.trim();
+                }
+            } else {
+                value = true; // For confirm/alert
+            }
+            
+            if (modal) modal.classList.add('hidden');
+            if (modalResolve) {
+                modalResolve(value);
+                modalResolve = null;
+            }
+        }
+
+        function handleModalCancel() {
+            const modal = document.getElementById('customModal');
+            if (modal) modal.classList.add('hidden');
+            if (modalResolve) {
+                modalResolve(null);
+                modalResolve = null;
+            }
+        }
+
+        function closeModal() {
+            handleModalCancel();
+        }
+
+        // Replace native dialogs
+        function customAlert(message, type = 'info') {
+            return showAlertModal('Thông báo', message, type);
+        }
+
+        function customConfirm(message) {
+            return showConfirmModal('Xác nhận', message);
+        }
+
+        function customPrompt(message, defaultValue = '') {
+            return showModal('Nhập liệu', message, true, '', defaultValue);
+        }
+        
+        // Enter key handler for modal input
+        document.addEventListener('DOMContentLoaded', function() {
+            const modalInputField = document.getElementById('modalInputField');
+            if (modalInputField) {
+                modalInputField.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        handleModalOk();
+                    }
+                });
+            }
+        });
+    </script>
     <script>
         // Custom Tier Select Dropdown
         (function() {
@@ -881,8 +1056,9 @@
         
         // Delete key (AJAX)
         document.querySelectorAll('.delete-key-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                if (!confirm('Bạn có chắc muốn xóa key này?')) return;
+            btn.addEventListener('click', async function() {
+                const confirmed = await customConfirm('<p class="font-semibold">Bạn có chắc muốn xóa key này?</p><p class="text-sm text-slate-400 mt-2">⚠️ Hành động này không thể hoàn tác!</p>');
+                if (!confirmed) return;
                 
                 const keyId = this.dataset.keyId;
                 const row = this.closest('tr');
