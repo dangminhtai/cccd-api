@@ -268,6 +268,93 @@ def generate_new_verification_token(user_id: int) -> Tuple[bool, Optional[str], 
         return False, f"Lỗi hệ thống: {str(e)}", None
 
 
+def get_users_list(page: int = 1, per_page: int = 20, search: Optional[str] = None) -> tuple[list[dict], int]:
+    """
+    Lấy danh sách users với pagination (cho admin)
+    Returns: (users_list, total_count)
+    """
+    try:
+        conn = _get_db_connection()
+        try:
+            with conn.cursor() as cursor:
+                # Build WHERE clause for search
+                where_clause = ""
+                params = []
+                if search:
+                    where_clause = "WHERE email LIKE %s OR full_name LIKE %s"
+                    search_pattern = f"%{search}%"
+                    params = [search_pattern, search_pattern]
+                
+                # Get total count
+                count_query = f"SELECT COUNT(*) as total FROM users {where_clause}"
+                cursor.execute(count_query, params)
+                total_count = cursor.fetchone()["total"]
+                
+                # Get users with pagination
+                offset = (page - 1) * per_page
+                users_query = f"""
+                    SELECT id, email, full_name, status, created_at, last_login_at
+                    FROM users
+                    {where_clause}
+                    ORDER BY id DESC
+                    LIMIT %s OFFSET %s
+                """
+                cursor.execute(users_query, params + [per_page, offset])
+                users = cursor.fetchall()
+                
+                # Get subscriptions for each user
+                user_ids = [user["id"] for user in users]
+                if user_ids:
+                    placeholders = ",".join(["%s"] * len(user_ids))
+                    try:
+                        cursor.execute(
+                            f"""
+                            SELECT user_id, tier, status, expires_at
+                            FROM subscriptions
+                            WHERE user_id IN ({placeholders}) AND status = 'active'
+                            ORDER BY created_at DESC
+                            """,
+                            user_ids,
+                        )
+                    except Exception:
+                        # Column created_at doesn't exist
+                        cursor.execute(
+                            f"""
+                            SELECT user_id, tier, status, expires_at
+                            FROM subscriptions
+                            WHERE user_id IN ({placeholders}) AND status = 'active'
+                            """,
+                            user_ids,
+                        )
+                    subscriptions = {sub["user_id"]: sub for sub in cursor.fetchall()}
+                else:
+                    subscriptions = {}
+                
+                # Combine user data with subscription
+                result = []
+                for user in users:
+                    user_id = user["id"]
+                    subscription = subscriptions.get(user_id)
+                    result.append({
+                        "id": user["id"],
+                        "email": user["email"],
+                        "full_name": user.get("full_name"),
+                        "status": user["status"],
+                        "created_at": user.get("created_at"),
+                        "last_login_at": user.get("last_login_at"),
+                        "current_tier": subscription["tier"] if subscription else None,
+                        "subscription_status": subscription["status"] if subscription else None,
+                        "expires_at": subscription["expires_at"] if subscription else None,
+                    })
+                
+                return result, total_count
+        finally:
+            conn.close()
+    except Exception as e:
+        logger.error(f"Error getting users list: {str(e)}", exc_info=True)
+        return [], 0
+
+
 def get_user_by_email(email: str) -> Optional[dict]:
     """Lấy thông tin user theo email (cho admin)"""
     try:

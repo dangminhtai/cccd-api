@@ -618,6 +618,194 @@
         }
       }
       
+      let currentUsersPage = 1;
+      let currentUserSearch = '';
+      
+      async function loadUsersList(page = 1) {
+        const adminKey = document.getElementById('adminKey').value.trim();
+        if (!adminKey) {
+          document.getElementById('usersContainer').innerHTML = 
+            '<p style="text-align: center; color: #d32f2f; padding: 40px;">Vui lòng nhập Admin Secret Key ở trên</p>';
+          return;
+        }
+        
+        const search = document.getElementById('userSearchInput').value.trim() || '';
+        currentUsersPage = page;
+        currentUserSearch = search;
+        
+        try {
+          let url = `/admin/users?page=${page}&per_page=20`;
+          if (search) {
+            url += `&search=${encodeURIComponent(search)}`;
+          }
+          
+          const resp = await fetch(url, {
+            headers: { 'X-Admin-Key': adminKey }
+          });
+          
+          if (!resp.ok) {
+            if (resp.status === 403) {
+              document.getElementById('usersContainer').innerHTML = 
+                '<p style="text-align: center; color: #d32f2f; padding: 40px;">❌ Admin key không hợp lệ. Vui lòng kiểm tra lại.</p>';
+            } else {
+              const data = await resp.json();
+              throw new Error(data.error || 'Lỗi khi tải danh sách users');
+            }
+            return;
+          }
+          
+          const data = await resp.json();
+          const users = data.users || [];
+          const pagination = data.pagination || {};
+          
+          if (users.length === 0) {
+            document.getElementById('usersContainer').innerHTML = 
+              '<p style="text-align: center; color: #666; padding: 40px;">Không tìm thấy user nào</p>';
+            return;
+          }
+          
+          // Render users table
+          const tierLabels = { free: 'Free', premium: 'Premium', ultra: 'Ultra' };
+          let html = '<table class="payments-table"><thead><tr><th>ID</th><th>Email</th><th>Tên</th><th>Tier hiện tại</th><th>Status</th><th>Ngày tạo</th><th>Thao tác</th></tr></thead><tbody>';
+          
+          users.forEach(user => {
+            const currentTier = user.current_tier ? tierLabels[user.current_tier] || user.current_tier : 'Chưa có';
+            const dateStr = user.created_at ? new Date(user.created_at).toLocaleDateString('vi-VN') : 'N/A';
+            const userEmail = (user.email || '').replace(/'/g, "\\'");
+            const userTier = (user.current_tier || 'free').replace(/'/g, "\\'");
+            
+            html += `
+              <tr id="user-row-${user.id}">
+                <td>${user.id}</td>
+                <td class="user-email">${user.email}</td>
+                <td>${user.full_name || 'N/A'}</td>
+                <td><span class="badge badge-${user.current_tier || 'free'}">${currentTier}</span></td>
+                <td>${user.status}</td>
+                <td>${dateStr}</td>
+                <td>
+                  <button class="btn-approve" onclick="showChangeTierModal(${user.id}, '${userEmail}', '${userTier}')">
+                    🔄 Đổi Tier
+                  </button>
+                </td>
+              </tr>
+            `;
+          });
+          
+          html += '</tbody></table>';
+          
+          // Add pagination
+          if (pagination.total_pages > 1) {
+            html += '<div style="margin-top: 24px; text-align: center;">';
+            
+            // Previous button
+            if (pagination.page > 1) {
+              html += `<button onclick="loadUsersList(${pagination.page - 1})" style="margin-right: 8px;">← Trước</button>`;
+            }
+            
+            // Page numbers
+            const startPage = Math.max(1, pagination.page - 2);
+            const endPage = Math.min(pagination.total_pages, pagination.page + 2);
+            
+            if (startPage > 1) {
+              html += `<button onclick="loadUsersList(1)" style="margin-right: 4px;">1</button>`;
+              if (startPage > 2) html += '<span style="margin: 0 4px;">...</span>';
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+              if (i === pagination.page) {
+                html += `<button style="background: #0b57d0; margin: 0 4px; font-weight: 600;">${i}</button>`;
+              } else {
+                html += `<button onclick="loadUsersList(${i})" style="margin: 0 4px;">${i}</button>`;
+              }
+            }
+            
+            if (endPage < pagination.total_pages) {
+              if (endPage < pagination.total_pages - 1) html += '<span style="margin: 0 4px;">...</span>';
+              html += `<button onclick="loadUsersList(${pagination.total_pages})" style="margin-left: 4px;">${pagination.total_pages}</button>`;
+            }
+            
+            // Next button
+            if (pagination.page < pagination.total_pages) {
+              html += `<button onclick="loadUsersList(${pagination.page + 1})" style="margin-left: 8px;">Sau →</button>`;
+            }
+            
+            html += `<div style="margin-top: 8px; color: #666; font-size: 14px;">Trang ${pagination.page}/${pagination.total_pages} - Tổng: ${pagination.total} users</div>`;
+            html += '</div>';
+          }
+          
+          document.getElementById('usersContainer').innerHTML = html;
+          
+        } catch (error) {
+          document.getElementById('usersContainer').innerHTML = 
+            '<p style="text-align: center; color: #d32f2f; padding: 40px;">❌ Lỗi: ' + error.message + '</p>';
+        }
+      }
+      
+      function clearUserSearch() {
+        document.getElementById('userSearchInput').value = '';
+        loadUsersList(1);
+      }
+      
+      function showChangeTierModal(userId, userEmail, currentTier) {
+        const tier = prompt(`Đổi tier cho user ${userEmail}\nTier hiện tại: ${currentTier || 'Chưa có'}\n\nNhập tier mới (free/premium/ultra):`, 'free');
+        if (!tier) return;
+        
+        if (!['free', 'premium', 'ultra'].includes(tier.toLowerCase())) {
+          alert('Tier không hợp lệ! Phải là: free, premium, hoặc ultra');
+          return;
+        }
+        
+        const notes = prompt('Ghi chú (tùy chọn):', '') || '';
+        
+        changeUserTierDirectly(userId, tier.toLowerCase(), notes);
+      }
+      
+      async function changeUserTierDirectly(userId, targetTier, notes) {
+        const adminKey = document.getElementById('adminKey').value.trim();
+        if (!adminKey) {
+          alert('Vui lòng nhập Admin Secret Key ở trên');
+          return;
+        }
+        
+        if (!confirm(`Xác nhận đổi tier user ID ${userId} sang ${targetTier.toUpperCase()}?`)) {
+          return;
+        }
+        
+        try {
+          const formData = new FormData();
+          formData.append('user_id', userId);
+          formData.append('tier', targetTier);
+          if (notes) formData.append('notes', notes);
+          
+          const resp = await fetch('/admin/users/change-tier', {
+            method: 'POST',
+            headers: { 'X-Admin-Key': adminKey },
+            body: formData
+          });
+          
+          if (resp.ok || resp.redirected) {
+            alert('✅ Đã đổi tier thành công!');
+            // Reload users list
+            loadUsersList(currentUsersPage);
+          } else {
+            const data = await resp.json();
+            throw new Error(data.error || 'Lỗi khi đổi tier');
+          }
+        } catch (error) {
+          alert('Lỗi: ' + error.message);
+        }
+      }
+      
+      // Load users list when stats are loaded
+      const originalLoadStats = loadStats;
+      loadStats = function() {
+        originalLoadStats();
+        const adminKey = document.getElementById('adminKey').value.trim();
+        if (adminKey) {
+          setTimeout(() => loadUsersList(1), 500);
+        }
+      };
+      
       let currentUserIdForTierChange = null;
       
       async function searchUserForTierChange() {
