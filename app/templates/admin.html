@@ -683,8 +683,11 @@
                 <td>${user.status}</td>
                 <td>${dateStr}</td>
                 <td>
-                  <button class="btn-approve" onclick="showChangeTierModal(${user.id}, '${userEmail}', '${userTier}')">
+                  <button class="btn-approve" onclick="showChangeTierModal(${user.id}, '${userEmail}', '${userTier}')" style="margin-right: 8px;">
                     🔄 Đổi Tier
+                  </button>
+                  <button class="btn-reject" onclick="deleteUser(${user.id}, '${userEmail}')">
+                    🗑️ Xóa
                   </button>
                 </td>
               </tr>

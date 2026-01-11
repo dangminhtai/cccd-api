@@ -588,3 +588,34 @@
   - **Check schema** trước khi viết query với ORDER BY
   - **Test** với database schema thực tế để đảm bảo columns tồn tại
   - **Backward compatibility**: Try/except cho optional columns trong ORDER BY clause
+
+---
+
+## 37) Nút xóa user chưa có confirm và nút đổi tier không hoạt động
+
+- **Hiện tượng**: 
+  - Nút xóa user không có confirm dialog "Bạn có chắc chắn xóa user này"
+  - Nút đổi tier không đổi được tier (không có response hoặc lỗi)
+- **Nguyên nhân**: 
+  - **Vấn đề 1**: Chưa có function `delete_user()` trong `services/user_service.py` và route `/admin/users/<id>/delete`
+  - **Vấn đề 2**: Nút đổi tier có thể không hoạt động do:
+    - JavaScript function `changeUserTierDirectly()` không parse JSON response đúng cách
+    - Route `/admin/users/change-tier` trả về redirect thay vì JSON cho AJAX requests
+    - Thiếu header `X-Requested-With: XMLHttpRequest` trong fetch request
+- **Cách xử lý**: 
+  - **Vấn đề 1**: 
+    - Thêm function `delete_user()` trong `services/user_service.py` để hard delete user
+    - Thêm route `POST /admin/users/<id>/delete` với AJAX detection
+    - Thêm nút "🗑️ Xóa" trong users table với confirm dialog
+    - Thêm JavaScript function `deleteUser()` với confirm "Bạn có chắc chắn muốn xóa user này?"
+  - **Vấn đề 2**: 
+    - Đảm bảo route `/admin/users/change-tier` detect AJAX và return JSON
+    - Thêm header `X-Requested-With: XMLHttpRequest` vào fetch request
+    - Parse JSON response thay vì xử lý redirect
+    - Improve `showChangeTierModal()` để hiển thị thông tin rõ ràng hơn
+- **Cách tránh lần sau**: 
+  - **Khi implement delete actions**: Luôn có confirm dialog để tránh xóa nhầm
+  - **Khi implement AJAX requests**: Luôn thêm header `X-Requested-With: XMLHttpRequest`
+  - **Backend routes**: Detect AJAX requests và return JSON thay vì redirect
+  - **JavaScript**: Parse JSON response và handle errors đúng cách
+  - **Test**: Verify cả success và error cases cho AJAX requests

@@ -453,4 +453,32 @@ def admin_list_users():
     })
 
 
+@admin_bp.post("/users/<int:user_id>/delete")
+def admin_delete_user(user_id: int):
+    """Admin: Delete user (hard delete)"""
+    from services.user_service import delete_user
+    from flask import current_app
+    
+    # Check if AJAX request
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest" or request.is_json
+    
+    current_app.logger.info(f"Admin delete user_id={user_id}")
+    
+    success, message = delete_user(user_id)
+    
+    if success:
+        if is_ajax:
+            return jsonify({"success": True, "message": message}), 200
+        flash(f"✅ {message}", "success")
+    else:
+        if is_ajax:
+            return jsonify({"error": message}), 400
+        flash(f"❌ {message}", "error")
+        current_app.logger.error(f"Failed to delete user {user_id}: {message}")
+    
+    if is_ajax:
+        return jsonify({"success": True, "message": message}), 200
+    return redirect(url_for("admin.admin_dashboard"))
+
+
 

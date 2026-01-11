@@ -99,27 +99,27 @@ def register_user(email: str, password: str, full_name: str) -> Tuple[bool, Opti
                     """,
                     (user_id,),
                 )
-                
-                conn.commit()
-                return True, None, user_id, verification_token
+            conn.commit()
+            return True, None, user_id, verification_token
         finally:
             conn.close()
     except Exception as e:
+        logger.error(f"Error registering user: {str(e)}", exc_info=True)
         return False, f"Lỗi hệ thống: {str(e)}", None, None
 
 
-def authenticate_user(email: str, password: str) -> Tuple[bool, Optional[str], Optional[dict]]:
+def authenticate_user(email: str, password: str) -> Tuple[bool, Optional[dict], Optional[str]]:
     """
     Xác thực user login
     
     Returns:
-        (success, error_message, user_data)
+        (success, user_dict, error_message)
     """
     try:
         conn = _get_db_connection()
         try:
             with conn.cursor() as cursor:
-                # Try to query with email_verified first (if column exists)
+                # Try with email_verified first, fallback if column doesn't exist
                 try:
                     cursor.execute(
                         """
@@ -139,133 +139,50 @@ def authenticate_user(email: str, password: str) -> Tuple[bool, Optional[str], O
                         """,
                         (email,),
                     )
-                
                 user = cursor.fetchone()
                 
                 if not user:
-                    return False, "Email hoặc mật khẩu không đúng", None
+                    return False, None, "Email hoặc mật khẩu không đúng"
                 
                 if user["status"] != "active":
-                    return False, "Tài khoản đã bị khóa", None
+                    return False, None, "Tài khoản đã bị khóa"
                 
                 # Verify password
                 if not verify_password(password, user["password_hash"]):
-                    return False, "Email hoặc mật khẩu không đúng", None
+                    return False, None, "Email hoặc mật khẩu không đúng"
                 
-                # Update last_login_at
-                cursor.execute(
-                    "UPDATE users SET last_login_at = NOW() WHERE id = %s",
-                    (user["id"],),
-                )
+                # Update last_login_at if column exists
+                try:
+                    cursor.execute(
+                        """
+                        UPDATE users
+                        SET last_login_at = NOW()
+                        WHERE id = %s
+                        """,
+                        (user["id"],),
+                    )
+                except Exception:
+                    # Column doesn't exist, skip update
+                    pass
+                
                 conn.commit()
                 
-                return True, None, {
+                # Return user info (without password_hash)
+                user_dict = {
                     "id": user["id"],
                     "email": user["email"],
                     "full_name": user["full_name"],
-                    "email_verified": bool(user.get("email_verified", False)),
+                    "status": user["status"],
                 }
+                if "email_verified" in user:
+                    user_dict["email_verified"] = user["email_verified"]
+                
+                return True, user_dict, None
         finally:
             conn.close()
     except Exception as e:
-        return False, f"Lỗi hệ thống: {str(e)}", None
-
-
-def verify_email(token: str) -> Tuple[bool, Optional[str]]:
-    """
-    Verify email với token
-    
-    Returns:
-        (success, error_message)
-    """
-    try:
-        conn = _get_db_connection()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    """
-                    SELECT id, email, email_verified, verification_token_expires
-                    FROM users
-                    WHERE verification_token = %s
-                    """,
-                    (token,),
-                )
-                user = cursor.fetchone()
-                
-                if not user:
-                    return False, "Token không hợp lệ hoặc đã hết hạn"
-                
-                if user["email_verified"]:
-                    return False, "Email đã được xác thực rồi"
-                
-                # Check token expiry
-                if user["verification_token_expires"] and user["verification_token_expires"] < datetime.now():
-                    return False, "Token đã hết hạn. Vui lòng yêu cầu gửi lại email xác thực"
-                
-                # Verify email
-                cursor.execute(
-                    """
-                    UPDATE users 
-                    SET email_verified = TRUE, 
-                        verification_token = NULL,
-                        verification_token_expires = NULL
-                    WHERE id = %s
-                    """,
-                    (user["id"],),
-                )
-                conn.commit()
-                
-                return True, None
-        finally:
-            conn.close()
-    except Exception as e:
-        return False, f"Lỗi hệ thống: {str(e)}"
-
-
-def generate_new_verification_token(user_id: int) -> Tuple[bool, Optional[str], Optional[str]]:
-    """
-    Generate new verification token cho user
-    
-    Returns:
-        (success, error_message, verification_token)
-    """
-    try:
-        conn = _get_db_connection()
-        try:
-            with conn.cursor() as cursor:
-                # Check if user exists and not already verified
-                cursor.execute(
-                    "SELECT id, email_verified FROM users WHERE id = %s",
-                    (user_id,),
-                )
-                user = cursor.fetchone()
-                
-                if not user:
-                    return False, "User không tồn tại", None
-                
-                if user["email_verified"]:
-                    return False, "Email đã được xác thực rồi", None
-                
-                # Generate new token
-                verification_token = generate_verification_token()
-                verification_expires = datetime.now() + timedelta(hours=24)
-                
-                cursor.execute(
-                    """
-                    UPDATE users 
-                    SET verification_token = %s, 
-                        verification_token_expires = %s
-                    WHERE id = %s
-                    """,
-                    (verification_token, verification_expires, user_id),
-                )
-                conn.commit()
-                
-                return True, None, verification_token
-        finally:
-            conn.close()
-    except Exception as e:
-        return False, f"Lỗi hệ thống: {str(e)}", None
+        logger.error(f"Error authenticating user: {str(e)}", exc_info=True)
+        return False, None, f"Lỗi hệ thống: {str(e)}"
 
 
 def get_users_list(page: int = 1, per_page: int = 20, search: Optional[str] = None) -> tuple[list[dict], int]:
@@ -467,6 +384,34 @@ def get_user_by_id(user_id: int) -> Optional[dict]:
         return None
 
 
+def delete_user(user_id: int) -> tuple[bool, Optional[str]]:
+    """
+    Xóa user (hard delete) - chỉ dùng cho admin
+    Returns: (success, error_message)
+    """
+    try:
+        conn = _get_db_connection()
+        try:
+            with conn.cursor() as cursor:
+                # Check user exists
+                cursor.execute("SELECT id, email FROM users WHERE id = %s", (user_id,))
+                user = cursor.fetchone()
+                if not user:
+                    return False, "User không tồn tại"
+                
+                # Delete user (CASCADE will handle related records)
+                # Note: Foreign keys should be set to CASCADE or SET NULL
+                cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
+                
+            conn.commit()
+            return True, f"Đã xóa user {user['email']} thành công"
+        finally:
+            conn.close()
+    except Exception as e:
+        logger.error(f"Error deleting user: {str(e)}", exc_info=True)
+        return False, f"Lỗi khi xóa user: {str(e)}"
+
+
 def generate_password_reset_token() -> str:
     """Generate secure password reset token"""
     return secrets.token_urlsafe(32)
@@ -484,48 +429,42 @@ def request_password_reset(email: str) -> Tuple[bool, Optional[str], Optional[st
         try:
             with conn.cursor() as cursor:
                 # Check if user exists
-                try:
-                    cursor.execute(
-                        """
-                        SELECT id, email, full_name, status
-                        FROM users
-                        WHERE email = %s
-                        """,
-                        (email,),
-                    )
-                except Exception:
-                    return False, "Lỗi hệ thống", None
-                
+                cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
                 user = cursor.fetchone()
-                
-                # Always return success (security: don't reveal if email exists)
                 if not user:
-                    return True, None, None
+                    return False, "Email không tồn tại", None
                 
-                if user["status"] != "active":
-                    return True, None, None  # Don't reveal account status
+                # Check if password_reset columns exist
+                cursor.execute(
+                    """
+                    SELECT COLUMN_NAME
+                    FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_SCHEMA = DATABASE()
+                    AND TABLE_NAME = 'users'
+                    AND COLUMN_NAME = 'password_reset_token'
+                    """
+                )
+                has_reset_columns = cursor.fetchone() is not None
+                
+                if not has_reset_columns:
+                    return False, "Password reset feature chưa được kích hoạt. Vui lòng liên hệ hỗ trợ", None
                 
                 # Generate reset token
                 reset_token = generate_password_reset_token()
-                reset_expires = datetime.now() + timedelta(hours=1)  # 1 hour expiry
+                reset_expires = datetime.now() + timedelta(hours=1)
                 
                 # Update user with reset token
-                try:
-                    cursor.execute(
-                        """
-                        UPDATE users 
-                        SET password_reset_token = %s, 
-                            password_reset_expires = %s
-                        WHERE id = %s
-                        """,
-                        (reset_token, reset_expires, user["id"]),
-                    )
-                except Exception:
-                    # Columns might not exist, return False
-                    return False, "Password reset feature chưa được kích hoạt. Vui lòng liên hệ hỗ trợ", None
-                
-                conn.commit()
-                return True, None, reset_token
+                cursor.execute(
+                    """
+                    UPDATE users
+                    SET password_reset_token = %s,
+                        password_reset_token_expires = %s
+                    WHERE id = %s
+                    """,
+                    (reset_token, reset_expires, user["id"]),
+                )
+            conn.commit()
+            return True, None, reset_token
         finally:
             conn.close()
     except Exception as e:
@@ -533,42 +472,46 @@ def request_password_reset(email: str) -> Tuple[bool, Optional[str], Optional[st
         return False, f"Lỗi hệ thống: {str(e)}", None
 
 
-def reset_password(token: str, new_password: str) -> Tuple[bool, Optional[str], Optional[int]]:
+def reset_password(token: str, new_password: str) -> Tuple[bool, Optional[str]]:
     """
     Reset password với token
     
     Returns:
-        (success, error_message, user_id)
+        (success, error_message)
     """
     try:
         conn = _get_db_connection()
         try:
             with conn.cursor() as cursor:
-                # Check if token exists and not expired
-                try:
-                    cursor.execute(
-                        """
-                        SELECT id, email, password_reset_expires, status
-                        FROM users
-                        WHERE password_reset_token = %s
-                        """,
-                        (token,),
-                    )
-                except Exception:
-                    # Columns might not exist
-                    return False, "Password reset feature chưa được kích hoạt. Vui lòng liên hệ hỗ trợ", None
+                # Check if password_reset columns exist
+                cursor.execute(
+                    """
+                    SELECT COLUMN_NAME
+                    FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_SCHEMA = DATABASE()
+                    AND TABLE_NAME = 'users'
+                    AND COLUMN_NAME = 'password_reset_token'
+                    """
+                )
+                has_reset_columns = cursor.fetchone() is not None
                 
+                if not has_reset_columns:
+                    return False, "Password reset feature chưa được kích hoạt. Vui lòng liên hệ hỗ trợ"
+                
+                # Find user with valid token
+                cursor.execute(
+                    """
+                    SELECT id, email
+                    FROM users
+                    WHERE password_reset_token = %s
+                    AND password_reset_token_expires > NOW()
+                    """,
+                    (token,),
+                )
                 user = cursor.fetchone()
                 
                 if not user:
-                    return False, "Token không hợp lệ hoặc đã hết hạn", None
-                
-                if user["status"] != "active":
-                    return False, "Tài khoản đã bị khóa", None
-                
-                # Check token expiry
-                if user["password_reset_expires"] and user["password_reset_expires"] < datetime.now():
-                    return False, "Token đã hết hạn. Vui lòng yêu cầu lại", None
+                    return False, "Token không hợp lệ hoặc đã hết hạn"
                 
                 # Hash new password
                 password_hash = hash_password(new_password)
@@ -576,37 +519,148 @@ def reset_password(token: str, new_password: str) -> Tuple[bool, Optional[str], 
                 # Update password and clear reset token
                 cursor.execute(
                     """
-                    UPDATE users 
-                    SET password_hash = %s, 
+                    UPDATE users
+                    SET password_hash = %s,
                         password_reset_token = NULL,
-                        password_reset_expires = NULL
+                        password_reset_token_expires = NULL
                     WHERE id = %s
                     """,
                     (password_hash, user["id"]),
                 )
-                conn.commit()
-                
-                return True, None, user["id"]
+            conn.commit()
+            return True, None
         finally:
             conn.close()
     except Exception as e:
         logger.error(f"Error resetting password: {str(e)}", exc_info=True)
-        return False, f"Lỗi hệ thống: {str(e)}", None
+        return False, f"Lỗi hệ thống: {str(e)}"
 
 
-def invalidate_user_sessions(user_id: int) -> bool:
+def verify_email(token: str) -> Tuple[bool, Optional[str]]:
     """
-    Invalidate all sessions cho user (sau khi reset password)
-    Note: Flask sessions are stored client-side, so we can't directly invalidate them
-    This function is a placeholder for future implementation (e.g., storing session IDs in DB)
+    Verify email với token
     
     Returns:
-        success
+        (success, error_message)
     """
-    # TODO: Implement session management if needed
-    # For now, sessions will be invalidated when user tries to use them (password check fails)
-    logger.info(f"Password reset for user {user_id} - sessions should be invalidated on next login attempt")
-    return True
+    try:
+        conn = _get_db_connection()
+        try:
+            with conn.cursor() as cursor:
+                # Check if email_verified columns exist
+                cursor.execute(
+                    """
+                    SELECT COLUMN_NAME
+                    FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_SCHEMA = DATABASE()
+                    AND TABLE_NAME = 'users'
+                    AND COLUMN_NAME = 'email_verified'
+                    """
+                )
+                has_email_columns = cursor.fetchone() is not None
+                
+                if not has_email_columns:
+                    return False, "Email verification feature chưa được kích hoạt"
+                
+                # Find user with valid token
+                cursor.execute(
+                    """
+                    SELECT id, email
+                    FROM users
+                    WHERE verification_token = %s
+                    AND verification_token_expires > NOW()
+                    """,
+                    (token,),
+                )
+                user = cursor.fetchone()
+                
+                if not user:
+                    return False, "Token không hợp lệ hoặc đã hết hạn"
+                
+                # Update email_verified
+                cursor.execute(
+                    """
+                    UPDATE users
+                    SET email_verified = TRUE,
+                        verification_token = NULL,
+                        verification_token_expires = NULL
+                    WHERE id = %s
+                    """,
+                    (user["id"],),
+                )
+            conn.commit()
+            return True, None
+        finally:
+            conn.close()
+    except Exception as e:
+        logger.error(f"Error verifying email: {str(e)}", exc_info=True)
+        return False, f"Lỗi hệ thống: {str(e)}"
+
+
+def resend_verification_email(user_id: int) -> Tuple[bool, Optional[str], Optional[str]]:
+    """
+    Resend verification email cho user
+    
+    Returns:
+        (success, error_message, verification_token)
+    """
+    try:
+        conn = _get_db_connection()
+        try:
+            with conn.cursor() as cursor:
+                # Check if email_verified columns exist
+                cursor.execute(
+                    """
+                    SELECT COLUMN_NAME
+                    FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_SCHEMA = DATABASE()
+                    AND TABLE_NAME = 'users'
+                    AND COLUMN_NAME = 'email_verified'
+                    """
+                )
+                has_email_columns = cursor.fetchone() is not None
+                
+                if not has_email_columns:
+                    return False, "Email verification feature chưa được kích hoạt", None
+                
+                # Get user info
+                cursor.execute(
+                    """
+                    SELECT id, email, email_verified
+                    FROM users
+                    WHERE id = %s
+                    """,
+                    (user_id,),
+                )
+                user = cursor.fetchone()
+                
+                if not user:
+                    return False, "User không tồn tại", None
+                
+                if user["email_verified"]:
+                    return False, "Email đã được verify rồi", None
+                
+                # Generate new token
+                verification_token = generate_verification_token()
+                verification_expires = datetime.now() + timedelta(hours=24)
+                
+                # Update user with new token
+                cursor.execute(
+                    """
+                    UPDATE users
+                    SET verification_token = %s,
+                        verification_token_expires = %s
+                    WHERE id = %s
+                    """,
+                    (verification_token, verification_expires, user["id"]),
+                )
+            conn.commit()
+            return True, None, verification_token
+        finally:
+            conn.close()
+    except Exception as e:
+        logger.error(f"Error resending verification email: {str(e)}", exc_info=True)
+        return False, f"Lỗi hệ thống: {str(e)}", None
 
 
 def get_user_subscription(user_id: int) -> Optional[dict]:
@@ -615,18 +669,32 @@ def get_user_subscription(user_id: int) -> Optional[dict]:
         conn = _get_db_connection()
         try:
             with conn.cursor() as cursor:
-                cursor.execute(
-                    """
-                    SELECT id, tier, status, started_at, expires_at, payment_method, amount, currency
-                    FROM subscriptions
-                    WHERE user_id = %s AND status = 'active'
-                    ORDER BY started_at DESC
-                    LIMIT 1
-                    """,
-                    (user_id,),
-                )
-                return cursor.fetchone()
+                try:
+                    cursor.execute(
+                        """
+                        SELECT tier, status, expires_at, created_at
+                        FROM subscriptions
+                        WHERE user_id = %s AND status = 'active'
+                        ORDER BY created_at DESC
+                        LIMIT 1
+                        """,
+                        (user_id,),
+                    )
+                except Exception:
+                    # Column created_at doesn't exist
+                    cursor.execute(
+                        """
+                        SELECT tier, status, expires_at
+                        FROM subscriptions
+                        WHERE user_id = %s AND status = 'active'
+                        LIMIT 1
+                        """,
+                        (user_id,),
+                    )
+                subscription = cursor.fetchone()
+                return subscription
         finally:
             conn.close()
-    except Exception:
+    except Exception as e:
+        logger.error(f"Error getting user subscription: {str(e)}", exc_info=True)
         return None
