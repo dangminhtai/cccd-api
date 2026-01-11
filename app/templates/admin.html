@@ -747,17 +747,27 @@
       }
       
       function showChangeTierModal(userId, userEmail, currentTier) {
-        const tier = prompt(`Đổi tier cho user ${userEmail}\nTier hiện tại: ${currentTier || 'Chưa có'}\n\nNhập tier mới (free/premium/ultra):`, 'free');
-        if (!tier) return;
+        // Escape single quotes in email
+        userEmail = userEmail.replace(/'/g, "\\'");
         
-        if (!['free', 'premium', 'ultra'].includes(tier.toLowerCase())) {
+        const tierInput = prompt(`Đổi tier cho user:\n${userEmail}\n\nTier hiện tại: ${currentTier || 'Chưa có'}\n\nNhập tier mới (free/premium/ultra):`, currentTier || 'free');
+        if (tierInput === null) return; // User cancelled
+        
+        const tier = tierInput.trim().toLowerCase();
+        if (!tier) {
+          alert('Tier không được để trống!');
+          return;
+        }
+        
+        if (!['free', 'premium', 'ultra'].includes(tier)) {
           alert('Tier không hợp lệ! Phải là: free, premium, hoặc ultra');
           return;
         }
         
-        const notes = prompt('Ghi chú (tùy chọn):', '') || '';
+        const notesInput = prompt('Ghi chú (tùy chọn, để trống nếu không có):', '');
+        const notes = notesInput ? notesInput.trim() : '';
         
-        changeUserTierDirectly(userId, tier.toLowerCase(), notes);
+        changeUserTierDirectly(userId, tier, notes);
       }
       
       async function changeUserTierDirectly(userId, targetTier, notes) {
