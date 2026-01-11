@@ -20,7 +20,7 @@ from services.user.service import (
 )
 
 # Backward compatibility alias
-resend_verification_email as generate_new_verification_token = resend_verification_email
+generate_new_verification_token = resend_verification_email
 
 __all__ = [
     # Service functions
