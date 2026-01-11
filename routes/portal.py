@@ -722,6 +722,12 @@ def upgrade():
                 flash("Không thể downgrade. Vui lòng liên hệ admin.", "error")
                 return redirect(url_for("portal.upgrade"))
             
+            # Check if user already has pending payment (prevent spam)
+            from services.billing_service import has_pending_payment
+            if has_pending_payment(user_id):
+                flash("Bạn đã có yêu cầu nâng cấp đang chờ xử lý. Vui lòng chờ admin phê duyệt hoặc hủy yêu cầu cũ trước khi tạo yêu cầu mới.", "warning")
+                return redirect(url_for("portal.billing"))
+            
             # Create payment request
             amount = pricing[target_tier]["price"]
             currency = pricing[target_tier].get("currency", "VND")

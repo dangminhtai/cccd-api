@@ -24,6 +24,29 @@ def _get_db_connection():
     )
 
 
+def has_pending_payment(user_id: int) -> bool:
+    """Kiểm tra xem user đã có payment pending chưa"""
+    try:
+        conn = _get_db_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT id
+                    FROM payments
+                    WHERE user_id = %s AND status = 'pending'
+                    LIMIT 1
+                    """,
+                    (user_id,),
+                )
+                result = cursor.fetchone()
+                return result is not None
+        finally:
+            conn.close()
+    except Exception:
+        return False
+
+
 def get_user_payments(user_id: int, limit: int = 50) -> list[dict]:
     """Lấy lịch sử thanh toán của user"""
     try:

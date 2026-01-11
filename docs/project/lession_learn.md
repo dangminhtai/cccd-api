@@ -294,3 +294,27 @@
   - **Template inheritance** giúp tránh duplicate code
   - **Component-based**: Tách reusable parts thành components
   - **Code duplication = Maintenance nightmare**: Sửa 1 chỗ phải sửa nhiều chỗ
+
+---
+
+## 23) Prevent duplicate pending records - Kiểm tra trước khi tạo mới
+
+- **Issue**: User có thể spam nút "nâng cấp gói" và tạo nhiều payment records với status "pending" cho cùng một gói. Không hợp lý - chỉ nên có 1 pending payment tại một thời điểm.
+- **Nguyên nhân**: 
+  - Thiếu validation trước khi tạo record mới
+  - Không kiểm tra xem đã có pending record chưa
+  - User có thể click nhiều lần (spam)
+- **Cách xử lý**:
+  - **Check trước khi create**: Kiểm tra xem user đã có pending payment chưa
+  - **Prevent spam**: Chỉ cho phép 1 pending payment per user tại một thời điểm
+  - **User-friendly message**: Hiển thị message rõ ràng thay vì tạo duplicate
+  - **Database constraints**: Có thể thêm UNIQUE constraint nếu cần (nhưng phức tạp hơn)
+- **Ví dụ**:
+  - Upgrade payment: Check `has_pending_payment(user_id)` trước khi `create_payment()`
+  - Subscription requests: Chỉ cho phép 1 pending request
+  - Order creation: Kiểm tra xem đã có order pending chưa
+- **Bài học**: 
+  - **Luôn check trước khi create**: Tránh duplicate records
+  - **Prevent spam**: User có thể click nhiều lần
+  - **Business logic validation**: Không phải mọi thứ đều hợp lệ
+  - **User experience**: Message rõ ràng hơn là tạo duplicate silently
