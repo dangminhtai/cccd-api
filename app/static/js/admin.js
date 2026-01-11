@@ -1,6 +1,151 @@
 // Admin Dashboard JavaScript Functions
 // All functions are preserved from the original admin.html
 
+// Custom Modal System
+let modalResolve = null;
+
+function showModal(title, content, showInput = false, inputPlaceholder = '', defaultValue = '') {
+  return new Promise((resolve) => {
+    modalResolve = resolve;
+    const modal = document.getElementById('customModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalContent = document.getElementById('modalContent');
+    const modalInput = document.getElementById('modalInput');
+    const modalInputField = document.getElementById('modalInputField');
+    const modalButtons = document.getElementById('modalButtons');
+    
+    if (modalTitle) modalTitle.textContent = title;
+    if (modalContent) modalContent.innerHTML = content;
+    
+    if (showInput) {
+      if (modalInput) modalInput.classList.remove('hidden');
+      if (modalInputField) {
+        modalInputField.value = defaultValue;
+        modalInputField.placeholder = inputPlaceholder;
+        setTimeout(() => modalInputField.focus(), 100);
+      }
+    } else {
+      if (modalInput) modalInput.classList.add('hidden');
+    }
+    
+    if (modalButtons) {
+      modalButtons.innerHTML = `
+        <button onclick="handleModalOk()" class="px-4 py-2 bg-primary hover:bg-blue-600 text-white font-semibold rounded-lg transition-all">
+          OK
+        </button>
+        <button onclick="handleModalCancel()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-lg transition-all">
+          Hủy
+        </button>
+      `;
+    }
+    
+    if (modal) modal.classList.remove('hidden');
+  });
+}
+
+function showConfirmModal(title, content) {
+  return new Promise((resolve) => {
+    modalResolve = resolve;
+    const modal = document.getElementById('customModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalContent = document.getElementById('modalContent');
+    const modalInput = document.getElementById('modalInput');
+    const modalButtons = document.getElementById('modalButtons');
+    
+    if (modalTitle) modalTitle.textContent = title;
+    if (modalContent) modalContent.innerHTML = content;
+    if (modalInput) modalInput.classList.add('hidden');
+    
+    if (modalButtons) {
+      modalButtons.innerHTML = `
+        <button onclick="handleModalOk()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg transition-all">
+          Xác nhận
+        </button>
+        <button onclick="handleModalCancel()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-lg transition-all">
+          Hủy
+        </button>
+      `;
+    }
+    
+    if (modal) modal.classList.remove('hidden');
+  });
+}
+
+function showAlertModal(title, content, type = 'info') {
+  return new Promise((resolve) => {
+    modalResolve = resolve;
+    const modal = document.getElementById('customModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalContent = document.getElementById('modalContent');
+    const modalInput = document.getElementById('modalInput');
+    const modalButtons = document.getElementById('modalButtons');
+    
+    const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+    const buttonColor = type === 'success' ? 'bg-emerald-600 hover:bg-emerald-500' : type === 'error' ? 'bg-red-600 hover:bg-red-500' : 'bg-primary hover:bg-blue-600';
+    
+    if (modalTitle) modalTitle.textContent = title;
+    if (modalContent) modalContent.innerHTML = `${icon} ${content}`;
+    if (modalInput) modalInput.classList.add('hidden');
+    
+    if (modalButtons) {
+      modalButtons.innerHTML = `
+        <button onclick="handleModalOk()" class="px-4 py-2 ${buttonColor} text-white font-semibold rounded-lg transition-all">
+          OK
+        </button>
+      `;
+    }
+    
+    if (modal) modal.classList.remove('hidden');
+  });
+}
+
+function handleModalOk() {
+  const modal = document.getElementById('customModal');
+  const modalInput = document.getElementById('modalInput');
+  const modalInputField = document.getElementById('modalInputField');
+  
+  let value = null;
+  if (!modalInput || !modalInput.classList.contains('hidden')) {
+    if (modalInputField) {
+      value = modalInputField.value.trim();
+    }
+  } else {
+    value = true; // For confirm/alert
+  }
+  
+  if (modal) modal.classList.add('hidden');
+  if (modalResolve) {
+    modalResolve(value);
+    modalResolve = null;
+  }
+}
+
+function handleModalCancel() {
+  const modal = document.getElementById('customModal');
+  if (modal) modal.classList.add('hidden');
+  if (modalResolve) {
+    modalResolve(null);
+    modalResolve = null;
+  }
+}
+
+function closeModal() {
+  handleModalCancel();
+}
+
+// Replace native dialogs
+function customAlert(message, type = 'info') {
+  return showAlertModal('Thông báo', message, type);
+}
+
+function customConfirm(message) {
+  return showConfirmModal('Xác nhận', message);
+}
+
+function customPrompt(message, defaultValue = '') {
+  return showModal('Nhập liệu', message, true, '', defaultValue);
+}
+
 function showError(msg) {
   const errorEl = document.getElementById("error");
   if (errorEl) {
@@ -334,13 +479,14 @@ async function createKey() {
 }
 
 async function approvePayment(paymentId) {
-  if (!confirm('Xác nhận approve payment này? API keys của user sẽ được extend 30 ngày.')) {
+  const confirmed = await customConfirm('Xác nhận approve payment này? API keys của user sẽ được extend 30 ngày.');
+  if (!confirmed) {
     return;
   }
   
   const adminKey = document.getElementById('adminKey')?.value.trim() || '';
   if (!adminKey) {
-    alert('Vui lòng nhập Admin Secret Key ở trên');
+    await customAlert('Vui lòng nhập Admin Secret Key ở trên', 'error');
     return;
   }
   
@@ -374,7 +520,7 @@ async function approvePayment(paymentId) {
       throw new Error(data.error || 'Lỗi khi approve payment');
     }
   } catch (error) {
-    alert('Lỗi: ' + error.message);
+    await customAlert('Lỗi: ' + error.message, 'error');
     btn.disabled = false;
     if (rejectBtn) rejectBtn.disabled = false;
     btn.innerHTML = originalHTML;
@@ -382,13 +528,14 @@ async function approvePayment(paymentId) {
 }
 
 async function rejectPayment(paymentId) {
-  if (!confirm('Xác nhận reject payment này? Payment sẽ bị hủy và không được xử lý.')) {
+  const confirmed = await customConfirm('Xác nhận reject payment này? Payment sẽ bị hủy và không được xử lý.');
+  if (!confirmed) {
     return;
   }
   
   const adminKey = document.getElementById('adminKey')?.value.trim() || '';
   if (!adminKey) {
-    alert('Vui lòng nhập Admin Secret Key ở trên');
+    await customAlert('Vui lòng nhập Admin Secret Key ở trên', 'error');
     return;
   }
   
@@ -422,7 +569,7 @@ async function rejectPayment(paymentId) {
       throw new Error(data.error || 'Lỗi khi reject payment');
     }
   } catch (error) {
-    alert('Lỗi: ' + error.message);
+    await customAlert('Lỗi: ' + error.message, 'error');
     btn.disabled = false;
     if (approveBtn) approveBtn.disabled = false;
     btn.innerHTML = originalHTML;
@@ -582,13 +729,21 @@ async function loadUsersList(page = 1) {
 async function deleteUser(userId, userEmail) {
   const displayEmail = userEmail.replace(/'/g, "\\'");
   
-  if (!confirm(`Bạn có chắc chắn muốn xóa user này?\n\nEmail: ${displayEmail}\nID: ${userId}\n\n⚠️ Hành động này không thể hoàn tác!`)) {
+  const confirmed = await customConfirm(`
+    <div class="space-y-2">
+      <p class="font-semibold">Bạn có chắc chắn muốn xóa user này?</p>
+      <p class="text-sm"><strong>Email:</strong> ${displayEmail}</p>
+      <p class="text-sm"><strong>ID:</strong> ${userId}</p>
+      <p class="text-amber-400 text-sm font-medium">⚠️ Hành động này không thể hoàn tác!</p>
+    </div>
+  `);
+  if (!confirmed) {
     return;
   }
   
   const adminKey = document.getElementById('adminKey')?.value.trim() || '';
   if (!adminKey) {
-    alert('Vui lòng nhập Admin Secret Key ở trên');
+    await customAlert('Vui lòng nhập Admin Secret Key ở trên', 'error');
     return;
   }
   
@@ -604,48 +759,57 @@ async function deleteUser(userId, userEmail) {
     const data = await resp.json();
     
     if (resp.ok && data.success) {
-      alert('✅ ' + (data.message || 'Đã xóa user thành công!'));
+      await customAlert(data.message || 'Đã xóa user thành công!', 'success');
       loadUsersList(currentUsersPage);
     } else {
       throw new Error(data.error || data.message || 'Lỗi khi xóa user');
     }
   } catch (error) {
     console.error('Error deleting user:', error);
-    alert('Lỗi: ' + error.message);
+    await customAlert('Lỗi: ' + error.message, 'error');
   }
 }
 
-function showChangeTierModal(userId, userEmail, currentTier) {
+async function showChangeTierModal(userId, userEmail, currentTier) {
   userEmail = userEmail.replace(/'/g, "\\'");
   
-  const tierInput = prompt(`Đổi tier cho user:\n${userEmail}\n\nTier hiện tại: ${currentTier || 'Chưa có'}\n\nNhập tier mới (free/premium/ultra):`, currentTier || 'free');
+  const tierInput = await customPrompt(`
+    <div class="space-y-2 mb-4">
+      <p><strong>Đổi tier cho user:</strong></p>
+      <p class="text-primary">${userEmail}</p>
+      <p><strong>Tier hiện tại:</strong> <span class="text-amber-400">${currentTier || 'Chưa có'}</span></p>
+      <p class="text-sm text-slate-400">Nhập tier mới (free/premium/ultra):</p>
+    </div>
+  `, currentTier || 'free');
+  
   if (tierInput === null) return;
   
   const tier = tierInput.trim().toLowerCase();
   if (!tier) {
-    alert('Tier không được để trống!');
+    await customAlert('Tier không được để trống!', 'error');
     return;
   }
   
   if (!['free', 'premium', 'ultra'].includes(tier)) {
-    alert('Tier không hợp lệ! Phải là: free, premium, hoặc ultra');
+    await customAlert('Tier không hợp lệ! Phải là: free, premium, hoặc ultra', 'error');
     return;
   }
   
-  const notesInput = prompt('Ghi chú (tùy chọn, để trống nếu không có):', '');
+  const notesInput = await customPrompt('Ghi chú (tùy chọn, để trống nếu không có):', '');
   const notes = notesInput ? notesInput.trim() : '';
   
-  changeUserTierDirectly(userId, tier, notes);
+  await changeUserTierDirectly(userId, tier, notes);
 }
 
 async function changeUserTierDirectly(userId, targetTier, notes) {
   const adminKey = document.getElementById('adminKey')?.value.trim() || '';
   if (!adminKey) {
-    alert('Vui lòng nhập Admin Secret Key ở trên');
+    await customAlert('Vui lòng nhập Admin Secret Key ở trên', 'error');
     return;
   }
   
-  if (!confirm(`Xác nhận đổi tier user ID ${userId} sang ${targetTier.toUpperCase()}?`)) {
+  const confirmed = await customConfirm(`Xác nhận đổi tier user ID ${userId} sang <span class="text-primary font-bold">${targetTier.toUpperCase()}</span>?`);
+  if (!confirmed) {
     return;
   }
   
@@ -667,13 +831,13 @@ async function changeUserTierDirectly(userId, targetTier, notes) {
     const data = await resp.json();
     
     if (resp.ok && data.success) {
-      alert('✅ ' + (data.message || 'Đã đổi tier thành công!'));
+      await customAlert(data.message || 'Đã đổi tier thành công!', 'success');
       loadUsersList(currentUsersPage);
     } else {
       throw new Error(data.error || data.message || 'Lỗi khi đổi tier');
     }
   } catch (error) {
-    alert('Lỗi: ' + error.message);
+    await customAlert('Lỗi: ' + error.message, 'error');
   }
 }
 
