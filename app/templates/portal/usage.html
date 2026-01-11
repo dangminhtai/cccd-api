@@ -1,62 +1,37 @@
-<!doctype html>
-<html lang="vi">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Usage Stats - CCCD API</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: #f5f5f5; }
-        .header { background: white; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 30px; }
-        .header-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
-        .logo { font-size: 24px; font-weight: 600; color: #667eea; }
-        .user-info { display: flex; align-items: center; gap: 20px; }
-        .user-name { color: #333; font-weight: 500; }
-        .btn-logout { padding: 8px 16px; background: #f0f0f0; color: #333; text-decoration: none; border-radius: 6px; font-size: 14px; }
-        .btn-logout:hover { background: #e0e0e0; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px 40px; }
-        .section { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px; }
-        .section h2 { color: #333; margin-bottom: 20px; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .stat-card { background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea; }
-        .stat-card h3 { font-size: 14px; color: #666; text-transform: uppercase; margin-bottom: 8px; }
-        .stat-card .value { font-size: 32px; font-weight: 600; color: #333; }
-        .filter-bar { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; }
-        .filter-bar select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
-        .chart-container { position: relative; height: 400px; margin-top: 20px; }
-        .flash-messages { margin-bottom: 20px; }
-        .flash { padding: 12px; border-radius: 8px; margin-bottom: 10px; }
-        .flash-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .flash-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .flash-warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <div class="header-content">
-            <div class="logo">🚀 CCCD API</div>
-            <div class="user-info">
-                <span class="user-name">{{ user.full_name }}</span>
-                <a href="{{ url_for('portal.logout') }}" class="btn-logout">Đăng xuất</a>
+{% extends "base.html" %}
+
+{% block title %}Usage Stats - CCCD API{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+    .stat-card { background: var(--color-bg-secondary); padding: 20px; border-radius: 8px; border-left: 4px solid var(--color-primary); }
+    .stat-card h3 { font-size: 14px; color: var(--color-text-secondary); text-transform: uppercase; margin-bottom: 8px; }
+    .stat-card .value { font-size: 32px; font-weight: 600; color: var(--color-text-primary); }
+    .filter-bar { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; }
+    .filter-bar label { font-weight: var(--font-weight-medium); }
+    .filter-bar select { padding: var(--spacing-2) var(--spacing-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: var(--font-size-sm); }
+    .chart-container { position: relative; height: 400px; margin-top: 20px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
             </div>
-        </div>
-    </div>
+        {% endif %}
+    {% endwith %}
     
-    <div class="container">
-        
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="flash-messages">
-                    {% for category, message in messages %}
-                        <div class="flash flash-{{ category }}">{{ message }}</div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
-        
-        <div class="section">
+    <div class="section card">
+        <div class="card-header">
             <h2>Usage Statistics</h2>
+        </div>
+        <div class="card-body">
             <div class="filter-bar">
                 <label>Xem trong:</label>
                 <select id="days-filter" onchange="changeDays(this.value)">
@@ -74,11 +49,11 @@
                 </div>
                 <div class="stat-card">
                     <h3>Thành công</h3>
-                    <div class="value" style="color: #28a745;">{{ stats.success_requests }}</div>
+                    <div class="value" style="color: var(--color-success-text);">{{ stats.success_requests }}</div>
                 </div>
                 <div class="stat-card">
                     <h3>Lỗi</h3>
-                    <div class="value" style="color: #dc3545;">{{ stats.error_requests }}</div>
+                    <div class="value" style="color: var(--color-error-text);">{{ stats.error_requests }}</div>
                 </div>
                 <div class="stat-card">
                     <h3>Response time trung bình</h3>
@@ -90,106 +65,113 @@
                 <canvas id="dailyChart"></canvas>
             </div>
         </div>
-        
-        {% if stats.status_code_breakdown %}
-        <div class="section">
+    </div>
+    
+    {% if stats.status_code_breakdown %}
+    <div class="section card">
+        <div class="card-header">
             <h2>Status Code Breakdown</h2>
+        </div>
+        <div class="card-body">
             <div class="chart-container">
                 <canvas id="statusChart"></canvas>
             </div>
         </div>
-        {% endif %}
     </div>
-    
-    <script>
-        // Daily requests chart
-        const dailyData = {{ stats.daily_stats|tojson }};
-        const dailyCtx = document.getElementById('dailyChart').getContext('2d');
-        new Chart(dailyCtx, {
-            type: 'line',
-            data: {
-                labels: dailyData.map(d => d.date).reverse(),
-                datasets: [
-                    {
-                        label: 'Tổng requests',
-                        data: dailyData.map(d => d.count).reverse(),
-                        borderColor: '#667eea',
-                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                        tension: 0.4
-                    },
-                    {
-                        label: 'Thành công',
-                        data: dailyData.map(d => d.success).reverse(),
-                        borderColor: '#28a745',
-                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                        tension: 0.4
-                    },
-                    {
-                        label: 'Lỗi',
-                        data: dailyData.map(d => d.error).reverse(),
-                        borderColor: '#dc3545',
-                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
-                        tension: 0.4
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'Requests theo ngày'
-                    }
+    {% endif %}
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Daily requests chart
+    const dailyData = {{ stats.daily_stats|tojson }};
+    const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+    new Chart(dailyCtx, {
+        type: 'line',
+        data: {
+            labels: dailyData.map(d => d.date).reverse(),
+            datasets: [
+                {
+                    label: 'Tổng requests',
+                    data: dailyData.map(d => d.count).reverse(),
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
+                {
+                    label: 'Thành công',
+                    data: dailyData.map(d => d.success).reverse(),
+                    borderColor: '#28a745',
+                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                    tension: 0.4
+                },
+                {
+                    label: 'Lỗi',
+                    data: dailyData.map(d => d.error).reverse(),
+                    borderColor: '#dc3545',
+                    backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                    tension: 0.4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Requests theo ngày'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
                 }
             }
-        });
-        
-        // Status code chart
-        {% if stats.status_code_breakdown %}
-        const statusData = {{ stats.status_code_breakdown|tojson }};
-        const statusCtx = document.getElementById('statusChart').getContext('2d');
-        new Chart(statusCtx, {
-            type: 'bar',
-            data: {
-                labels: Object.keys(statusData),
-                datasets: [{
-                    label: 'Số lượng',
-                    data: Object.values(statusData),
-                    backgroundColor: [
-                        '#28a745',  // 200
-                        '#ffc107',  // 400
-                        '#fd7e14',  // 401
-                        '#dc3545'   // 500
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'Phân bổ Status Code'
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-        {% endif %}
-        
-        function changeDays(days) {
-            window.location.href = '{{ url_for("portal.usage") }}?days=' + days;
         }
-    </script>
-</body>
-</html>
+    });
+    
+    // Status code chart
+    {% if stats.status_code_breakdown %}
+    const statusData = {{ stats.status_code_breakdown|tojson }};
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    new Chart(statusCtx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(statusData),
+            datasets: [{
+                label: 'Số lượng',
+                data: Object.values(statusData),
+                backgroundColor: [
+                    '#28a745',  // 200
+                    '#ffc107',  // 400
+                    '#fd7e14',  // 401
+                    '#dc3545'   // 500
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Phân bổ Status Code'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    {% endif %}
+    
+    function changeDays(days) {
+        window.location.href = '{{ url_for("portal.usage") }}?days=' + days;
+    }
+</script>
+{% endblock %}
