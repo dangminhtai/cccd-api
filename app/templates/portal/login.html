@@ -123,6 +123,7 @@ body {
     width: 100%;
     max-width: 480px;
     padding: var(--spacing-5);
+    margin: 0 auto;
 }
 
 /* Glassmorphism Card */
@@ -134,7 +135,9 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.5);
     border-radius: var(--radius-xl);
     box-shadow: 0 8px 40px rgba(0, 0, 0, 0.2);
-    overflow: hidden;
+    overflow: visible;
+    position: relative;
+    z-index: 10;
 }
 
 /* Decorative Top Bar */
@@ -148,11 +151,50 @@ body {
 
 .login-content {
     padding: var(--spacing-8);
+    position: relative;
+    z-index: 10;
 }
 
 @media (min-width: 768px) {
     .login-content {
         padding: var(--spacing-10);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+    body {
+        padding: var(--spacing-3);
+    }
+    
+    .login-wrapper {
+        padding: var(--spacing-3);
+    }
+    
+    .login-content {
+        padding: var(--spacing-6);
+    }
+    
+    .login-title h1 {
+        font-size: var(--font-size-2xl);
+    }
+    
+    .form-utility {
+        flex-wrap: wrap;
+        gap: var(--spacing-2);
+    }
+    
+    .form-link {
+        font-size: var(--font-size-xs);
+    }
+    
+    .login-footer {
+        margin-top: var(--spacing-6);
+    }
+    
+    .login-footer p {
+        font-size: var(--font-size-xs);
+        line-height: 1.5;
     }
 }
 
@@ -319,6 +361,8 @@ body {
     align-items: center;
     justify-content: space-between;
     margin-top: calc(var(--spacing-2) * -1);
+    gap: var(--spacing-3);
+    flex-wrap: wrap;
 }
 
 .checkbox-group {
@@ -329,23 +373,25 @@ body {
 }
 
 .checkbox-group input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     border-radius: var(--radius-sm);
     border: 1px solid var(--color-border);
     cursor: pointer;
     accent-color: var(--color-primary);
+    flex-shrink: 0;
 }
 
-.checkbox-group label {
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
+.checkbox-group span {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-normal);
     color: var(--color-text-secondary);
     cursor: pointer;
     user-select: none;
+    line-height: 1.4;
 }
 
-.checkbox-group:hover label {
+.checkbox-group:hover span {
     color: var(--color-primary);
 }
 
@@ -421,6 +467,8 @@ body {
 .login-footer {
     text-align: center;
     margin-top: var(--spacing-8);
+    position: relative;
+    z-index: 10;
 }
 
 .login-footer p {
@@ -428,6 +476,7 @@ body {
     font-weight: var(--font-weight-medium);
     color: var(--color-text-primary);
     margin: 0;
+    line-height: 1.6;
 }
 
 .login-footer a {
@@ -435,6 +484,7 @@ body {
     font-weight: var(--font-weight-bold);
     text-decoration: none;
     margin-left: var(--spacing-1);
+    display: inline-block;
 }
 
 .login-footer a:hover {

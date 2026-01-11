@@ -685,3 +685,36 @@
   - **Code review**: Rà soát kỹ để đảm bảo không leak raw data structures
   - **Production code**: Không bao giờ có debug code (print/return raw data) trong production
   - **Defense in depth**: Kiểm tra mọi routes để đảm bảo không leak raw data
+
+---
+
+## Issue #41: Login page responsive issues - elements bị che khuất và checkbox quá lớn
+
+- **Mức độ nghiêm trọng**: 🟡 MEDIUM (UX)
+- **Mô tả**: 
+  - Một số thành phần bị che khuất trên mobile/small screens (ví dụ: "Đăng ký ngay" link)
+  - Checkbox "Ghi nhớ đăng nhập" quá lớn (16px) và label font-size/weight quá lớn, làm xấu UI
+  - Thiếu responsive design cho mobile devices
+- **Nguyên nhân**: 
+  - Z-index và overflow issues: background elements có thể che khuất content
+  - Checkbox size (16px) và label styling (font-size sm, font-weight medium) quá lớn
+  - Thiếu media queries cho mobile (< 480px)
+  - Form utility row không có flex-wrap, có thể overflow trên mobile
+- **Cách xử lý**: 
+  - **Giảm checkbox size**: Từ 16px xuống 14px
+  - **Giảm label size**: Từ font-size sm + font-weight medium xuống font-size xs + font-weight normal
+  - **Thêm responsive styles**: Media query cho mobile (< 480px) để:
+    - Giảm padding cho login-content
+    - Giảm font-size cho title và footer
+    - Thêm flex-wrap cho form-utility
+    - Đảm bảo z-index đúng cho tất cả elements
+  - **Fix z-index**: Đảm bảo login-container, login-content, login-footer có z-index đúng
+  - **Fix overflow**: Đổi overflow từ `hidden` sang `visible` cho login-container
+  - **Improve spacing**: Thêm gap và flex-wrap cho form-utility row
+- **Cách tránh lần sau**: 
+  - **Mobile-first design**: Luôn test trên mobile devices hoặc browser DevTools mobile view
+  - **Checkbox sizing**: Checkbox nên nhỏ gọn (12-14px), label nên nhỏ (xs size, normal weight)
+  - **Z-index management**: Luôn đảm bảo content có z-index cao hơn background elements
+  - **Responsive testing**: Test trên nhiều screen sizes (320px, 375px, 768px, 1024px)
+  - **Overflow handling**: Cẩn thận với overflow: hidden - có thể cắt content
+  - **Flex-wrap**: Luôn thêm flex-wrap cho flex containers có thể overflow trên mobile
