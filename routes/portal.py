@@ -488,9 +488,16 @@ def keys():
                 flash("Tier không hợp lệ", "error")
                 return redirect(url_for("portal.keys"))
             
-            # Check if user can create this tier (must match subscription)
-            if tier != current_tier:
-                flash(f"Bạn chỉ có thể tạo API key tier {current_tier}. Vui lòng nâng cấp để sử dụng tier {tier}.", "error")
+            # Check if user can create this tier
+            # User với tier cao hơn có thể tạo key của tier thấp hơn
+            # Tier hierarchy: ultra > premium > free
+            tier_hierarchy = {"free": 1, "premium": 2, "ultra": 3}
+            current_tier_level = tier_hierarchy.get(current_tier, 1)
+            requested_tier_level = tier_hierarchy.get(tier, 1)
+            
+            # User chỉ có thể tạo key với tier <= tier hiện tại
+            if requested_tier_level > current_tier_level:
+                flash(f"Bạn chỉ có thể tạo API key với tier <= {current_tier}. Vui lòng nâng cấp để sử dụng tier {tier}.", "error")
                 return redirect(url_for("portal.keys"))
             
             # Parse days_valid - ĐỪNG TIN USER INPUT (Lesson #20)

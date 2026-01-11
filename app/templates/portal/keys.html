@@ -63,9 +63,18 @@
                     <label for="tier">Tier</label>
                     <select id="tier" name="tier" required>
                         <option value="free" {% if current_tier == 'free' %}selected{% endif %}>Free (10 req/min)</option>
-                        <option value="premium" {% if current_tier == 'premium' %}selected{% endif %} {% if current_tier != 'premium' and current_tier != 'ultra' %}disabled{% endif %}>Premium (100 req/min)</option>
+                        <option value="premium" {% if current_tier == 'premium' %}selected{% endif %} {% if current_tier == 'free' %}disabled{% endif %}>Premium (100 req/min)</option>
                         <option value="ultra" {% if current_tier == 'ultra' %}selected{% endif %} {% if current_tier != 'ultra' %}disabled{% endif %}>Ultra (1000 req/min)</option>
                     </select>
+                    {% if current_tier == 'ultra' %}
+                    <p style="margin-top: 4px; color: var(--color-text-secondary); font-size: 12px;">
+                        💡 Bạn có thể tạo key với tier Ultra, Premium hoặc Free
+                    </p>
+                    {% elif current_tier == 'premium' %}
+                    <p style="margin-top: 4px; color: var(--color-text-secondary); font-size: 12px;">
+                        💡 Bạn có thể tạo key với tier Premium hoặc Free
+                    </p>
+                    {% endif %}
                 </div>
                 <div class="form-group">
                     <label for="days_valid">Số ngày hợp lệ (để trống = vĩnh viễn)</label>
@@ -75,7 +84,7 @@
             </form>
             {% if current_tier == 'free' %}
             <p style="margin-top: 12px; color: #666; font-size: 14px;">
-                💡 Bạn đang ở tier Free. <a href="#" style="color: #667eea;">Nâng cấp</a> để tạo Premium/Ultra keys.
+                💡 Bạn đang ở tier Free. <a href="{{ url_for('portal.upgrade') }}" style="color: #667eea;">Nâng cấp</a> để tạo Premium/Ultra keys.
             </p>
             {% endif %}
             <p style="margin-top: 8px; color: #666; font-size: 14px;">
