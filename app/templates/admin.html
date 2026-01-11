@@ -237,11 +237,14 @@
                             
                             <div>
                                 <label class="text-xs text-slate-400 block mb-1.5">Province Version (Optional)</label>
-                                <select id="demoProvinceVersion" class="w-full bg-surface-dark border border-slate-700 rounded-lg text-white text-sm px-3 py-2.5 focus:border-purple-500 focus:ring-1 focus:ring-purple-500">
-                                    <option value="">(mặc định)</option>
-                                    <option value="legacy_63">legacy_63</option>
-                                    <option value="current_34">current_34</option>
-                                </select>
+                                <div class="relative">
+                                    <select id="demoProvinceVersion" class="appearance-none w-full bg-surface-dark border border-slate-700 rounded-lg text-white text-sm px-3 py-2.5 pr-9 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 cursor-pointer">
+                                        <option value="">(mặc định)</option>
+                                        <option value="legacy_63">legacy_63</option>
+                                        <option value="current_34">current_34</option>
+                                    </select>
+                                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none material-symbols-outlined text-lg">expand_more</span>
+                                </div>
                             </div>
                             
                             <div>
@@ -251,7 +254,7 @@
                                 </div>
                             </div>
                             
-                            <button onclick="testApi()" class="mt-2 w-full bg-purple-600 hover:bg-purple-500 text-white font-medium py-2.5 rounded-lg transition-transform duration-150 active:scale-[0.98] flex items-center justify-center gap-2">
+                            <button type="button" onclick="testApi()" class="mt-2 w-full bg-purple-600 hover:bg-purple-500 text-white font-medium py-2.5 rounded-lg transition-transform duration-150 active:scale-[0.98] flex items-center justify-center gap-2">
                                 <span class="material-symbols-outlined text-[18px]">send</span> Send Request
                             </button>
                             
@@ -283,12 +286,12 @@
                             <div>
                                 <label class="text-xs text-slate-400 block mb-1.5">Select Tier</label>
                                 <div class="relative">
-                                    <select id="createTier" class="appearance-none w-full bg-surface-dark border border-slate-700 rounded-lg text-white text-sm px-3 py-3 focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer">
+                                    <select id="createTier" class="appearance-none w-full bg-surface-dark border border-slate-700 rounded-lg text-white text-sm px-3 py-3 pr-9 focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer">
                                         <option value="free">Free Tier (10 req/phút)</option>
                                         <option value="premium">Premium (100 req/phút)</option>
                                         <option value="ultra" selected>Ultra (1000 req/phút)</option>
                                     </select>
-                                    <span class="absolute right-3 top-3 text-slate-400 pointer-events-none material-symbols-outlined text-lg">expand_more</span>
+                                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none material-symbols-outlined text-lg">expand_more</span>
                                 </div>
                             </div>
                             <div>
