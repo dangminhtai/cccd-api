@@ -5,8 +5,18 @@ Yêu cầu header: X-Admin-Key
 from __future__ import annotations
 
 import os
+import time
 
-from flask import Blueprint, flash, g, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, current_app, flash, g, jsonify, redirect, render_template, request, url_for
+from flask_limiter.util import get_remote_address
+
+from app import limiter
+from services.admin_security import (
+    get_failed_attempts_count,
+    get_security_stats,
+    is_ip_blocked,
+    record_failed_attempt,
+)
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -44,7 +54,10 @@ def _get_request_id() -> str:
 
 @admin_bp.before_request
 def check_admin_auth():
-    """Kiểm tra Admin key trước mọi request"""
+    """
+    Kiểm tra Admin key trước mọi request
+    Bao gồm chống brute force: IP blocking, rate limiting, logging
+    """
     admin_secret = os.getenv("ADMIN_SECRET")
     if not admin_secret:
         # Nếu chưa config ADMIN_SECRET, vẫn cho phép GET /admin/ để hiển thị form nhập key
@@ -60,13 +73,66 @@ def check_admin_auth():
     if request.method == "GET" and request.endpoint == "admin.admin_dashboard":
         return None
     
+    # ===== CHỐNG BRUTE FORCE =====
+    # Lấy IP address của request
+    ip_address = get_remote_address()
+    
+    # Kiểm tra xem IP có bị block không
+    is_blocked, unblock_time = is_ip_blocked(ip_address)
+    if is_blocked:
+        remaining_seconds = int(unblock_time - time.time())
+        current_app.logger.warning(
+            f"admin_blocked_ip | request_id={_get_request_id()} | "
+            f"ip={ip_address} | endpoint={request.endpoint} | "
+            f"unblock_in={remaining_seconds}s"
+        )
+        return jsonify({
+            "error": f"IP bị tạm khóa do quá nhiều lần thử sai. Vui lòng thử lại sau {remaining_seconds} giây.",
+            "blocked_until": int(unblock_time),
+            "remaining_seconds": remaining_seconds,
+        }), 429  # 429 Too Many Requests
+    
     # Cho TẤT CẢ routes khác (API endpoints), yêu cầu admin key trong header
     provided_key = request.headers.get("X-Admin-Key")
+    
     if provided_key != admin_secret:
+        # Key sai → ghi lại failed attempt và block nếu cần
+        endpoint = request.endpoint or request.path
+        record_failed_attempt(ip_address, endpoint)
+        
+        failed_count = get_failed_attempts_count(ip_address)
+        
+        # Log failed attempt
+        current_app.logger.warning(
+            f"admin_auth_failed | request_id={_get_request_id()} | "
+            f"ip={ip_address} | endpoint={endpoint} | "
+            f"failed_count={failed_count}"
+        )
+        
+        # Delay để làm chậm brute force (exponential backoff)
+        # Delay tăng dần theo số lần failed: 0.1s, 0.2s, 0.4s, 0.8s, 1.6s
+        delay_seconds = min(0.1 * (2 ** (failed_count - 1)), 2.0)  # Max 2 seconds
+        time.sleep(delay_seconds)
+        
+        # Kiểm tra lại xem có bị block sau khi record attempt không
+        is_blocked, unblock_time = is_ip_blocked(ip_address)
+        if is_blocked:
+            remaining_seconds = int(unblock_time - time.time())
+            return jsonify({
+                "error": f"IP bị tạm khóa do quá nhiều lần thử sai. Vui lòng thử lại sau {remaining_seconds} giây.",
+                "blocked_until": int(unblock_time),
+                "remaining_seconds": remaining_seconds,
+            }), 429
+        
+        # Trả về error message (không tiết lộ thông tin về key)
         return jsonify({"error": "Unauthorized - Admin key không hợp lệ"}), 403
+    
+    # Key đúng → reset failed attempts cho IP này (nếu có)
+    # (Có thể implement reset logic nếu cần)
 
 
 @admin_bp.post("/keys/create")
+@limiter.limit("10 per minute")  # Rate limit cho create key
 def create_key():
     """
     Tạo API key mới (admin test key - không cần email)
@@ -240,7 +306,19 @@ def get_key_usage(key_prefix: str):
     })
 
 
+@admin_bp.get("/security-stats")
+@limiter.limit("10 per minute")  # Rate limit cho security stats
+def get_security_stats_endpoint():
+    """Xem thống kê bảo mật (blocked IPs, failed attempts)"""
+    stats = get_security_stats()
+    return jsonify({
+        "success": True,
+        "security": stats,
+    })
+
+
 @admin_bp.get("/stats")
+@limiter.limit("30 per minute")  # Rate limit cho admin stats
 def get_stats():
     """Thống kê tổng quan"""
     import pymysql
