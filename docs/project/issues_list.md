@@ -639,3 +639,22 @@
   - **String interpolation**: Khi đưa user input vào JavaScript strings, luôn escape special characters
   - **Test**: Verify buttons có thể click được và không có JavaScript errors trong console
   - **Alternative**: Có thể dùng event listeners thay vì inline onclick để tránh string escaping issues
+
+---
+
+## 39) Lỗi khi đổi tier do subscriptions table không có column `notes`
+
+- **Hiện tượng**: Khi admin đổi tier cho user, báo lỗi "Unknown column 'notes' in 'field list'"
+- **Nguyên nhân**: 
+  - Function `manually_change_user_tier()` trong `services/billing_service.py` INSERT vào subscriptions table với column `notes`
+  - Subscriptions table không có column `notes` (chỉ có user_id, tier, status, expires_at, payment_method, amount, currency, started_at)
+  - SQL INSERT statement include column `notes` nhưng table schema không có column này
+- **Cách xử lý**: 
+  - Xóa column `notes` khỏi INSERT statement trong `manually_change_user_tier()`
+  - Không lưu notes vào subscriptions table (notes chỉ dùng để log/audit, không cần lưu trong database)
+  - Nếu cần lưu notes, có thể log vào payment records hoặc audit log table riêng
+- **Cách tránh lần sau**: 
+  - **Khi INSERT/UPDATE database**: Luôn kiểm tra table schema trước khi thêm columns
+  - **Không giả định** columns tồn tại mà không verify schema
+  - **Test** với database schema thực tế trước khi commit
+  - **Backward compatibility**: Nếu column optional, dùng try/except hoặc check column exists trước
