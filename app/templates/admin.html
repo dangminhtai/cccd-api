@@ -1,976 +1,358 @@
-<!doctype html>
-<html lang="vi">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Admin Dashboard - CCCD API</title>
-    <style>
-      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; background: #f5f5f5; }
-      .container { max-width: 1200px; margin: 0 auto; background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-      h1 { margin-top: 0; color: #333; }
-      .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin: 24px 0; }
-      .stat-card { background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #0b57d0; }
-      .stat-card h3 { margin: 0 0 8px; font-size: 14px; color: #666; text-transform: uppercase; }
-      .stat-card .value { font-size: 32px; font-weight: 600; color: #333; }
-      .tier-stats { margin-top: 24px; }
-      .tier-stats table { width: 100%; border-collapse: collapse; }
-      .tier-stats th, .tier-stats td { padding: 12px; text-align: left; border-bottom: 1px solid #e0e0e0; }
-      .tier-stats th { background: #f8f9fa; font-weight: 600; }
-      .tier-stats tr:hover { background: #f8f9fa; }
-      .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
-      .badge-free { background: #e3f2fd; color: #1976d2; }
-      .badge-premium { background: #fff3e0; color: #f57c00; }
-      .badge-ultra { background: #f3e5f5; color: #7b1fa2; }
-      .error { color: #d32f2f; background: #ffebee; padding: 12px; border-radius: 8px; margin: 16px 0; }
-      .loading { text-align: center; padding: 40px; color: #666; }
-      .ok { color: #0a7a2f; font-weight: 600; }
-      .bad { color: #b00020; font-weight: 600; }
-      .hint { color: #555; font-size: 13px; margin-top: 10px; }
-      button { padding: 10px 16px; border: 0; border-radius: 8px; background: #0b57d0; color: white; cursor: pointer; font-size: 14px; }
-      button:hover { background: #0a4fb8; }
-      button:disabled { opacity: 0.6; cursor: not-allowed; }
-      input, select { padding: 10px; border: 1px solid #ccc; border-radius: 8px; min-width: 300px; }
-      .form-group { margin: 16px 0; }
-      label { display: block; margin-bottom: 6px; font-size: 14px; color: #555; }
-      .form-row { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; }
-      .form-row > div { flex: 1; min-width: 200px; }
-      .success { color: #2e7d32; background: #e8f5e9; padding: 12px; border-radius: 8px; margin: 16px 0; }
-      .key-display { background: #f5f5f5; padding: 16px; border-radius: 8px; margin: 16px 0; font-family: monospace; word-break: break-all; }
-      .key-display strong { color: #d32f2f; }
-      .section { margin-top: 32px; padding-top: 24px; border-top: 2px solid #e0e0e0; }
-      .section h2 { margin-top: 0; }
-      .payments-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-      .payments-table th, .payments-table td { padding: 12px; text-align: left; border-bottom: 1px solid #e0e0e0; }
-      .payments-table th { background: #f8f9fa; font-weight: 600; }
-      .payments-table tr:hover { background: #f8f9fa; }
-      .btn-approve { padding: 6px 16px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; margin-right: 8px; }
-      .btn-approve:hover { background: #218838; }
-      .btn-reject { padding: 6px 16px; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; }
-      .btn-reject:hover { background: #c82333; }
-      .btn-actions { display: flex; gap: 8px; align-items: center; }
-      .amount { font-weight: 600; color: #28a745; }
-      .user-info { color: #495057; }
-      .user-email { color: #0b57d0; font-weight: 500; }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <h1>🔐 Admin Dashboard</h1>
-
-      <div class="form-group">
-        <label>Admin Secret Key</label>
-        <input id="adminKey" type="password" placeholder="Nhập ADMIN_SECRET từ .env" />
-        <button onclick="loadStats()">Tải thống kê</button>
-      </div>
-
-      <div id="error" class="error" style="display:none;"></div>
-      <div id="loading" class="loading" style="display:none;">Đang tải...</div>
-
-      <div id="stats" style="display:none;">
-        <div class="stats-grid">
-          <div class="stat-card">
-            <h3>Requests hôm nay</h3>
-            <div class="value" id="requestsToday">0</div>
-          </div>
-        </div>
-
-        <div class="tier-stats">
-          <h2>Tổng quan theo Tier</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Tier</th>
-                <th>Tổng Keys</th>
-                <th>Keys đang hoạt động</th>
-              </tr>
-            </thead>
-            <tbody id="tierTableBody">
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="section">
-        <h2>🧪 Test API</h2>
-        <p style="color: #666; margin-bottom: 16px;">
-          Test API key trực tiếp tại đây:
-        </p>
-        
-        <!-- Security status -->
-        <div style="margin-bottom: 16px; padding: 12px; border-radius: 8px; background: {% if api_key_required %}#e8f5e9{% else %}#fff3e0{% endif %};">
-          {% if api_key_required %}
-            <strong style="color:#2e7d32;">🔐 API Key đang BẬT</strong>
-            <p style="margin:6px 0 0; font-size:13px; color:#555;">
-              Server yêu cầu API key. Mode: <code>{{ api_key_mode }}</code>
-              {% if api_key_mode == 'simple' %}
-                <br>Key hiện tại: <code>{{ configured_key }}</code>
-              {% endif %}
-            </p>
-          {% else %}
-            <strong style="color:#e65100;">🔓 API Key đang TẮT</strong>
-            <p style="margin:6px 0 0; font-size:13px; color:#555;">
-              Server chưa yêu cầu API key (mọi request đều được chấp nhận).
-            </p>
-          {% endif %}
-        </div>
-        
-        <!-- Demo form -->
-        <div class="form-group">
-          <div class="form-row">
-            <div>
-              <label>CCCD (12 số)</label>
-              <input id="demoCccd" value="079203012345" maxlength="12" pattern="[0-9]{12}" inputmode="numeric" style="min-width: 200px;" />
-            </div>
-            <div>
-              <label>province_version (tuỳ chọn)</label>
-              <select id="demoProvinceVersion" style="min-width: 200px;">
-                <option value="">(mặc định)</option>
-                <option value="legacy_63">legacy_63</option>
-                <option value="current_34">current_34</option>
-              </select>
-            </div>
-            <div>
-              <label>API Key để test</label>
-              <input id="demoApiKey" type="password" placeholder="Nhập API Key để test" style="min-width: 200px;" />
-            </div>
-            <div>
-              <button onclick="testApi()" style="margin-top: 24px;">Test Parse</button>
-            </div>
-          </div>
-        </div>
-        
-        <div id="demoError" class="error" style="display:none;"></div>
-        <div id="demoResult" style="display:none;">
-          <h3 style="margin-top: 16px;">Kết quả</h3>
-          <div class="hint">Status: <span id="demoStatus">-</span></div>
-          <pre id="demoOutput" style="background: #0b1020; color: #e7e7e7; padding: 14px; border-radius: 10px; overflow: auto; max-height: 400px;">{}</pre>
-        </div>
-      </div>
-
-      <div class="section">
-        <h2>🔑 Tạo API Key mới</h2>
-        
-        <div class="form-group">
-          <div class="form-row">
-            <div>
-              <label>Tier</label>
-              <select id="createTier">
-                <option value="free">Free (10 req/phút)</option>
-                <option value="premium">Premium (100 req/phút)</option>
-                <option value="ultra" selected>Ultra (1000 req/phút)</option>
-              </select>
-            </div>
-            <div>
-              <label>Số ngày hợp lệ (để trống = vĩnh viễn)</label>
-              <input id="createDays" type="number" placeholder="30" min="1" step="1" pattern="[0-9]+" />
-            </div>
-          </div>
-          <button onclick="createKey()">Tạo Key</button>
-        </div>
-
-        <div id="createError" class="error" style="display:none;"></div>
-        <div id="createSuccess" class="success" style="display:none;">
-          <strong>⚠️ LƯU Ý: Key chỉ hiển thị 1 lần này. Hãy copy và lưu ngay!</strong>
-          <div class="key-display" id="createdKey"></div>
-        </div>
-      </div>
-      
-      <!-- Pending Payments Section -->
-      <div class="section">
-        <h2>💰 Pending Payments - Chờ Xác Nhận</h2>
-        <div id="paymentsContainer">
-          <p style="text-align: center; color: #666; padding: 40px;">
-            Vui lòng nhập Admin Secret Key ở trên và nhấn "Tải thống kê" để xem pending payments
-          </p>
-        </div>
-      </div>
-      
-      <!-- User Management Section -->
-      <div class="section">
-        <h2>👥 Quản Lý Users</h2>
-        <p style="color: #666; margin-bottom: 16px;">
-          Danh sách users với pagination. Admin có thể tìm kiếm và thay đổi tier trực tiếp.
-        </p>
-        
-        <div class="form-group">
-          <div class="form-row" style="align-items: center;">
-            <div style="flex: 1;">
-              <label>Tìm kiếm (Email hoặc Tên)</label>
-              <input id="userSearchInput" type="text" placeholder="Nhập email hoặc tên..." style="min-width: 300px;" />
-            </div>
-            <div>
-              <button onclick="loadUsersList()">Tìm</button>
-            </div>
-          </div>
-        </div>
-        
-        <div id="usersContainer">
-          <p style="text-align: center; color: #666; padding: 40px;">
-            Vui lòng nhập Admin Secret Key ở trên và nhấn "Tải thống kê" để xem danh sách users
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <script>
-      function showError(msg) {
-        document.getElementById("error").textContent = msg;
-        document.getElementById("error").style.display = "block";
-        document.getElementById("stats").style.display = "none";
-      }
-
-      function hideError() {
-        document.getElementById("error").style.display = "none";
-      }
-
-      async function loadStats() {
-        const adminKey = document.getElementById("adminKey").value.trim();
-        if (!adminKey) {
-          showError("Vui lòng nhập Admin Secret Key");
-          return;
-        }
-
-        document.getElementById("loading").style.display = "block";
-        document.getElementById("stats").style.display = "none";
-        hideError();
-
-        try {
-          const resp = await fetch("/admin/stats", {
-            headers: { "X-Admin-Key": adminKey }
-          });
-
-          if (!resp.ok) {
-            const data = await resp.json();
-            throw new Error(data.error || `HTTP ${resp.status}`);
-          }
-
-          const data = await resp.json();
-
-          // Update requests today
-          document.getElementById("requestsToday").textContent = data.requests_today || 0;
-
-          // Update tier stats
-          const tbody = document.getElementById("tierTableBody");
-          tbody.innerHTML = "";
-
-          const tiers = data.tiers || {};
-          const tierOrder = ["free", "premium", "ultra"];
-          const tierLabels = { free: "Free", premium: "Premium", ultra: "Ultra" };
-
-          tierOrder.forEach(tier => {
-            if (tiers[tier]) {
-              const row = document.createElement("tr");
-              row.innerHTML = `
-                <td><span class="badge badge-${tier}">${tierLabels[tier]}</span></td>
-                <td>${tiers[tier].total || 0}</td>
-                <td>${tiers[tier].active || 0}</td>
-              `;
-              tbody.appendChild(row);
-            }
-          });
-
-          document.getElementById("loading").style.display = "none";
-          document.getElementById("stats").style.display = "block";
-          
-          // Load pending payments sau khi load stats thành công
-          loadPendingPayments(adminKey);
-        } catch (e) {
-          document.getElementById("loading").style.display = "none";
-          showError("Lỗi: " + e.message);
-        }
-      }
-      
-      async function loadPendingPayments(adminKey) {
-        if (!adminKey) {
-          return;
-        }
-        
-        try {
-          const resp = await fetch("/admin/payments", {
-            headers: { "X-Admin-Key": adminKey }
-          });
-          
-          if (!resp.ok) {
-            if (resp.status === 403) {
-              document.getElementById("paymentsContainer").innerHTML = 
-                '<p style="text-align: center; color: #d32f2f; padding: 40px;">❌ Admin key không hợp lệ. Vui lòng kiểm tra lại.</p>';
-            } else {
-              throw new Error(`HTTP ${resp.status}`);
-            }
-            return;
-          }
-          
-          const data = await resp.json();
-          const payments = data.payments || [];
-          
-          if (payments.length === 0) {
-            document.getElementById("paymentsContainer").innerHTML = 
-              '<p style="text-align: center; color: #666; padding: 40px;">Không có payment nào đang chờ xử lý</p>';
-            return;
-          }
-          
-          // Render payments table
-          let html = '<table class="payments-table"><thead><tr><th>Ngày</th><th>Khách hàng</th><th>Số tiền</th><th>Phương thức</th><th>Ghi chú</th><th>Thao tác</th></tr></thead><tbody>';
-          
-          payments.forEach(payment => {
-            const dateStr = payment.created_at ? new Date(payment.created_at).toLocaleString('vi-VN', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            }) : 'N/A';
-            
-            const amountStr = payment.currency === 'VND' 
-              ? new Intl.NumberFormat('vi-VN').format(payment.amount) + ' ' + payment.currency
-              : '$' + payment.amount.toFixed(2) + ' ' + payment.currency;
-            
-            html += `
-              <tr id="payment-row-${payment.id}">
-                <td>${dateStr}</td>
-                <td class="user-info">
-                  <div class="user-email">${payment.user_email || 'N/A'}</div>
-                  <div style="font-size: 12px; color: #666;">${payment.user_name || 'N/A'}</div>
-                </td>
-                <td class="amount">${amountStr}</td>
-                <td>${payment.payment_gateway || 'N/A'}</td>
-                <td>${payment.notes || '-'}</td>
-                <td>
-                  <div class="btn-actions">
-                    <button class="btn-approve" onclick="approvePayment(${payment.id})">
-                      ✅ Approve
-                    </button>
-                    <button class="btn-reject" onclick="rejectPayment(${payment.id})">
-                      ❌ Reject
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            `;
-          });
-          
-          html += '</tbody></table>';
-          document.getElementById("paymentsContainer").innerHTML = html;
-        } catch (e) {
-          document.getElementById("paymentsContainer").innerHTML = 
-            '<p style="text-align: center; color: #d32f2f; padding: 40px;">❌ Lỗi khi tải pending payments: ' + e.message + '</p>';
-        }
-      }
-
-      // Enter key to load
-      document.getElementById("adminKey").addEventListener("keypress", (e) => {
-        if (e.key === "Enter") loadStats();
-      });
-      
-      // Test API function
-      async function testApi() {
-        const cccd = document.getElementById("demoCccd").value.trim();
-        const provinceVersion = document.getElementById("demoProvinceVersion").value;
-        const apiKey = document.getElementById("demoApiKey").value.trim();
-        
-        document.getElementById("demoError").style.display = "none";
-        document.getElementById("demoResult").style.display = "none";
-        
-        const payload = {};
-        if (cccd) payload.cccd = cccd;
-        if (provinceVersion) payload.province_version = provinceVersion;
-        
-        try {
-          const headers = { "Content-Type": "application/json" };
-          if (apiKey) headers["X-API-Key"] = apiKey;
-          
-          const resp = await fetch("/v1/cccd/parse", {
-            method: "POST",
-            headers,
-            body: JSON.stringify(payload),
-          });
-          
-          const statusEl = document.getElementById("demoStatus");
-          statusEl.textContent = resp.status;
-          
-          const text = await resp.text();
-          try {
-            const json = JSON.parse(text);
-            document.getElementById("demoOutput").textContent = JSON.stringify(json, null, 2);
-            
-            if (resp.status === 200) {
-              statusEl.className = "ok";
-            } else if (resp.status === 401 || resp.status === 400) {
-              statusEl.className = "bad";
-            } else {
-              statusEl.className = "";
-            }
-          } catch {
-            document.getElementById("demoOutput").textContent = text;
-            statusEl.className = "bad";
-          }
-          
-          document.getElementById("demoResult").style.display = "block";
-        } catch (e) {
-          document.getElementById("demoError").textContent = "Lỗi: " + e.message;
-          document.getElementById("demoError").style.display = "block";
-        }
-      }
-      
-
-      // Chỉ cho phép nhập số 0-9 vào ô "Số ngày"
-      document.getElementById("createDays").addEventListener("keypress", (e) => {
-        // Cho phép: số 0-9, Backspace, Delete, Arrow keys, Tab
-        const allowed = /[0-9]|Backspace|Delete|ArrowLeft|ArrowRight|Tab/;
-        if (!allowed.test(e.key)) {
-          e.preventDefault();
-        }
-      });
-
-      // Ngăn paste text không phải số
-      document.getElementById("createDays").addEventListener("paste", (e) => {
-        e.preventDefault();
-        const paste = (e.clipboardData || window.clipboardData).getData("text");
-        const numbersOnly = paste.replace(/[^0-9]/g, "");
-        if (numbersOnly) {
-          e.target.value = numbersOnly;
-        }
-      });
-
-      async function createKey() {
-        const adminKey = document.getElementById("adminKey").value.trim();
-        const tier = document.getElementById("createTier").value;
-        const days = document.getElementById("createDays").value.trim();
-
-        if (!adminKey) {
-          showError("Vui lòng nhập Admin Secret Key trước");
-          return;
-        }
-
-        document.getElementById("createError").style.display = "none";
-        document.getElementById("createSuccess").style.display = "none";
-
-        try {
-          const body = { tier };
-          if (days) {
-            const daysNum = parseInt(days);
-            if (isNaN(daysNum) || daysNum < 1) {
-              document.getElementById("createError").textContent = "Số ngày phải là số nguyên >= 1";
-              document.getElementById("createError").style.display = "block";
-              return;
-            }
-            body.days = daysNum;
-          }
-
-          const resp = await fetch("/admin/keys/create", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Admin-Key": adminKey
+<!DOCTYPE html>
+<html class="dark" lang="vi">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>CCCD API Master Admin Dashboard</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    
+    <!-- Tailwind Config -->
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0d7ff2",
+                        "secondary": "#0ea5e9",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#0b1219",
+                        "surface-dark": "#16202a",
+                        "glass-border": "rgba(255, 255, 255, 0.08)",
+                        "glass-bg": "rgba(22, 32, 42, 0.6)",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"],
+                        "mono": ["ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "Liberation Mono", "Courier New", "monospace"],
+                    },
+                    backgroundImage: {
+                        'tech-grid': "radial-gradient(circle at center, rgba(13, 127, 242, 0.08) 0%, transparent 70%), linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)",
+                    },
+                    backgroundSize: {
+                        'tech-grid': '100% 100%, 40px 40px, 40px 40px',
+                    }
+                },
             },
-            body: JSON.stringify(body)
-          });
-
-          if (!resp.ok) {
-            const data = await resp.json();
-            throw new Error(data.error || `HTTP ${resp.status}`);
-          }
-
-          const data = await resp.json();
-          
-          // Hiển thị key
-          document.getElementById("createdKey").textContent = data.api_key;
-          document.getElementById("createSuccess").style.display = "block";
-          
-          // Reset form
-          document.getElementById("createDays").value = "";
-          
-          // Reload stats để cập nhật số lượng keys
-          loadStats();
-        } catch (e) {
-          document.getElementById("createError").textContent = "Lỗi: " + e.message;
-          document.getElementById("createError").style.display = "block";
         }
-      }
-      
-      async function approvePayment(paymentId) {
-        if (!confirm('Xác nhận approve payment này? API keys của user sẽ được extend 30 ngày.')) {
-          return;
-        }
-        
-        const adminKey = document.getElementById('adminKey').value.trim();
-        if (!adminKey) {
-          alert('Vui lòng nhập Admin Secret Key ở trên');
-          return;
-        }
-        
-        const row = document.getElementById('payment-row-' + paymentId);
-        if (!row) return;
-        
-        const btn = row.querySelector('.btn-approve');
-        const rejectBtn = row.querySelector('.btn-reject');
-        const originalText = btn.textContent;
-        btn.disabled = true;
-        rejectBtn.disabled = true;
-        btn.textContent = 'Đang xử lý...';
-        
-        try {
-          const resp = await fetch(`/admin/payments/${paymentId}/approve`, {
-            method: 'POST',
-            headers: {
-              'X-Admin-Key': adminKey
-            }
-          });
-          
-          if (resp.ok || resp.redirected) {
-            // Remove row from table
-            row.remove();
-            // Show success message
-            showMessage('✅ Đã approve payment thành công!', 'success');
-            // Reload payments if table is empty
-            const tbody = row.closest('tbody');
-            if (tbody && tbody.children.length === 0) {
-              const adminKey = document.getElementById('adminKey').value.trim();
-              loadPendingPayments(adminKey);
-            }
-          } else {
-            const data = await resp.json();
-            throw new Error(data.error || 'Lỗi khi approve payment');
-          }
-        } catch (error) {
-          alert('Lỗi: ' + error.message);
-          btn.disabled = false;
-          rejectBtn.disabled = false;
-          btn.textContent = originalText;
-        }
-      }
-      
-      async function rejectPayment(paymentId) {
-        if (!confirm('Xác nhận reject payment này? Payment sẽ bị hủy và không được xử lý.')) {
-          return;
-        }
-        
-        const adminKey = document.getElementById('adminKey').value.trim();
-        if (!adminKey) {
-          alert('Vui lòng nhập Admin Secret Key ở trên');
-          return;
-        }
-        
-        const row = document.getElementById('payment-row-' + paymentId);
-        if (!row) return;
-        
-        const btn = row.querySelector('.btn-reject');
-        const approveBtn = row.querySelector('.btn-approve');
-        const originalText = btn.textContent;
-        btn.disabled = true;
-        approveBtn.disabled = true;
-        btn.textContent = 'Đang xử lý...';
-        
-        try {
-          const resp = await fetch(`/admin/payments/${paymentId}/reject`, {
-            method: 'POST',
-            headers: {
-              'X-Admin-Key': adminKey
-            }
-          });
-          
-          if (resp.ok || resp.redirected) {
-            // Remove row from table
-            row.remove();
-            // Show success message
-            showMessage('✅ Đã reject payment thành công!', 'success');
-            // Reload payments if table is empty
-            const tbody = row.closest('tbody');
-            if (tbody && tbody.children.length === 0) {
-              const adminKey = document.getElementById('adminKey').value.trim();
-              loadPendingPayments(adminKey);
-            }
-          } else {
-            const data = await resp.json();
-            throw new Error(data.error || 'Lỗi khi reject payment');
-          }
-        } catch (error) {
-          alert('Lỗi: ' + error.message);
-          btn.disabled = false;
-          approveBtn.disabled = false;
-          btn.textContent = originalText;
-        }
-      }
-      
-      function showMessage(message, type) {
-        const div = document.createElement('div');
-        div.className = type === 'success' ? 'success' : 'error';
-        div.textContent = message;
-        div.style.marginTop = '16px';
-        const paymentsSection = document.querySelector('.section:last-child');
-        if (paymentsSection) {
-          paymentsSection.insertBefore(div, paymentsSection.firstChild);
-          setTimeout(() => div.remove(), 5000);
-        }
-      }
-      
-      let currentUsersPage = 1;
-      let currentUserSearch = '';
-      
-      async function loadUsersList(page = 1) {
-        const adminKey = document.getElementById('adminKey').value.trim();
-        if (!adminKey) {
-          document.getElementById('usersContainer').innerHTML = 
-            '<p style="text-align: center; color: #d32f2f; padding: 40px;">Vui lòng nhập Admin Secret Key ở trên</p>';
-          return;
-        }
-        
-        const search = document.getElementById('userSearchInput').value.trim() || '';
-        currentUsersPage = page;
-        currentUserSearch = search;
-        
-        try {
-          let url = `/admin/users?page=${page}&per_page=20`;
-          if (search) {
-            url += `&search=${encodeURIComponent(search)}`;
-          }
-          
-          const resp = await fetch(url, {
-            headers: { 'X-Admin-Key': adminKey }
-          });
-          
-          if (!resp.ok) {
-            if (resp.status === 403) {
-              document.getElementById('usersContainer').innerHTML = 
-                '<p style="text-align: center; color: #d32f2f; padding: 40px;">❌ Admin key không hợp lệ. Vui lòng kiểm tra lại.</p>';
-            } else {
-              const data = await resp.json();
-              throw new Error(data.error || 'Lỗi khi tải danh sách users');
-            }
-            return;
-          }
-          
-          const data = await resp.json();
-          const users = data.users || [];
-          const pagination = data.pagination || {};
-          
-          if (users.length === 0) {
-            document.getElementById('usersContainer').innerHTML = 
-              '<p style="text-align: center; color: #666; padding: 40px;">Không tìm thấy user nào</p>';
-            return;
-          }
-          
-          // Render users table
-          const tierLabels = { free: 'Free', premium: 'Premium', ultra: 'Ultra' };
-          let html = '<table class="payments-table"><thead><tr><th>ID</th><th>Email</th><th>Tên</th><th>Tier hiện tại</th><th>Status</th><th>Ngày tạo</th><th>Thao tác</th></tr></thead><tbody>';
-          
-          users.forEach(user => {
-            const currentTier = user.current_tier ? tierLabels[user.current_tier] || user.current_tier : 'Chưa có';
-            const dateStr = user.created_at ? new Date(user.created_at).toLocaleDateString('vi-VN') : 'N/A';
-            
-            // Escape quotes for JavaScript string
-            const userEmailEscaped = (user.email || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-            const userTierEscaped = (user.current_tier || 'free').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-            
-            html += `
-              <tr id="user-row-${user.id}">
-                <td>${user.id}</td>
-                <td class="user-email">${user.email}</td>
-                <td>${user.full_name || 'N/A'}</td>
-                <td><span class="badge badge-${user.current_tier || 'free'}">${currentTier}</span></td>
-                <td>${user.status}</td>
-                <td>${dateStr}</td>
-                <td>
-                  <button class="btn-approve" onclick="showChangeTierModal(${user.id}, '${userEmailEscaped}', '${userTierEscaped}')" style="margin-right: 8px;">
-                    🔄 Đổi Tier
-                  </button>
-                  <button class="btn-reject" onclick="deleteUser(${user.id}, '${userEmailEscaped}')">
-                    🗑️ Xóa
-                  </button>
-                </td>
-              </tr>
-            `;
-          });
-          
-          html += '</tbody></table>';
-          
-          // Add pagination
-          if (pagination.total_pages > 1) {
-            html += '<div style="margin-top: 24px; text-align: center;">';
-            
-            // Previous button
-            if (pagination.page > 1) {
-              html += `<button onclick="loadUsersList(${pagination.page - 1})" style="margin-right: 8px;">← Trước</button>`;
-            }
-            
-            // Page numbers
-            const startPage = Math.max(1, pagination.page - 2);
-            const endPage = Math.min(pagination.total_pages, pagination.page + 2);
-            
-            if (startPage > 1) {
-              html += `<button onclick="loadUsersList(1)" style="margin-right: 4px;">1</button>`;
-              if (startPage > 2) html += '<span style="margin: 0 4px;">...</span>';
-            }
-            
-            for (let i = startPage; i <= endPage; i++) {
-              if (i === pagination.page) {
-                html += `<button style="background: #0b57d0; margin: 0 4px; font-weight: 600;">${i}</button>`;
-              } else {
-                html += `<button onclick="loadUsersList(${i})" style="margin: 0 4px;">${i}</button>`;
-              }
-            }
-            
-            if (endPage < pagination.total_pages) {
-              if (endPage < pagination.total_pages - 1) html += '<span style="margin: 0 4px;">...</span>';
-              html += `<button onclick="loadUsersList(${pagination.total_pages})" style="margin-left: 4px;">${pagination.total_pages}</button>`;
-            }
-            
-            // Next button
-            if (pagination.page < pagination.total_pages) {
-              html += `<button onclick="loadUsersList(${pagination.page + 1})" style="margin-left: 8px;">Sau →</button>`;
-            }
-            
-            html += `<div style="margin-top: 8px; color: #666; font-size: 14px;">Trang ${pagination.page}/${pagination.total_pages} - Tổng: ${pagination.total} users</div>`;
-            html += '</div>';
-          }
-          
-          document.getElementById('usersContainer').innerHTML = html;
-          
-        } catch (error) {
-          document.getElementById('usersContainer').innerHTML = 
-            '<p style="text-align: center; color: #d32f2f; padding: 40px;">❌ Lỗi: ' + error.message + '</p>';
-        }
-      }
-      
-      function clearUserSearch() {
-        document.getElementById('userSearchInput').value = '';
-        loadUsersList(1);
-      }
-      
-      async function deleteUser(userId, userEmail) {
-        // Escape single quotes in email
-        const displayEmail = userEmail.replace(/'/g, "\\'");
-        
-        if (!confirm(`Bạn có chắc chắn muốn xóa user này?\n\nEmail: ${displayEmail}\nID: ${userId}\n\n⚠️ Hành động này không thể hoàn tác!`)) {
-          return;
-        }
-        
-        const adminKey = document.getElementById('adminKey').value.trim();
-        if (!adminKey) {
-          alert('Vui lòng nhập Admin Secret Key ở trên');
-          return;
-        }
-        
-        try {
-          const resp = await fetch(`/admin/users/${userId}/delete`, {
-            method: 'POST',
-            headers: { 
-              'X-Admin-Key': adminKey,
-              'X-Requested-With': 'XMLHttpRequest'
-            }
-          });
-          
-          const data = await resp.json();
-          
-          if (resp.ok && data.success) {
-            alert('✅ ' + (data.message || 'Đã xóa user thành công!'));
-            // Reload users list
-            loadUsersList(currentUsersPage);
-          } else {
-            throw new Error(data.error || data.message || 'Lỗi khi xóa user');
-          }
-        } catch (error) {
-          console.error('Error deleting user:', error);
-          alert('Lỗi: ' + error.message);
-        }
-      }
-      
-      function showChangeTierModal(userId, userEmail, currentTier) {
-        // Escape single quotes in email
-        userEmail = userEmail.replace(/'/g, "\\'");
-        
-        const tierInput = prompt(`Đổi tier cho user:\n${userEmail}\n\nTier hiện tại: ${currentTier || 'Chưa có'}\n\nNhập tier mới (free/premium/ultra):`, currentTier || 'free');
-        if (tierInput === null) return; // User cancelled
-        
-        const tier = tierInput.trim().toLowerCase();
-        if (!tier) {
-          alert('Tier không được để trống!');
-          return;
-        }
-        
-        if (!['free', 'premium', 'ultra'].includes(tier)) {
-          alert('Tier không hợp lệ! Phải là: free, premium, hoặc ultra');
-          return;
-        }
-        
-        const notesInput = prompt('Ghi chú (tùy chọn, để trống nếu không có):', '');
-        const notes = notesInput ? notesInput.trim() : '';
-        
-        changeUserTierDirectly(userId, tier, notes);
-      }
-      
-      async function changeUserTierDirectly(userId, targetTier, notes) {
-        const adminKey = document.getElementById('adminKey').value.trim();
-        if (!adminKey) {
-          alert('Vui lòng nhập Admin Secret Key ở trên');
-          return;
-        }
-        
-        if (!confirm(`Xác nhận đổi tier user ID ${userId} sang ${targetTier.toUpperCase()}?`)) {
-          return;
-        }
-        
-        try {
-          const formData = new FormData();
-          formData.append('user_id', userId);
-          formData.append('tier', targetTier);
-          if (notes) formData.append('notes', notes);
-          
-          const resp = await fetch('/admin/users/change-tier', {
-            method: 'POST',
-            headers: { 
-              'X-Admin-Key': adminKey,
-              'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: formData
-          });
-          
-          const data = await resp.json();
-          
-          if (resp.ok && data.success) {
-            alert('✅ ' + (data.message || 'Đã đổi tier thành công!'));
-            // Reload users list
-            loadUsersList(currentUsersPage);
-          } else {
-            throw new Error(data.error || data.message || 'Lỗi khi đổi tier');
-          }
-        } catch (error) {
-          alert('Lỗi: ' + error.message);
-        }
-      }
-      
-      // Load users list when stats are loaded
-      const originalLoadStats = loadStats;
-      loadStats = function() {
-        originalLoadStats();
-        const adminKey = document.getElementById('adminKey').value.trim();
-        if (adminKey) {
-          setTimeout(() => loadUsersList(1), 500);
-        }
-      };
-      
-      let currentUserIdForTierChange = null;
-      
-      async function searchUserForTierChange() {
-        const adminKey = document.getElementById('adminKey').value.trim();
-        const email = document.getElementById('changeTierEmail').value.trim();
-        
-        if (!adminKey) {
-          document.getElementById('changeTierError').textContent = 'Vui lòng nhập Admin Secret Key ở trên';
-          document.getElementById('changeTierError').style.display = 'block';
-          return;
-        }
-        
-        if (!email) {
-          document.getElementById('changeTierError').textContent = 'Vui lòng nhập email user';
-          document.getElementById('changeTierError').style.display = 'block';
-          return;
-        }
-        
-        document.getElementById('changeTierError').style.display = 'none';
-        document.getElementById('changeTierSuccess').style.display = 'none';
-        document.getElementById('changeTierUserInfo').style.display = 'none';
-        document.getElementById('changeTierBtn').style.display = 'none';
-        
-        try {
-          const resp = await fetch(`/admin/users/search?email=${encodeURIComponent(email)}`, {
-            headers: { 'X-Admin-Key': adminKey }
-          });
-          
-          if (!resp.ok) {
-            const data = await resp.json();
-            throw new Error(data.error || 'Không tìm thấy user');
-          }
-          
-          const data = await resp.json();
-          const user = data.user;
-          currentUserIdForTierChange = user.id;
-          
-          // Display user info
-          const tierLabels = { free: 'Free', premium: 'Premium', ultra: 'Ultra' };
-          const currentTier = user.current_tier ? tierLabels[user.current_tier] || user.current_tier : 'Chưa có';
-          
-          document.getElementById('changeTierUserDetails').innerHTML = `
-            <p><strong>ID:</strong> ${user.id}</p>
-            <p><strong>Email:</strong> ${user.email}</p>
-            <p><strong>Tên:</strong> ${user.full_name || 'N/A'}</p>
-            <p><strong>Tier hiện tại:</strong> <span class="badge badge-${user.current_tier || 'free'}">${currentTier}</span></p>
-            <p><strong>Status:</strong> ${user.status}</p>
-          `;
-          
-          document.getElementById('changeTierUserInfo').style.display = 'block';
-          document.getElementById('changeTierBtn').style.display = 'inline-block';
-          
-        } catch (error) {
-          document.getElementById('changeTierError').textContent = 'Lỗi: ' + error.message;
-          document.getElementById('changeTierError').style.display = 'block';
-        }
-      }
-      
-      async function changeUserTier() {
-        if (!currentUserIdForTierChange) {
-          alert('Vui lòng tìm user trước');
-          return;
-        }
-        
-        const adminKey = document.getElementById('adminKey').value.trim();
-        const targetTier = document.getElementById('changeTierSelect').value;
-        const notes = document.getElementById('changeTierNotes').value.trim();
-        
-        if (!adminKey) {
-          alert('Vui lòng nhập Admin Secret Key ở trên');
-          return;
-        }
-        
-        if (!confirm(`Xác nhận đổi tier user ID ${currentUserIdForTierChange} sang ${targetTier.toUpperCase()}?`)) {
-          return;
-        }
-        
-        const btn = document.getElementById('changeTierBtn');
-        const originalText = btn.textContent;
-        btn.disabled = true;
-        btn.textContent = 'Đang xử lý...';
-        
-        try {
-          const formData = new FormData();
-          formData.append('user_id', currentUserIdForTierChange);
-          formData.append('tier', targetTier);
-          if (notes) formData.append('notes', notes);
-          
-          const resp = await fetch('/admin/users/change-tier', {
-            method: 'POST',
-            headers: { 'X-Admin-Key': adminKey },
-            body: formData
-          });
-          
-          if (resp.ok || resp.redirected) {
-            document.getElementById('changeTierSuccess').textContent = '✅ Đã đổi tier thành công!';
-            document.getElementById('changeTierSuccess').style.display = 'block';
-            document.getElementById('changeTierError').style.display = 'none';
-            
-            // Reset form
-            document.getElementById('changeTierEmail').value = '';
-            document.getElementById('changeTierNotes').value = '';
-            document.getElementById('changeTierUserInfo').style.display = 'none';
-            document.getElementById('changeTierBtn').style.display = 'none';
-            currentUserIdForTierChange = null;
-            
-            // Reload after 2 seconds
-            setTimeout(() => {
-              window.location.reload();
-            }, 2000);
-          } else {
-            const text = await resp.text();
-            throw new Error('Lỗi khi đổi tier');
-          }
-        } catch (error) {
-          document.getElementById('changeTierError').textContent = 'Lỗi: ' + error.message;
-          document.getElementById('changeTierError').style.display = 'block';
-          btn.disabled = false;
-          btn.textContent = originalText;
-        }
-      }
     </script>
-  </body>
+    
+    <style>
+        /* Custom scrollbar for dark theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b1219;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1f2d3d;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #314d68;
+        }
+        
+        .glass-panel {
+            background: rgba(22, 32, 42, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .neon-glow:focus-within {
+            box-shadow: 0 0 15px rgba(13, 127, 242, 0.3);
+            border-color: #0d7ff2;
+        }
+        
+        /* Material Symbols */
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display antialiased text-slate-900 dark:text-white min-h-screen flex flex-col overflow-x-hidden selection:bg-primary selection:text-white">
+    <!-- Background Grid Effect -->
+    <div class="fixed inset-0 z-0 pointer-events-none bg-tech-grid opacity-50"></div>
+    
+    <div class="relative z-10 flex h-full grow flex-col">
+        <!-- Main Container -->
+        <div class="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <!-- 1. Top Section -->
+            <header class="flex flex-col lg:flex-row gap-6 lg:items-end justify-between mb-8 pb-6 border-b border-glass-border">
+                <div class="flex flex-col gap-2">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-primary text-4xl">shield_person</span>
+                        <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-white">
+                            Admin Dashboard
+                        </h1>
+                    </div>
+                    <p class="text-slate-400 text-sm md:text-base font-light">CCCD API Service • Master Control Panel</p>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row gap-4 items-end sm:items-center">
+                    <!-- Secret Key Field -->
+                    <div class="relative w-full sm:w-80 group">
+                        <label class="block text-xs font-medium text-slate-400 mb-1.5 ml-1">Admin Secret Key</label>
+                        <div class="flex items-center w-full rounded-lg bg-surface-dark border border-slate-700 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all neon-glow overflow-hidden">
+                            <span class="pl-3 text-slate-500">
+                                <span class="material-symbols-outlined text-xl">vpn_key</span>
+                            </span>
+                            <input id="adminKey" class="w-full bg-transparent border-none text-white placeholder-slate-600 focus:ring-0 text-sm py-2.5 px-3" placeholder="Nhập ADMIN_SECRET từ .env" type="password"/>
+                        </div>
+                    </div>
+                    
+                    <!-- Download Stats Button -->
+                    <button onclick="loadStats()" class="h-[42px] px-5 bg-primary hover:bg-blue-600 text-white text-sm font-semibold rounded-lg flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20 active:scale-95 w-full sm:w-auto justify-center mt-6 sm:mt-0">
+                        <span class="material-symbols-outlined text-[20px]">download</span>
+                        Tải thống kê
+                    </button>
+                </div>
+            </header>
+            
+            <!-- Error Message -->
+            <div id="error" class="hidden bg-red-500/20 text-red-400 border border-red-500/30 px-4 py-3 rounded-lg mb-6"></div>
+            
+            <!-- Loading Indicator -->
+            <div id="loading" class="hidden text-center py-10 text-slate-400">
+                <span class="material-symbols-outlined text-4xl animate-spin">hourglass_empty</span>
+                <p class="mt-2">Đang tải...</p>
+            </div>
+            
+            <!-- 2. Overview Stats & Tier Table -->
+            <section id="stats" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
+                <!-- Stats Cards -->
+                <div class="lg:col-span-4 flex flex-col gap-4">
+                    <!-- Card 1: Requests Today -->
+                    <div class="glass-panel rounded-xl p-6 flex flex-col justify-between h-full relative overflow-hidden group">
+                        <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <span class="material-symbols-outlined text-8xl text-white">insights</span>
+                        </div>
+                        <div>
+                            <p class="text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">Requests hôm nay</p>
+                            <div class="flex items-baseline gap-3">
+                                <h3 class="text-4xl font-bold text-white" id="requestsToday">0</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tier Overview Table -->
+                <div class="lg:col-span-8 glass-panel rounded-xl flex flex-col">
+                    <div class="px-6 py-4 border-b border-glass-border flex justify-between items-center bg-surface-dark/30 rounded-t-xl">
+                        <h3 class="text-white font-semibold flex items-center gap-2">
+                            <span class="material-symbols-outlined text-slate-400">table_chart</span> 
+                            Tổng quan theo Tier
+                        </h3>
+                    </div>
+                    <div class="overflow-x-auto flex-1">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-surface-dark/50 text-slate-400 font-medium uppercase text-xs">
+                                <tr>
+                                    <th class="px-6 py-3">Tier Name</th>
+                                    <th class="px-6 py-3">Tổng Keys</th>
+                                    <th class="px-6 py-3">Keys đang hoạt động</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tierTableBody" class="divide-y divide-glass-border">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 3 & 4. Tools Section: Test API & Create Key -->
+            <section class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+                <!-- 3. Test API Module -->
+                <div class="glass-panel rounded-xl flex flex-col h-full overflow-hidden border-t-4 border-t-purple-500">
+                    <div class="px-6 py-4 bg-surface-dark/40 border-b border-glass-border flex justify-between items-center">
+                        <h3 class="text-white font-bold text-lg flex items-center gap-2">
+                            <span class="material-symbols-outlined text-purple-400">science</span>
+                            Test API
+                        </h3>
+                        <span class="px-2 py-0.5 rounded text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/30">SANDBOX</span>
+                    </div>
+                    
+                    <div class="p-6 flex flex-col lg:flex-row gap-6 h-full">
+                        <!-- Inputs -->
+                        <div class="flex-1 flex flex-col gap-4">
+                            <!-- Security status -->
+                            <div class="mb-4 p-4 rounded-lg {% if api_key_required %}bg-emerald-500/10 border border-emerald-500/30{% else %}bg-amber-500/10 border border-amber-500/30{% endif %}">
+                                {% if api_key_required %}
+                                    <strong class="text-emerald-400 text-sm">🔐 API Key đang BẬT</strong>
+                                    <p class="text-xs text-slate-400 mt-1">
+                                        Server yêu cầu API key. Mode: <code class="text-slate-300">{{ api_key_mode }}</code>
+                                        {% if api_key_mode == 'simple' %}
+                                            <br>Key hiện tại: <code class="text-slate-300">{{ configured_key }}</code>
+                                        {% endif %}
+                                    </p>
+                                {% else %}
+                                    <strong class="text-amber-400 text-sm">🔓 API Key đang TẮT</strong>
+                                    <p class="text-xs text-slate-400 mt-1">
+                                        Server chưa yêu cầu API key (mọi request đều được chấp nhận).
+                                    </p>
+                                {% endif %}
+                            </div>
+                            
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1.5">CCCD Number</label>
+                                <input id="demoCccd" class="w-full bg-surface-dark border border-slate-700 rounded-lg text-white text-sm px-3 py-2.5 focus:border-purple-500 focus:ring-1 focus:ring-purple-500" placeholder="001099002..." type="text" value="079203012345" maxlength="12" pattern="[0-9]{12}" inputmode="numeric"/>
+                            </div>
+                            
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1.5">Province Version (Optional)</label>
+                                <select id="demoProvinceVersion" class="w-full bg-surface-dark border border-slate-700 rounded-lg text-white text-sm px-3 py-2.5 focus:border-purple-500 focus:ring-1 focus:ring-purple-500">
+                                    <option value="">(mặc định)</option>
+                                    <option value="legacy_63">legacy_63</option>
+                                    <option value="current_34">current_34</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1.5">API Key để test</label>
+                                <div class="relative">
+                                    <input id="demoApiKey" class="w-full bg-surface-dark border border-slate-700 rounded-lg text-white text-sm px-3 py-2.5 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 pr-9" type="password" placeholder="Nhập API Key để test"/>
+                                </div>
+                            </div>
+                            
+                            <button onclick="testApi()" class="mt-2 bg-purple-600 hover:bg-purple-500 text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-[18px]">send</span> Send Request
+                            </button>
+                            
+                            <div id="demoError" class="hidden bg-red-500/20 text-red-400 border border-red-500/30 px-4 py-3 rounded-lg mt-2"></div>
+                        </div>
+                        
+                        <!-- Console Output -->
+                        <div id="demoResult" class="hidden flex-1 bg-[#0d1117] rounded-lg border border-slate-800 p-4 font-mono text-xs overflow-y-auto max-h-[250px] shadow-inner">
+                            <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-800">
+                                <span class="text-slate-500">Output Console</span>
+                                <span id="demoStatus" class="text-emerald-500">-</span>
+                            </div>
+                            <pre id="demoOutput" class="text-slate-300 leading-relaxed whitespace-pre-wrap">{}</pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 4. Create Key Module -->
+                <div class="glass-panel rounded-xl flex flex-col h-full overflow-hidden border-t-4 border-t-primary">
+                    <div class="px-6 py-4 bg-surface-dark/40 border-b border-glass-border">
+                        <h3 class="text-white font-bold text-lg flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">vpn_key_alert</span>
+                            Tạo API Key Mới
+                        </h3>
+                    </div>
+                    
+                    <div class="p-6 flex flex-col h-full justify-between">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1.5">Select Tier</label>
+                                <div class="relative">
+                                    <select id="createTier" class="appearance-none w-full bg-surface-dark border border-slate-700 rounded-lg text-white text-sm px-3 py-3 focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer">
+                                        <option value="free">Free Tier (10 req/phút)</option>
+                                        <option value="premium">Premium (100 req/phút)</option>
+                                        <option value="ultra" selected>Ultra (1000 req/phút)</option>
+                                    </select>
+                                    <span class="absolute right-3 top-3 text-slate-400 pointer-events-none material-symbols-outlined text-lg">expand_more</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1.5">Validity (Days)</label>
+                                <div class="relative">
+                                    <input id="createDays" class="w-full bg-surface-dark border border-slate-700 rounded-lg text-white text-sm px-3 py-3 focus:border-primary focus:ring-1 focus:ring-primary" type="number" placeholder="30" min="1" step="1" pattern="[0-9]+"/>
+                                    <span class="absolute right-3 top-3 text-slate-500 text-xs mt-0.5">days</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button onclick="createKey()" class="w-full bg-gradient-to-r from-primary to-blue-600 hover:from-blue-500 hover:to-blue-500 text-white font-bold py-3 rounded-lg shadow-lg shadow-blue-500/20 transition-all transform active:scale-[0.98] flex items-center justify-center gap-2 mb-6">
+                            <span class="material-symbols-outlined">auto_fix_high</span> Generate Key
+                        </button>
+                        
+                        <div id="createError" class="hidden bg-red-500/20 text-red-400 border border-red-500/30 px-4 py-3 rounded-lg mb-4"></div>
+                        
+                        <!-- Result Area -->
+                        <div id="createSuccess" class="hidden mt-auto bg-[#0b1219] border border-primary/50 rounded-lg p-4 relative group">
+                            <div class="absolute -inset-0.5 bg-gradient-to-r from-primary to-cyan-400 rounded-lg blur opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+                            <div class="relative flex flex-col gap-2">
+                                <span class="text-xs text-primary font-medium uppercase tracking-wider">⚠️ LƯU Ý: Key chỉ hiển thị 1 lần này. Hãy copy và lưu ngay!</span>
+                                <div class="flex items-center gap-2 justify-between bg-black/40 rounded px-3 py-2 border border-white/5">
+                                    <code id="createdKey" class="text-emerald-400 font-mono text-sm tracking-wide break-all"></code>
+                                    <button onclick="navigator.clipboard.writeText(document.getElementById('createdKey').textContent)" class="text-slate-400 hover:text-white transition-colors" title="Copy to clipboard">
+                                        <span class="material-symbols-outlined text-lg">content_copy</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 5. Management Tables (Tabs) -->
+            <section class="glass-panel rounded-xl overflow-hidden mb-10">
+                <!-- Tabs Header -->
+                <div class="flex border-b border-glass-border overflow-x-auto">
+                    <button id="paymentsTab" onclick="switchTab('payments')" class="px-6 py-4 text-sm font-medium text-white border-b-2 border-primary bg-primary/5 flex items-center gap-2 whitespace-nowrap">
+                        <span class="material-symbols-outlined text-[18px]">payments</span> Pending Payments
+                    </button>
+                    <button id="usersTab" onclick="switchTab('users')" class="px-6 py-4 text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-colors border-b-2 border-transparent flex items-center gap-2 whitespace-nowrap">
+                        <span class="material-symbols-outlined text-[18px]">group</span> Quản Lý Users
+                    </button>
+                    <div class="flex-1 flex items-center justify-end px-4 gap-2">
+                        <div class="relative hidden sm:block">
+                            <span class="absolute left-3 top-2.5 text-slate-500 material-symbols-outlined text-lg">search</span>
+                            <input id="userSearchInput" class="bg-surface-dark border border-slate-700 rounded-full pl-9 pr-4 py-1.5 text-sm text-white focus:ring-1 focus:ring-primary focus:border-primary w-48 transition-all focus:w-64" placeholder="Search users..." type="text"/>
+                        </div>
+                        <button onclick="loadUsersList()" class="p-2 text-slate-400 hover:text-white rounded-lg border border-slate-700 hover:bg-slate-800">
+                            <span class="material-symbols-outlined text-lg">search</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Payments Content -->
+                <div id="paymentsContent">
+                    <div id="paymentsContainer" class="p-6">
+                        <p class="text-center text-slate-400 py-10">
+                            Vui lòng nhập Admin Secret Key ở trên và nhấn "Tải thống kê" để xem pending payments
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Users Content -->
+                <div id="usersContent" class="hidden">
+                    <div id="usersContainer" class="p-6">
+                        <p class="text-center text-slate-400 py-10">
+                            Vui lòng nhập Admin Secret Key ở trên và nhấn "Tải thống kê" để xem danh sách users
+                        </p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+    
+    <!-- External JavaScript -->
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+</body>
 </html>
-
