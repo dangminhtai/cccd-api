@@ -718,3 +718,33 @@
   - **Responsive testing**: Test trên nhiều screen sizes (320px, 375px, 768px, 1024px)
   - **Overflow handling**: Cẩn thận với overflow: hidden - có thể cắt content
   - **Flex-wrap**: Luôn thêm flex-wrap cho flex containers có thể overflow trên mobile
+
+---
+
+## Issue #42: CSS mất sau khi chuyển sang Tailwind CDN - CSP chặn external scripts
+
+- **Mức độ nghiêm trọng**: 🔴 CRITICAL (UI/UX)
+- **Mô tả**: 
+  - Sau khi chuyển login page sang dùng Tailwind CSS CDN, toàn bộ CSS bị mất
+  - Trang login hiển thị không có style, chỉ có HTML thuần
+  - Background, colors, spacing, fonts đều không hiển thị
+- **Nguyên nhân**: 
+  - CSP (Content Security Policy) header trong `app/__init__.py` chỉ cho phép scripts từ `'self'` và `'unsafe-inline'`
+  - Tailwind CSS CDN (`https://cdn.tailwindcss.com`) bị CSP chặn vì không có trong `script-src` whitelist
+  - Tailwind CDN cần load script để generate CSS, nếu script bị chặn thì CSS không được apply
+- **Cách xử lý**: 
+  - **Cập nhật CSP header**: Thêm `https://cdn.tailwindcss.com` vào `script-src` directive:
+    ```python
+    script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com
+    ```
+  - **Thêm Tailwind CDN vào style-src**: Nếu Tailwind inject styles, cần thêm vào `style-src`:
+    ```python
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com
+    ```
+  - **Verify CSP**: Test lại để đảm bảo Tailwind script load được (check browser console)
+- **Cách tránh lần sau**: 
+  - **Kiểm tra CSP trước khi dùng CDN**: Khi thêm external CDN (Tailwind, Bootstrap, jQuery...), luôn kiểm tra CSP whitelist
+  - **Browser console**: Luôn check browser console khi CSS/JS không load - CSP violations sẽ hiển thị ở đó
+  - **CSP cho CDN**: Luôn thêm CDN domain vào cả `script-src` và `style-src` nếu cần
+  - **Test after change**: Sau khi thay đổi CSP, luôn test lại để đảm bảo external resources load được
+  - **Document CSP changes**: Ghi lại các CDN domains được whitelist trong CSP để dễ maintain
