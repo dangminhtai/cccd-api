@@ -1,198 +1,564 @@
-{% extends "base.html" %}
-
-{% block title %}API Keys - CCCD API{% endblock %}
-
-{% block extra_css %}
-<style>
-    .create-form { display: flex; gap: 12px; align-items: flex-end; }
-    .form-group { flex: 1; }
-    .form-group select, .form-group input[type="number"] { width: 100%; }
-    .keys-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    .keys-table th, .keys-table td { padding: 12px; text-align: left; border-bottom: 1px solid var(--color-border); }
-    .keys-table th { background: var(--color-bg-secondary); font-weight: 600; }
-    .keys-table tr:hover { background: var(--color-bg-hover); }
-    .new-key-modal { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); max-width: 600px; margin: 40px auto; }
-    .new-key-box { background: var(--color-bg-secondary); padding: 20px; border-radius: 8px; margin: 20px 0; font-family: monospace; word-break: break-all; border: 2px dashed var(--color-primary); }
-    .form-error { color: var(--color-error-text); font-size: 12px; margin-top: 4px; }
-    input.error { border-color: var(--color-error-border) !important; }
-    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite; }
-</style>
-{% endblock %}
-
-{% block content %}
-    <div class="container">
+<!DOCTYPE html>
+<html class="dark" lang="vi">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>CCCD API Keys Management</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    
+    <!-- Tailwind Config -->
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#667fea",
+                        "electric-blue": "#3b82f6",
+                        "electric-purple": "#8b5cf6",
+                        "navy-deep": "#101628",
+                        "navy-card": "rgba(255, 255, 255, 0.08)",
+                        "glass-border": "rgba(255, 255, 255, 0.1)",
+                        "text-light": "#e2e8f0",
+                        "text-dim": "#94a3b8",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "3xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    
+    <style>
+        /* Material Symbols font configuration */
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        body {
+            background-color: #101628;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(102, 127, 234, 0.15) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+        
+        .bg-icon {
+            position: fixed;
+            opacity: 0.05;
+            color: white;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        .bg-icon-1 { top: 15%; left: 5%; transform: rotate(-15deg); font-size: 64px; }
+        .bg-icon-2 { bottom: 20%; right: 10%; transform: rotate(10deg); font-size: 80px; }
+        .bg-icon-3 { top: 30%; right: 25%; transform: rotate(5deg); font-size: 48px; }
+        
+        .glass-header {
+            background: rgba(16, 22, 40, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        
+        .dashboard-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(8px);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        }
+        
+        .dashboard-card:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+        
+        .glass-input {
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .glass-input:focus {
+            background-color: rgba(255, 255, 255, 0.08);
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+            outline: none;
+        }
+        
+        .nav-item-active {
+            background: linear-gradient(135deg, #667fea 0%, #3b82f6 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav-item {
+            color: #94a3b8;
+            transition: all 0.2s;
+        }
+        
+        .nav-item:hover {
+            color: #ffffff;
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        .warning-banner {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            backdrop-filter: blur(8px);
+            color: #fbbf24;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.05);
+        }
+        
+        .glass-table th {
+            background-color: rgba(255, 255, 255, 0.03);
+            color: #94a3b8;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+        
+        .glass-table td {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: #e2e8f0;
+        }
+        
+        .glass-table tr:hover td {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+        
+        .glass-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        .modal-animate {
+            animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        /* Fix scrollbar issue */
+        html {
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        
+        body {
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        /* Toast notifications for dark theme */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.25rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            z-index: 9999;
+            animation: slideIn 0.3s ease;
+            max-width: 400px;
+            word-wrap: break-word;
+        }
+        
+        .toast-success {
+            background: rgba(16, 185, 129, 0.2);
+            color: #6ee7b7;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        
+        .toast-error {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        
+        .toast-warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+        
+        .toast-info {
+            background: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="font-display min-h-screen flex flex-col text-text-light relative overflow-x-hidden">
+    <!-- Background Icons -->
+    <span class="material-symbols-outlined bg-icon bg-icon-1">vpn_key</span>
+    <span class="material-symbols-outlined bg-icon bg-icon-2">data_object</span>
+    <span class="material-symbols-outlined bg-icon bg-icon-3">lock</span>
+    
+    <!-- Navigation Header -->
+    <nav class="glass-header sticky top-0 z-50 w-full px-6 py-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-10">
+                <a class="flex items-center gap-2 group" href="{{ url_for('portal.dashboard') }}">
+                    <div class="relative w-8 h-8 flex items-center justify-center bg-gradient-to-br from-primary to-electric-blue rounded-lg shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
+                        <span class="material-symbols-outlined text-white text-[20px]">rocket_launch</span>
+                    </div>
+                    <span class="text-xl font-bold text-white tracking-tight">CCCD API</span>
+                </a>
+                <div class="hidden md:flex items-center gap-2">
+                    <a class="nav-item px-5 py-2 rounded-lg text-sm font-medium transition-all" href="{{ url_for('portal.dashboard') }}">Dashboard</a>
+                    <a class="nav-item-active px-5 py-2 rounded-lg text-sm font-medium" href="{{ url_for('portal.keys') }}">API Keys</a>
+                    <a class="nav-item px-5 py-2 rounded-lg text-sm font-medium" href="{{ url_for('portal.usage') }}">Usage</a>
+                    <a class="nav-item px-5 py-2 rounded-lg text-sm font-medium" href="{{ url_for('portal.billing') }}">Billing</a>
+                    <a class="nav-item px-5 py-2 rounded-lg text-sm font-medium" href="{{ url_for('portal.upgrade') }}">Upgrade</a>
+                </div>
+            </div>
+            <div class="flex items-center gap-6">
+                <span class="hidden lg:block text-sm font-medium text-slate-400">
+                    Xin chào, <span class="font-bold text-white">{{ user.full_name }}</span>
+                </span>
+                <a href="{{ url_for('portal.logout') }}" class="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/10 hover:text-white transition-all shadow-sm">
+                    Đăng xuất
+                </a>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <main class="flex-grow w-full max-w-7xl mx-auto px-6 py-10 relative z-10" style="overflow-y: auto; height: calc(100vh - 80px);">
+        <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                <div class="flash-messages">
+                <div class="mb-6">
                     {% for category, message in messages %}
-                        <div class="flash flash-{{ category }}">{{ message }}</div>
+                        <div class="toast toast-{{ category }}">{{ message }}</div>
                     {% endfor %}
                 </div>
             {% endif %}
         {% endwith %}
         
-        {% if new_api_key %}
-        <div class="section new-key-modal">
-            <h3>🎉 API Key mới đã được tạo!</h3>
-            <p style="color: #dc3545; font-weight: 600; margin-bottom: 10px;">⚠️ Lưu ý: Key này chỉ hiển thị 1 lần. Vui lòng copy và lưu lại ngay!</p>
-            <div class="new-key-box" id="new-key-box">{{ new_api_key }}</div>
-            <button class="btn copy-btn" onclick="copyKey()">📋 Copy Key</button>
-            <button class="btn btn-secondary" onclick="closeNewKeyModal()" style="margin-left: 10px;">Đóng</button>
+        <!-- Warning Banner for Email Verification -->
+        {% if not email_verified %}
+        <div class="mb-8 p-4 warning-banner rounded-xl flex items-center gap-3 shadow-sm">
+            <span class="material-symbols-outlined text-amber-400">warning</span>
+            <span class="text-sm font-medium text-amber-100">Tài khoản của bạn chưa được xác thực email. Vui lòng kiểm tra hộp thư đến.</span>
+            <a href="{{ url_for('portal.resend_verification') }}" class="ml-auto text-sm font-bold text-amber-400 hover:text-amber-300 underline decoration-2 underline-offset-2">Gửi lại email</a>
         </div>
         {% endif %}
         
-        <div class="section">
-            <h2>Tạo API Key mới</h2>
-            
-            {% if not email_verified %}
-            <div style="padding: 16px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 6px; margin-bottom: 20px;">
-                <strong>⚠️ Email chưa được xác thực</strong>
-                <p style="margin: 8px 0 0; color: #856404;">
-                    Vui lòng xác thực email trước khi tạo API key. 
-                    Kiểm tra email hoặc 
-                    <a href="{{ url_for('portal.resend_verification') }}" style="color: #0b57d0; text-decoration: underline;">
-                        gửi lại email xác thực
-                    </a>
-                </p>
-            </div>
-            {% endif %}
-            
-            <form method="POST" action="{{ url_for('portal.keys') }}" class="create-form" {% if not email_verified %}onsubmit="window.showToast('Vui lòng xác thực email trước khi tạo API key', 'warning'); return false;"{% endif %}>
-                <input type="hidden" name="action" value="create">
-                <div class="form-group">
-                    <label for="tier">Tier</label>
-                    <select id="tier" name="tier" required>
-                        <option value="free" {% if current_tier == 'free' %}selected{% endif %}>Free (10 req/min)</option>
-                        <option value="premium" {% if current_tier == 'premium' %}selected{% endif %} {% if current_tier == 'free' %}disabled{% endif %}>Premium (100 req/min)</option>
-                        <option value="ultra" {% if current_tier == 'ultra' %}selected{% endif %} {% if current_tier != 'ultra' %}disabled{% endif %}>Ultra (1000 req/min)</option>
-                    </select>
-                    {% if current_tier == 'ultra' %}
-                    <p style="margin-top: 4px; color: var(--color-text-secondary); font-size: 12px;">
-                        💡 Bạn có thể tạo key với tier Ultra, Premium hoặc Free
-                    </p>
-                    {% elif current_tier == 'premium' %}
-                    <p style="margin-top: 4px; color: var(--color-text-secondary); font-size: 12px;">
-                        💡 Bạn có thể tạo key với tier Premium hoặc Free
-                    </p>
+        <!-- Glass Panel Container -->
+        <div class="glass-panel rounded-2xl p-1 shadow-2xl shadow-blue-900/10">
+            <div class="bg-navy-deep/40 rounded-xl p-6 md:p-8 space-y-8">
+                <!-- Create New Key Section -->
+                <div class="space-y-4">
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                        <span class="material-symbols-outlined text-electric-blue">add_circle</span>
+                        Tạo API Key mới
+                    </h2>
+                    <div class="dashboard-card p-6 md:p-8 border border-white/10">
+                        <form method="POST" action="{{ url_for('portal.keys') }}" {% if not email_verified %}onsubmit="showToast('Vui lòng xác thực email trước khi tạo API key', 'warning'); return false;"{% endif %}>
+                            <input type="hidden" name="action" value="create">
+                            <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
+                                <div class="md:col-span-4 space-y-2">
+                                    <label class="text-sm font-medium text-slate-300 ml-1">Tier</label>
+                                    <div class="relative">
+                                        <select id="tier" name="tier" class="glass-input w-full rounded-lg py-2.5 pl-4 pr-10 text-sm appearance-none cursor-pointer" required>
+                                            <option value="free" {% if current_tier == 'free' %}selected{% endif %}>Free (10 req/min)</option>
+                                            <option value="premium" {% if current_tier == 'premium' %}selected{% endif %} {% if current_tier == 'free' %}disabled{% endif %}>Premium (100 req/min)</option>
+                                            <option value="ultra" {% if current_tier == 'ultra' %}selected{% endif %} {% if current_tier != 'ultra' %}disabled{% endif %}>Ultra (1000 req/min)</option>
+                                        </select>
+                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+                                            <span class="material-symbols-outlined text-sm">expand_more</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="md:col-span-5 space-y-2">
+                                    <label class="text-sm font-medium text-slate-300 ml-1">
+                                        Số ngày hợp lệ <span class="text-slate-500 font-normal">(để trống = vĩnh viễn)</span>
+                                    </label>
+                                    <input type="number" id="days_valid" name="days_valid" min="1" step="1" placeholder="Ví dụ: 30" class="glass-input w-full rounded-lg py-2.5 px-4 text-sm placeholder-slate-600"/>
+                                </div>
+                                <div class="md:col-span-3">
+                                    <button type="submit" class="w-full py-2.5 bg-electric-blue hover:bg-blue-600 text-white font-medium rounded-lg shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2" {% if not email_verified %}disabled style="opacity: 0.6; cursor: not-allowed;"{% endif %}>
+                                        <span class="material-symbols-outlined text-[20px]">key</span>
+                                        Tạo API Key
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                        <div class="mt-4 flex items-start gap-2">
+                            <span class="material-symbols-outlined text-yellow-500 text-sm mt-0.5">lightbulb</span>
+                            <p class="text-xs text-slate-500 leading-relaxed">
+                                Để trống "Số ngày hợp lệ" nếu muốn key vĩnh viễn. Nhập số ngày (ví dụ: 30) để key tự động hết hạn sau N ngày.
+                            </p>
+                        </div>
+                        {% if current_tier == 'ultra' %}
+                        <p class="text-xs text-slate-500 mt-2 ml-6">
+                            💡 Bạn có thể tạo key với tier Ultra, Premium hoặc Free
+                        </p>
+                        {% elif current_tier == 'premium' %}
+                        <p class="text-xs text-slate-500 mt-2 ml-6">
+                            💡 Bạn có thể tạo key với tier Premium hoặc Free
+                        </p>
+                        {% elif current_tier == 'free' %}
+                        <p class="text-xs text-slate-500 mt-2 ml-6">
+                            💡 Bạn đang ở tier Free. <a href="{{ url_for('portal.upgrade') }}" class="text-electric-blue hover:underline">Nâng cấp</a> để tạo Premium/Ultra keys.
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- API Keys List Section -->
+                <div class="space-y-4">
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                        <span class="material-symbols-outlined text-electric-blue">list</span>
+                        Danh sách API Keys
+                    </h2>
+                    {% if api_keys %}
+                    <div class="dashboard-card overflow-hidden border border-white/10">
+                        <div class="overflow-x-auto">
+                            <table class="w-full glass-table">
+                                <thead>
+                                    <tr>
+                                        <th class="px-6 py-4 text-left">Label</th>
+                                        <th class="px-6 py-4 text-left">Key Prefix</th>
+                                        <th class="px-6 py-4 text-left">Tier</th>
+                                        <th class="px-6 py-4 text-left">Trạng thái</th>
+                                        <th class="px-6 py-4 text-left">Ngày tạo</th>
+                                        <th class="px-6 py-4 text-left">Hết hạn</th>
+                                        <th class="px-6 py-4 text-center">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-white/5">
+                                    {% for key in api_keys %}
+                                    <tr data-key-id="{{ key.id }}" class="{% if not key.active %}bg-white/[0.02]{% endif %}">
+                                        <td class="px-6 py-4">
+                                            <span class="key-label-display" data-key-id="{{ key.id }}">
+                                                {% if key.label %}
+                                                <div class="group flex items-center gap-2 cursor-pointer">
+                                                    <span class="text-sm text-white">{{ key.label }}</span>
+                                                    <span class="material-symbols-outlined text-slate-500 text-[14px] opacity-0 group-hover:opacity-100 transition-opacity">edit</span>
+                                                </div>
+                                                {% else %}
+                                                <div class="group flex items-center gap-2 cursor-pointer">
+                                                    <span class="text-sm text-slate-400 italic">(Không có label)</span>
+                                                    <span class="material-symbols-outlined text-slate-600 text-[14px] opacity-0 group-hover:opacity-100 transition-opacity">edit</span>
+                                                </div>
+                                                {% endif %}
+                                            </span>
+                                            <div class="key-label-form" data-key-id="{{ key.id }}" style="display: none;">
+                                                <div class="flex items-center gap-2">
+                                                    <input type="text" class="label-input glass-input w-32 py-1 px-2 rounded text-xs" data-key-id="{{ key.id }}" value="{{ key.label or '' }}" placeholder="Nhập label..." maxlength="100"/>
+                                                    <button type="button" class="save-label-btn text-xs bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 rounded transition-colors" data-key-id="{{ key.id }}">Lưu</button>
+                                                    <button type="button" class="cancel-label-edit text-xs bg-transparent border border-white/10 hover:bg-white/5 text-slate-400 px-2 py-1 rounded transition-colors" data-key-id="{{ key.id }}">Hủy</button>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 font-mono text-xs text-slate-400">{{ key.key_prefix }}...</td>
+                                        <td class="px-6 py-4">
+                                            {% if key.tier == 'ultra' %}
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20 uppercase tracking-wide shadow-[0_0_8px_rgba(168,85,247,0.1)]">
+                                                Ultra
+                                            </span>
+                                            {% elif key.tier == 'premium' %}
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 uppercase tracking-wide">
+                                                Premium
+                                            </span>
+                                            {% else %}
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-500/20 text-slate-400 border border-slate-500/30 uppercase tracking-wide">
+                                                Free
+                                            </span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            {% if key.expired %}
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                                                <span class="text-xs text-slate-400">Hết hạn</span>
+                                            </div>
+                                            {% elif key.active %}
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_5px_rgba(52,211,153,0.5)]"></span>
+                                                <span class="text-xs text-slate-300">Hoạt động</span>
+                                            </div>
+                                            {% else %}
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+                                                <span class="text-xs text-slate-400">Vô hiệu</span>
+                                            </div>
+                                            {% endif %}
+                                        </td>
+                                        <td class="px-6 py-4 text-xs text-slate-400">{{ key.created_at.strftime('%d/%m/%Y') if key.created_at else 'N/A' }}</td>
+                                        <td class="px-6 py-4 text-xs text-slate-400">{{ key.expires_at.strftime('%d/%m/%Y') if key.expires_at else 'Vĩnh viễn' }}</td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center justify-center gap-2">
+                                                {% if key.active and not key.expired %}
+                                                <button class="view-usage-btn p-1.5 rounded-md bg-teal-500/10 text-teal-400 hover:bg-teal-500/20 border border-teal-500/20 transition-all" data-key-id="{{ key.id }}" title="Usage Statistics">
+                                                    <span class="material-symbols-outlined text-[16px] block">bar_chart</span>
+                                                </button>
+                                                {% endif %}
+                                                <button class="delete-key-btn p-1.5 rounded-md bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 transition-all" data-key-id="{{ key.id }}" title="Xóa Key">
+                                                    <span class="material-symbols-outlined text-[16px] block">delete</span>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="px-6 py-4 border-t border-white/5 flex items-center justify-between">
+                            <span class="text-xs text-slate-500">Hiển thị {{ api_keys|length }} trên {{ api_keys|length }} keys</span>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="dashboard-card p-12 text-center border border-white/10">
+                        <span class="material-symbols-outlined text-6xl text-slate-600 mb-4">vpn_key</span>
+                        <h3 class="text-lg font-semibold text-white mb-2">Chưa có API Key nào</h3>
+                        <p class="text-sm text-slate-400">Tạo API key đầu tiên của bạn ở trên để bắt đầu sử dụng API.</p>
+                    </div>
                     {% endif %}
                 </div>
-                <div class="form-group">
-                    <label for="days_valid">Số ngày hợp lệ (để trống = vĩnh viễn)</label>
-                    <input type="number" id="days_valid" name="days_valid" min="1" step="1" placeholder="Ví dụ: 30" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px;">
+            </div>
+        </div>
+    </main>
+    
+    <!-- New Key Modal -->
+    {% if new_api_key %}
+    <div id="new-key-modal" class="fixed top-24 left-1/2 transform -translate-x-1/2 z-50 modal-animate w-full max-w-md px-4">
+        <div class="glass-panel rounded-xl border border-emerald-500/30 shadow-[0_0_30px_rgba(16,185,129,0.15)] overflow-hidden">
+            <div class="p-4 bg-emerald-500/10 border-b border-emerald-500/20 flex items-center gap-3">
+                <span class="material-symbols-outlined text-emerald-400">check_circle</span>
+                <h3 class="font-bold text-emerald-100">API Key mới đã được tạo!</h3>
+                <button onclick="closeNewKeyModal()" class="ml-auto text-slate-400 hover:text-white"><span class="material-symbols-outlined text-sm">close</span></button>
+            </div>
+            <div class="p-5 space-y-4 bg-navy-deep/80 backdrop-blur-xl">
+                <p class="text-sm text-slate-300">Vui lòng sao chép key của bạn ngay bây giờ. Bạn sẽ không thể xem lại nó sau khi đóng cửa sổ này.</p>
+                <div class="flex items-center gap-2">
+                    <code id="new-key-box" class="flex-1 bg-black/40 border border-white/10 rounded-lg p-3 text-xs font-mono text-emerald-400 break-all">{{ new_api_key }}</code>
+                    <button onclick="copyKey()" class="p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white transition-colors" title="Copy to clipboard">
+                        <span class="material-symbols-outlined text-sm">content_copy</span>
+                    </button>
                 </div>
-                <button type="submit" class="btn" {% if not email_verified %}disabled style="opacity: 0.6; cursor: not-allowed;"{% endif %}>Tạo API Key</button>
-            </form>
-            {% if current_tier == 'free' %}
-            <p style="margin-top: 12px; color: #666; font-size: 14px;">
-                💡 Bạn đang ở tier Free. <a href="{{ url_for('portal.upgrade') }}" style="color: #667eea;">Nâng cấp</a> để tạo Premium/Ultra keys.
-            </p>
-            {% endif %}
-            <p style="margin-top: 8px; color: #666; font-size: 14px;">
-                💡 Để trống "Số ngày hợp lệ" nếu muốn key vĩnh viễn. Nhập số ngày (ví dụ: 30) để key tự động hết hạn sau N ngày.
-            </p>
-        </div>
-        
-        <div class="section">
-            <h2>Danh sách API Keys</h2>
-            {% if api_keys %}
-            <table class="keys-table">
-                <thead>
-                    <tr>
-                        <th>Label</th>
-                        <th>Key Prefix</th>
-                        <th>Tier</th>
-                        <th>Trạng thái</th>
-                        <th>Ngày tạo</th>
-                        <th>Hết hạn</th>
-                        <th>Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for key in api_keys %}
-                    <tr data-key-id="{{ key.id }}">
-                        <td>
-                            <span class="key-label-display" data-key-id="{{ key.id }}">
-                                {{ key.label or '(Không có label)' }}
-                            </span>
-                            <div class="key-label-form" data-key-id="{{ key.id }}" style="display: none;">
-                                <input type="text" class="label-input" data-key-id="{{ key.id }}" value="{{ key.label or '' }}" placeholder="Nhập label..." maxlength="100" style="padding: 6px; border: 1px solid #ddd; border-radius: 4px; width: 150px;">
-                                <button type="button" class="btn save-label-btn" data-key-id="{{ key.id }}" style="padding: 6px 12px; font-size: 12px; margin-left: 4px;">Lưu</button>
-                                <button type="button" class="btn btn-secondary cancel-label-edit" data-key-id="{{ key.id }}" style="padding: 6px 12px; font-size: 12px; margin-left: 4px;">Hủy</button>
-                            </div>
-                            <button class="btn-edit-label" data-key-id="{{ key.id }}" style="padding: 4px 8px; font-size: 11px; background: #6c757d; color: white; border: 0; border-radius: 4px; cursor: pointer; margin-left: 4px;">✏️</button>
-                        </td>
-                        <td><code>{{ key.key_prefix }}...</code></td>
-                        <td><span class="badge badge-{{ key.tier }}">{{ key.tier|upper }}</span></td>
-                        <td>
-                            {% if key.expired %}
-                                <span class="badge badge-expired">Hết hạn</span>
-                            {% elif key.active %}
-                                <span class="badge badge-active">Hoạt động</span>
-                            {% else %}
-                                <span class="badge badge-inactive">Đã vô hiệu hóa</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ key.created_at.strftime('%d/%m/%Y') if key.created_at else 'N/A' }}</td>
-                        <td>{{ key.expires_at.strftime('%d/%m/%Y') if key.expires_at else 'Vĩnh viễn' }}</td>
-                        <td>
-                            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                                {% if key.active and not key.expired %}
-                                <button class="btn view-usage-btn" data-key-id="{{ key.id }}" style="padding: 6px 12px; font-size: 12px; background: #17a2b8;">📊 Usage</button>
-                                {% endif %}
-                                <button class="btn btn-danger delete-key-btn" data-key-id="{{ key.id }}" style="padding: 6px 12px; font-size: 12px;">🗑️ Xóa</button>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <div class="empty-state">
-                <div class="empty-state-icon">🔑</div>
-                <h3>Chưa có API Key nào</h3>
-                <p>Tạo API key đầu tiên của bạn ở trên để bắt đầu sử dụng API.</p>
             </div>
-            {% endif %}
         </div>
     </div>
+    {% endif %}
     
-    <!-- Modal for key usage -->
-    <div id="usage-modal" class="modal-backdrop" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: var(--z-modal-backdrop); align-items: center; justify-content: center;">
-        <div class="modal-content" style="background: white; padding: 30px; border-radius: 12px; max-width: 800px; max-height: 80vh; overflow-y: auto; position: relative;">
-            <button onclick="closeUsageModal()" style="position: absolute; top: 10px; right: 10px; background: #f0f0f0; border: 0; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 18px;">×</button>
-            <h3 id="usage-modal-title">Key Usage Stats</h3>
-            <div id="usage-modal-content">
-                <p>Loading...</p>
+    <!-- Usage Modal -->
+    <div id="usage-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" style="display: none;">
+        <div class="glass-panel rounded-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto modal-animate">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 id="usage-modal-title" class="text-xl font-bold text-white">Key Usage Stats</h3>
+                    <button onclick="closeUsageModal()" class="text-slate-400 hover:text-white transition-colors">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                <div id="usage-modal-content" class="text-slate-300">
+                    <p>Loading...</p>
+                </div>
             </div>
         </div>
     </div>
     
+    <!-- AJAX Helpers and JavaScript -->
+    <script src="{{ url_for('static', filename='js/ajax-helpers.js') }}"></script>
     <script>
-        function copyKey() {
-            const keyBox = document.getElementById('new-key-box');
-            const text = keyBox.textContent.trim();
-            navigator.clipboard.writeText(text).then(() => {
-                window.showToast('✅ Đã copy API key vào clipboard!', 'success');
-            }).catch(() => {
-                const textarea = document.createElement('textarea');
-                textarea.value = text;
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textarea);
-                window.showToast('✅ Đã copy API key vào clipboard!', 'success');
-            });
-        }
-        
         // Edit label functionality
-        document.querySelectorAll('.btn-edit-label').forEach(btn => {
-            btn.addEventListener('click', function() {
+        document.querySelectorAll('.key-label-display').forEach(display => {
+            display.addEventListener('click', function() {
                 const keyId = this.dataset.keyId;
-                const display = document.querySelector(`.key-label-display[data-key-id="${keyId}"]`);
                 const form = document.querySelector(`.key-label-form[data-key-id="${keyId}"]`);
-                display.style.display = 'none';
-                form.style.display = 'inline-block';
-                this.style.display = 'none';
+                if (form) {
+                    this.style.display = 'none';
+                    form.style.display = 'block';
+                }
             });
         });
         
@@ -201,10 +567,10 @@
                 const keyId = this.dataset.keyId;
                 const display = document.querySelector(`.key-label-display[data-key-id="${keyId}"]`);
                 const form = document.querySelector(`.key-label-form[data-key-id="${keyId}"]`);
-                const editBtn = document.querySelector(`.btn-edit-label[data-key-id="${keyId}"]`);
-                display.style.display = 'inline';
-                form.style.display = 'none';
-                editBtn.style.display = 'inline-block';
+                if (display && form) {
+                    display.style.display = 'block';
+                    form.style.display = 'none';
+                }
             });
         });
         
@@ -216,7 +582,7 @@
                 const label = input.value.trim();
                 
                 if (label.length > 100) {
-                    window.showToast('Label không được quá 100 ký tự', 'error');
+                    showToast('Label không được quá 100 ký tự', 'error');
                     return;
                 }
                 
@@ -225,7 +591,7 @@
                 formData.append('key_id', keyId);
                 formData.append('label', label);
                 
-                ajaxFetch('/portal/keys', {
+                ajaxFetch('{{ url_for("portal.keys") }}', {
                     method: 'POST',
                     body: formData,
                     button: this,
@@ -235,12 +601,14 @@
                 .then(data => {
                     const display = document.querySelector(`.key-label-display[data-key-id="${keyId}"]`);
                     const form = document.querySelector(`.key-label-form[data-key-id="${keyId}"]`);
-                    const editBtn = document.querySelector(`.btn-edit-label[data-key-id="${keyId}"]`);
                     
-                    display.textContent = label || '(Không có label)';
-                    display.style.display = 'inline';
-                    form.style.display = 'none';
-                    editBtn.style.display = 'inline-block';
+                    if (display && form) {
+                        display.innerHTML = label ? 
+                            `<div class="group flex items-center gap-2 cursor-pointer"><span class="text-sm text-white">${label}</span><span class="material-symbols-outlined text-slate-500 text-[14px] opacity-0 group-hover:opacity-100 transition-opacity">edit</span></div>` :
+                            `<div class="group flex items-center gap-2 cursor-pointer"><span class="text-sm text-slate-400 italic">(Không có label)</span><span class="material-symbols-outlined text-slate-600 text-[14px] opacity-0 group-hover:opacity-100 transition-opacity">edit</span></div>`;
+                        display.style.display = 'block';
+                        form.style.display = 'none';
+                    }
                 })
                 .catch(() => { /* Error already shown via toast */ });
             });
@@ -258,7 +626,7 @@
                 formData.append('action', 'delete');
                 formData.append('key_id', keyId);
                 
-                ajaxFetch('/portal/keys', {
+                ajaxFetch('{{ url_for("portal.keys") }}', {
                     method: 'POST',
                     body: formData,
                     button: this,
@@ -269,7 +637,7 @@
                     row.style.opacity = '0.5';
                     setTimeout(() => {
                         row.remove();
-                        const tbody = document.querySelector('.keys-table tbody');
+                        const tbody = document.querySelector('.glass-table tbody');
                         if (tbody && tbody.children.length === 0) {
                             location.reload();
                         }
@@ -278,14 +646,6 @@
                 .catch(() => { /* Error already shown via toast */ });
             });
         });
-        
-        function closeNewKeyModal() {
-            const modal = document.querySelector('.new-key-modal');
-            if (modal && modal.parentElement) {
-                modal.remove();
-            }
-        }
-        
         
         // View usage button handlers
         document.querySelectorAll('.view-usage-btn').forEach(btn => {
@@ -302,9 +662,7 @@
             const title = document.getElementById('usage-modal-title');
             
             modal.style.display = 'flex';
-            content.innerHTML = '<p>Loading...</p>';
-            
-            content.innerHTML = '<div class="loading">Đang tải...</div>';
+            content.innerHTML = '<div class="text-center py-8"><div class="spinner mx-auto"></div><p class="mt-4 text-slate-400">Đang tải...</p></div>';
             
             ajaxFetch(`/portal/keys/${keyId}/usage?days=30`, {
                 headers: { 'Accept': 'application/json' },
@@ -315,54 +673,67 @@
                 const usage = data.data || data;
                 
                 if (!usage || !usage.key_prefix) {
-                    content.innerHTML = '<p class="text-error">Invalid response format</p>';
+                    content.innerHTML = '<p class="text-red-400">Invalid response format</p>';
                     return;
                 }
                 
                 title.textContent = `Usage Stats: ${usage.key_prefix}... (${usage.tier})`;
                 
                 let html = `
-                    <div class="mb-4">
-                        <p><strong>Total Requests:</strong> ${(usage.total_requests || 0).toLocaleString()}</p>
-                        <p><strong>Success:</strong> ${(usage.success_requests || 0).toLocaleString()}</p>
-                        <p><strong>Errors:</strong> ${(usage.error_requests || 0).toLocaleString()}</p>
-                        <p><strong>Avg Response Time:</strong> ${(usage.avg_response_time_ms || 0).toFixed(2)} ms</p>
+                    <div class="mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-white/5 rounded-lg p-4 border border-white/10">
+                            <p class="text-xs text-slate-400 mb-1">Total Requests</p>
+                            <p class="text-xl font-bold text-white">${(usage.total_requests || 0).toLocaleString()}</p>
+                        </div>
+                        <div class="bg-white/5 rounded-lg p-4 border border-white/10">
+                            <p class="text-xs text-slate-400 mb-1">Success</p>
+                            <p class="text-xl font-bold text-emerald-400">${(usage.success_requests || 0).toLocaleString()}</p>
+                        </div>
+                        <div class="bg-white/5 rounded-lg p-4 border border-white/10">
+                            <p class="text-xs text-slate-400 mb-1">Errors</p>
+                            <p class="text-xl font-bold text-red-400">${(usage.error_requests || 0).toLocaleString()}</p>
+                        </div>
+                        <div class="bg-white/5 rounded-lg p-4 border border-white/10">
+                            <p class="text-xs text-slate-400 mb-1">Avg Response Time</p>
+                            <p class="text-xl font-bold text-blue-400">${(usage.avg_response_time_ms || 0).toFixed(2)} ms</p>
+                        </div>
                     </div>
-                    <h4>Daily Stats (Last 30 days):</h4>
-                    <table class="keys-table mt-3">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Requests</th>
-                                <th>Success</th>
-                                <th>Errors</th>
-                                <th>Avg Time (ms)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                    <h4 class="text-lg font-semibold text-white mb-4">Daily Stats (Last 30 days):</h4>
+                    <div class="overflow-x-auto">
+                        <table class="w-full glass-table">
+                            <thead>
+                                <tr>
+                                    <th class="px-4 py-3 text-left">Date</th>
+                                    <th class="px-4 py-3 text-left">Requests</th>
+                                    <th class="px-4 py-3 text-left">Success</th>
+                                    <th class="px-4 py-3 text-left">Errors</th>
+                                    <th class="px-4 py-3 text-left">Avg Time (ms)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
                 `;
                 
                 if (usage.daily_stats && usage.daily_stats.length > 0) {
                     usage.daily_stats.forEach(stat => {
                         html += `
                             <tr>
-                                <td>${stat.date}</td>
-                                <td>${stat.count || 0}</td>
-                                <td>${stat.success || 0}</td>
-                                <td>${stat.error || 0}</td>
-                                <td>${(stat.avg_response_time || 0).toFixed(2)}</td>
+                                <td class="px-4 py-3 text-xs">${stat.date}</td>
+                                <td class="px-4 py-3 text-xs">${stat.count || 0}</td>
+                                <td class="px-4 py-3 text-xs text-emerald-400">${stat.success || 0}</td>
+                                <td class="px-4 py-3 text-xs text-red-400">${stat.error || 0}</td>
+                                <td class="px-4 py-3 text-xs">${(stat.avg_response_time || 0).toFixed(2)}</td>
                             </tr>
                         `;
                     });
                 } else {
-                    html += '<tr><td colspan="5" class="text-center text-secondary">No data</td></tr>';
+                    html += '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-500">No data</td></tr>';
                 }
                 
-                html += '</tbody></table>';
+                html += '</tbody></table></div>';
                 content.innerHTML = html;
             })
             .catch(err => {
-                content.innerHTML = `<p class="text-error">Error: ${err.message}</p>`;
+                content.innerHTML = `<p class="text-red-400">Error: ${err.message}</p>`;
             });
         }
         
@@ -376,5 +747,30 @@
                 closeUsageModal();
             }
         });
+        
+        // Copy key function
+        function copyKey() {
+            const keyBox = document.getElementById('new-key-box');
+            const text = keyBox.textContent.trim();
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('✅ Đã copy API key vào clipboard!', 'success');
+            }).catch(() => {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast('✅ Đã copy API key vào clipboard!', 'success');
+            });
+        }
+        
+        function closeNewKeyModal() {
+            const modal = document.getElementById('new-key-modal');
+            if (modal) {
+                modal.remove();
+            }
+        }
     </script>
-{% endblock %}
+</body>
+</html>
