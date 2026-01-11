@@ -295,7 +295,7 @@
                             </div>
                             <div class="col-span-3 h-8 flex items-center">
                                 <!-- Mini Sparkline -->
-                                <svg class="w-full h-full sparkline" data-daily="{{ key_stat.daily_stats|tojson|safe }}" preserveAspectRatio="none" viewBox="0 0 100 30">
+                                <svg class="w-full h-full sparkline" data-key-id="{{ key_stat.key_id }}" preserveAspectRatio="none" viewBox="0 0 100 30">
                                     <path class="sparkline-path" fill="none" stroke="{% if key_stat.tier == 'ultra' %}#a855f7{% elif key_stat.tier == 'premium' %}#f59e0b{% else %}#64748b{% endif %}" stroke-width="2"></path>
                                 </svg>
                             </div>
