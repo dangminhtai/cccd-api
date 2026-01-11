@@ -47,21 +47,6 @@
             <div style="font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); color: var(--color-text-primary);">{{ user.created_at.strftime('%d/%m/%Y') if user.created_at else 'N/A' }}</div>
         </div>
     </div>
-    
-    <div class="nav-menu card">
-        <div class="card-header">
-            <h3 style="color: var(--color-text-primary); margin-bottom: var(--spacing-4);">Quản lý</h3>
-        </div>
-        <div class="card-body">
-            <div class="nav-links grid-responsive">
-                <a href="{{ url_for('portal.dashboard') }}" class="nav-link {% if request.endpoint == 'portal.dashboard' %}active{% endif %}">📊 Dashboard</a>
-                <a href="{{ url_for('portal.keys') }}" class="nav-link {% if request.endpoint == 'portal.keys' %}active{% endif %}">🔑 API Keys</a>
-                <a href="{{ url_for('portal.usage') }}" class="nav-link {% if request.endpoint == 'portal.usage' %}active{% endif %}">📈 Usage Stats</a>
-                <a href="{{ url_for('portal.billing') }}" class="nav-link {% if request.endpoint == 'portal.billing' %}active{% endif %}">💳 Billing</a>
-                <a href="{{ url_for('portal.upgrade') }}" class="nav-link {% if request.endpoint == 'portal.upgrade' %}active{% endif %}">⬆️ Upgrade Tier</a>
-            </div>
-        </div>
-    </div>
 </div>
 
 <style>
@@ -71,10 +56,5 @@
     gap: var(--spacing-5);
 }
 
-.nav-links {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: var(--spacing-3);
-}
 </style>
 {% endblock %}

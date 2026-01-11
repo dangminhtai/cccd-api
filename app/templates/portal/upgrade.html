@@ -15,11 +15,6 @@
         .btn-logout { padding: 8px 16px; background: #f0f0f0; color: #333; text-decoration: none; border-radius: 6px; font-size: 14px; }
         .btn-logout:hover { background: #e0e0e0; }
         .container { max-width: 1200px; margin: 0 auto; padding: 0 20px 40px; }
-        .nav-menu { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px; }
-        .nav-links { display: flex; gap: 12px; flex-wrap: wrap; }
-        .nav-link { padding: 12px 20px; background: #f8f9fa; border-radius: 8px; text-decoration: none; color: #333; transition: background 0.2s; }
-        .nav-link:hover { background: #e9ecef; }
-        .nav-link.active { background: #667eea; color: white; }
         .section { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px; }
         .section h2 { color: #333; margin-bottom: 20px; }
         .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 30px; }
@@ -58,14 +53,6 @@
     </div>
     
     <div class="container">
-        <div class="nav-menu">
-            <div class="nav-links">
-                <a href="{{ url_for('portal.dashboard') }}" class="nav-link">Dashboard</a>
-                <a href="{{ url_for('portal.keys') }}" class="nav-link">API Keys</a>
-                <a href="{{ url_for('portal.usage') }}" class="nav-link">Usage Stats</a>
-                <a href="{{ url_for('portal.billing') }}" class="nav-link">Billing</a>
-            </div>
-        </div>
         
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
