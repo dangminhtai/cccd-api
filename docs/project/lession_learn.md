@@ -350,3 +350,33 @@
   - **Module organization**: Dễ đọc, dễ test, dễ maintain
   - **Tách concerns**: Mỗi file chỉ làm 1 việc, dễ hiểu hơn
   - **Refactor từng bước**: Không cần refactor hết cùng lúc, làm từng module một
+
+---
+
+## 25) KHÔNG BAO GIỜ hiển thị raw data structures (dict, JSON) ra giao diện người dùng
+
+- **Issue**: Hiển thị raw dictionary/JSON object (ví dụ: `{'id': 1, 'email': '...', 'status': 'active'}`) trực tiếp trên giao diện login/dashboard thay vì render HTML template. Đây là lỗi bảo mật và UX nghiêm trọng - có thể expose sensitive data, nhìn không chuyên nghiệp, và dễ bị exploit.
+- **Nguyên nhân**: 
+  - Exception handler return raw data thay vì render template
+  - Debug code còn sót lại (print/return dict trực tiếp)
+  - Tuple unpacking sai thứ tự khiến variable assignment sai
+  - Thiếu try-catch ở routes, exception được Flask handler catch và return raw data
+- **Cách xử lý**:
+  - **LUÔN render template**: Portal routes PHẢI dùng `render_template()`, KHÔNG BAO GIỜ return dict/JSON trực tiếp
+  - **Wrap routes trong try-except**: Bắt mọi exception, log vào server, và hiển thị user-friendly message
+  - **Verify tuple unpacking**: Đảm bảo thứ tự variables khớp với function return signature
+  - **Remove debug code**: Xóa mọi `print()`, `return dict`, `jsonify(user)` trong production code
+  - **Error messages generic**: Không expose exception details, stack traces, hoặc raw data structures
+  - **Validate data trước khi pass to template**: Chỉ pass những gì cần thiết, không pass raw dict
+- **Ví dụ**:
+  - ❌ **SAI**: `return user_dict` hoặc `return jsonify(user)` trong portal route
+  - ✅ **ĐÚNG**: `return render_template("portal/login.html")` với flash message
+  - ❌ **SAI**: `except Exception as e: return str(e)` hoặc `return e`
+  - ✅ **ĐÚNG**: `except Exception as e: logger.error(...); flash("Lỗi hệ thống"); return render_template(...)`
+- **Bài học**: 
+  - **Security first**: Raw data exposure = security vulnerability + bad UX
+  - **Professional UI**: Người dùng chỉ thấy HTML đẹp, không thấy code/data structures
+  - **Error handling**: Mọi exception phải được catch và hiển thị user-friendly message
+  - **Production code**: Không bao giờ có debug code (print/return raw data) trong production
+  - **Defense in depth**: Kiểm tra mọi routes để đảm bảo không leak raw data
+  - **Code review critical**: Lỗi này rất dễ miss trong code review, cần rà soát kỹ

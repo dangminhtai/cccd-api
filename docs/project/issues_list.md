@@ -658,3 +658,30 @@
   - **Không giả định** columns tồn tại mà không verify schema
   - **Test** với database schema thực tế trước khi commit
   - **Backward compatibility**: Nếu column optional, dùng try/except hoặc check column exists trước
+
+---
+
+## Issue #40: Raw data structures (dict/JSON) hiển thị trực tiếp trên giao diện người dùng
+
+- **Mức độ nghiêm trọng**: 🔴 CRITICAL (Security + UX)
+- **Mô tả**: 
+  - Hiển thị raw dictionary/JSON object (ví dụ: `{'id': 1, 'email': '...', 'status': 'active', 'email_verified': 1}`) trực tiếp trên giao diện login/dashboard thay vì render HTML template
+  - Đây là lỗi bảo mật và UX nghiêm trọng - có thể expose sensitive data, nhìn không chuyên nghiệp, và dễ bị exploit
+- **Nguyên nhân**: 
+  - Tuple unpacking sai thứ tự: `success, error_msg, user_data = authenticate_user(...)` nhưng function return `(success, user_dict, error_message)`
+  - Thiếu try-except wrapper ở routes → exception có thể return raw data
+  - Không có validation để đảm bảo luôn render template, không return raw dict/JSON
+- **Cách xử lý**: 
+  - **Sửa tuple unpacking**: Đổi thành `success, user_data, error_msg = authenticate_user(...)` để khớp với function return signature
+  - **Wrap routes trong try-except**: Bắt mọi exception, log vào server, và hiển thị user-friendly message
+  - **LUÔN render template**: Portal routes PHẢI dùng `render_template()`, KHÔNG BAO GIỜ return dict/JSON trực tiếp (trừ AJAX endpoints)
+  - **Remove debug code**: Xóa mọi `print()`, `return dict`, `jsonify(user)` trong production code
+  - **Error messages generic**: Không expose exception details, stack traces, hoặc raw data structures
+- **Cách tránh lần sau**: 
+  - **Verify tuple unpacking**: Đảm bảo thứ tự variables khớp với function return signature
+  - **LUÔN render template**: Portal routes (GET) PHẢI render template, không return raw data
+  - **AJAX endpoints**: Chỉ return JSON cho AJAX requests (có `X-Requested-With` header)
+  - **Error handling**: Mọi exception phải được catch và hiển thị user-friendly message
+  - **Code review**: Rà soát kỹ để đảm bảo không leak raw data structures
+  - **Production code**: Không bao giờ có debug code (print/return raw data) trong production
+  - **Defense in depth**: Kiểm tra mọi routes để đảm bảo không leak raw data

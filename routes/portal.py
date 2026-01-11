@@ -301,43 +301,50 @@ def reset_password(token: str):
 @portal_bp.route("/login", methods=["GET", "POST"])
 def login():
     """Đăng nhập"""
-    if request.method == "POST":
-        email = request.form.get("email", "").strip()
-        password = request.form.get("password", "")
-        remember_me = request.form.get("remember_me") == "on"
-        
-        if not email or not password:
-            flash("Vui lòng điền email và mật khẩu", "error")
-            return render_template("portal/login.html")
-        
-        # Authenticate
-        success, error_msg, user_data = authenticate_user(email, password)
-        
-        if success and user_data:
-            # Set session
-            session["user_id"] = user_data["id"]
-            session["user_email"] = user_data["email"]
-            session["user_name"] = user_data["full_name"]
+    try:
+        if request.method == "POST":
+            email = request.form.get("email", "").strip()
+            password = request.form.get("password", "")
+            remember_me = request.form.get("remember_me") == "on"
             
-            # Remember me: set permanent session (24h) if checked
-            if remember_me:
-                session.permanent = True
-                # Flask will use PERMANENT_SESSION_LIFETIME from app config (24h)
-                # Cookie will have max_age set and persist after browser closes
+            if not email or not password:
+                flash("Vui lòng điền email và mật khẩu", "error")
+                return render_template("portal/login.html")
+            
+            # Authenticate
+            success, user_data, error_msg = authenticate_user(email, password)
+            
+            if success and user_data:
+                # Set session - CHỈ lưu những gì cần thiết, KHÔNG lưu toàn bộ user dict
+                session["user_id"] = user_data["id"]
+                session["user_email"] = user_data["email"]
+                session["user_name"] = user_data["full_name"]
+                
+                # Remember me: set permanent session (24h) if checked
+                if remember_me:
+                    session.permanent = True
+                    # Flask will use PERMANENT_SESSION_LIFETIME from app config (24h)
+                    # Cookie will have max_age set and persist after browser closes
+                else:
+                    session.permanent = False
+                    # Regular session cookie (expires when browser closes)
+                
+                # Force session to be saved (mark as modified)
+                session.modified = True
+                
+                flash(f"Chào mừng, {user_data['full_name']}!", "success")
+                return redirect(url_for("portal.dashboard"))
             else:
-                session.permanent = False
-                # Regular session cookie (expires when browser closes)
-            
-            # Force session to be saved (mark as modified)
-            session.modified = True
-            
-            flash(f"Chào mừng, {user_data['full_name']}!", "success")
-            return redirect(url_for("portal.dashboard"))
-        else:
-            flash(error_msg or "Đăng nhập thất bại", "error")
-            return render_template("portal/login.html")
-    
-    return render_template("portal/login.html")
+                # NEVER expose user data in error messages
+                flash(error_msg or "Email hoặc mật khẩu không đúng", "error")
+                return render_template("portal/login.html")
+        
+        return render_template("portal/login.html")
+    except Exception as e:
+        # NEVER expose raw data or exceptions to users
+        current_app.logger.error(f"Error in login route: {str(e)}", exc_info=True)
+        flash("Đã xảy ra lỗi. Vui lòng thử lại sau", "error")
+        return render_template("portal/login.html")
 
 
 @portal_bp.route("/logout")
@@ -351,7 +358,9 @@ def logout():
 @portal_bp.route("/verify-email/<token>")
 def verify_email(token: str):
     """Xác thực email với token"""
-    success, error_msg = verify_email(token)
+    from services.user_service import verify_email as verify_email_service
+    
+    success, error_msg = verify_email_service(token)
     
     if success:
         flash("Email đã được xác thực thành công! Bạn có thể tạo API key ngay bây giờ", "success")
@@ -365,6 +374,7 @@ def verify_email(token: str):
 @require_login
 def resend_verification():
     """Gửi lại email xác thực"""
+    from services.user_service import generate_new_verification_token, get_user_by_id
     from services.email_service import send_verification_email
     import os
     
@@ -383,8 +393,8 @@ def resend_verification():
         return redirect(url_for("portal.dashboard"))
     
     # Handle both GET and POST
-    # Resend verification email
-    success, error_msg, verification_token = resend_verification_email(user_id)
+    # Generate new token
+    success, error_msg, verification_token = generate_new_verification_token(user_id)
     
     if success and verification_token:
         # Send verification email
@@ -411,20 +421,33 @@ def resend_verification():
 @require_login
 def dashboard():
     """Dashboard chính"""
-    user_id = session.get("user_id")
-    user = get_user_by_id(user_id)
-    subscription = get_user_subscription(user_id)
-    
-    if not user:
+    try:
+        user_id = session.get("user_id")
+        if not user_id:
+            session.clear()
+            flash("Vui lòng đăng nhập", "warning")
+            return redirect(url_for("portal.login"))
+        
+        user = get_user_by_id(user_id)
+        subscription = get_user_subscription(user_id)
+        
+        if not user:
+            session.clear()
+            flash("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại", "warning")
+            return redirect(url_for("portal.login"))
+        
+        # NEVER return raw dict/JSON - always render template
+        return render_template(
+            "portal/dashboard.html",
+            user=user,
+            subscription=subscription,
+        )
+    except Exception as e:
+        # NEVER expose raw data or exceptions to users
+        current_app.logger.error(f"Error in dashboard route: {str(e)}", exc_info=True)
         session.clear()
-        flash("Phiên đăng nhập đã hết hạn", "warning")
+        flash("Đã xảy ra lỗi. Vui lòng đăng nhập lại", "error")
         return redirect(url_for("portal.login"))
-    
-    return render_template(
-        "portal/dashboard.html",
-        user=user,
-        subscription=subscription,
-    )
 
 
 @portal_bp.route("/keys", methods=["GET", "POST"])
