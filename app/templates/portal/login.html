@@ -1,24 +1,86 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html class="light" lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Đăng nhập - CCCD API</title>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>CCCD API Developer Login</title>
     
-    <!-- Design System CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/utilities.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/animations.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/accessibility.css') }}">
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
     
     <!-- Material Symbols -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    
+    <!-- Tailwind Config -->
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#667fea",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111421",
+                        "navy-deep": "#0B1120",
+                        "electric-blue": "#3b82f6",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "3xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    
     <style>
-        /* Material Symbols font fallback */
+        /* Custom circuit board pattern simulation */
+        .bg-circuit {
+            background-image: radial-gradient(#667eea 1px, transparent 1px), radial-gradient(#667eea 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-position: 0 0, 20px 20px;
+            opacity: 0.1;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        .dark .glass-card {
+            background: rgba(17, 20, 33, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Subtle floating animation for background elements */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+        .animate-float-delayed {
+            animation: float 8s ease-in-out infinite;
+            animation-delay: 2s;
+        }
+        
+        /* Material Symbols font configuration */
         .material-symbols-outlined {
             font-family: 'Material Symbols Outlined';
             font-weight: normal;
@@ -35,618 +97,192 @@
             -webkit-font-smoothing: antialiased;
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
+        
+        /* Fix overflow for Windows display - ensure all content is visible */
+        body {
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        
+        /* Ensure checkbox is smaller and looks better */
+        input[type="checkbox"] {
+            width: 14px !important;
+            height: 14px !important;
+        }
+        
+        /* Fix responsive on small screens */
+        @media (max-width: 480px) {
+            .login-container-responsive {
+                padding: 1.5rem !important;
+            }
+        }
     </style>
-<style>
-/* Login Page Styles */
-body {
-    background: #0B1120;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--spacing-5);
-    position: relative;
-    overflow: hidden;
-    margin: 0;
-}
-
-/* Abstract Tech Background */
-body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    background: linear-gradient(to bottom right, #02040a, #0f172a, #1e3a8a);
-    opacity: 0.9;
-}
-
-body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: 1;
-    background-image: 
-        radial-gradient(#667eea 1px, transparent 1px),
-        radial-gradient(#667eea 1px, transparent 1px);
-    background-size: 40px 40px;
-    background-position: 0 0, 20px 20px;
-    opacity: 0.1;
-    pointer-events: none;
-}
-
-/* Glowing Orbs Animation */
-@keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-20px); }
-}
-
-.glow-orb {
-    position: fixed;
-    border-radius: 50%;
-    filter: blur(100px);
-    pointer-events: none;
-    z-index: 1;
-    animation: float 6s ease-in-out infinite;
-}
-
-.glow-orb-1 {
-    top: -10%;
-    left: -10%;
-    width: 500px;
-    height: 500px;
-    background: rgba(102, 126, 234, 0.3);
-}
-
-.glow-orb-2 {
-    bottom: -10%;
-    right: -10%;
-    width: 600px;
-    height: 600px;
-    background: rgba(59, 130, 246, 0.2);
-    animation-delay: 2s;
-    animation-duration: 8s;
-}
-
-/* Tech Grid Lines */
-body {
-    background-image: 
-        linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
-    background-size: 100px 100px;
-    background-position: 0 0, 0 0;
-}
-
-/* Main Content Container */
-.login-wrapper {
-    position: relative;
-    z-index: 10;
-    width: 100%;
-    max-width: 480px;
-    padding: var(--spacing-5);
-    margin: 0 auto;
-}
-
-/* Glassmorphism Card */
-.login-container {
-    width: 100%;
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    border-radius: var(--radius-xl);
-    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.2);
-    overflow: visible;
-    position: relative;
-    z-index: 10;
-}
-
-/* Decorative Top Bar */
-.login-container::before {
-    content: '';
-    display: block;
-    height: 4px;
-    width: 100%;
-    background: linear-gradient(to right, #3b82f6, var(--color-primary));
-}
-
-.login-content {
-    padding: var(--spacing-8);
-    position: relative;
-    z-index: 10;
-}
-
-@media (min-width: 768px) {
-    .login-content {
-        padding: var(--spacing-10);
-    }
-}
-
-/* Responsive adjustments */
-@media (max-width: 480px) {
-    body {
-        padding: var(--spacing-3);
-    }
-    
-    .login-wrapper {
-        padding: var(--spacing-3);
-    }
-    
-    .login-content {
-        padding: var(--spacing-6);
-    }
-    
-    .login-title h1 {
-        font-size: var(--font-size-2xl);
-    }
-    
-    .form-utility {
-        flex-wrap: wrap;
-        gap: var(--spacing-2);
-    }
-    
-    .form-link {
-        font-size: var(--font-size-xs);
-    }
-    
-    .login-footer {
-        margin-top: var(--spacing-6);
-    }
-    
-    .login-footer p {
-        font-size: var(--font-size-xs);
-        line-height: 1.5;
-    }
-}
-
-/* Header / Logo Area */
-.login-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    margin-bottom: var(--spacing-8);
-}
-
-.login-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 64px;
-    height: 64px;
-    border-radius: var(--radius-lg);
-    background: rgba(102, 126, 234, 0.1);
-    color: var(--color-primary);
-    margin-bottom: var(--spacing-4);
-    box-shadow: inset 0 0 0 1px rgba(102, 126, 234, 0.2);
-}
-
-.login-icon .material-symbols-outlined {
-    font-size: 32px;
-}
-
-.login-header h2 {
-    font-size: var(--font-size-2xl);
-    font-weight: var(--font-weight-bold);
-    color: var(--color-text-primary);
-    margin: 0;
-    letter-spacing: -0.5px;
-}
-
-.login-header .subtitle {
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
-    color: var(--color-text-secondary);
-    margin-top: var(--spacing-1);
-}
-
-/* Title Section */
-.login-title {
-    margin-bottom: var(--spacing-8);
-    text-align: center;
-}
-
-.login-title h1 {
-    font-size: var(--font-size-3xl);
-    font-weight: var(--font-weight-bold);
-    color: var(--color-text-primary);
-    margin-bottom: var(--spacing-2);
-}
-
-.login-title p {
-    font-size: var(--font-size-base);
-    color: var(--color-text-secondary);
-}
-
-/* Form Styles */
-.login-form {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-6);
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-2);
-}
-
-.form-label {
-    display: block;
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
-    color: var(--color-text-primary);
-}
-
-/* Input with Icon */
-.input-group {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.input-group .material-symbols-outlined {
-    position: absolute;
-    left: 0;
-    top: 0;
-    height: 44px;
-    width: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-text-tertiary);
-    pointer-events: none;
-    font-size: 20px;
-    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-    transition: color var(--transition-base);
-}
-
-.input-group:focus-within .material-symbols-outlined {
-    color: var(--color-primary);
-}
-
-.input-group input {
-    width: 100%;
-    height: 44px;
-    padding: 0 var(--spacing-4) 0 44px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    background: rgba(255, 255, 255, 0.5);
-    color: var(--color-text-primary);
-    font-size: var(--font-size-base);
-    transition: all var(--transition-base);
-    outline: none;
-}
-
-.input-group input:focus {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
-    background: rgba(255, 255, 255, 0.8);
-}
-
-.input-group input::placeholder {
-    color: var(--color-text-tertiary);
-}
-
-/* Password Toggle Button */
-.password-toggle {
-    position: absolute;
-    right: 0;
-    top: 0;
-    height: 44px;
-    width: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-text-tertiary);
-    background: none;
-    border: none;
-    cursor: pointer;
-    transition: color var(--transition-base);
-}
-
-.password-toggle:hover {
-    color: var(--color-text-primary);
-}
-
-.password-toggle .material-symbols-outlined {
-    font-size: 20px;
-    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-    position: static;
-}
-
-/* Utility Row */
-.form-utility {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: calc(var(--spacing-2) * -1);
-    gap: var(--spacing-3);
-    flex-wrap: wrap;
-}
-
-.checkbox-group {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-2);
-    cursor: pointer;
-}
-
-.checkbox-group input[type="checkbox"] {
-    width: 14px;
-    height: 14px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--color-border);
-    cursor: pointer;
-    accent-color: var(--color-primary);
-    flex-shrink: 0;
-}
-
-.checkbox-group span {
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-normal);
-    color: var(--color-text-secondary);
-    cursor: pointer;
-    user-select: none;
-    line-height: 1.4;
-}
-
-.checkbox-group:hover span {
-    color: var(--color-primary);
-}
-
-.form-link {
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-bold);
-    color: var(--color-primary);
-    text-decoration: none;
-    transition: color var(--transition-base);
-}
-
-.form-link:hover {
-    color: var(--color-primary-dark);
-    text-decoration: underline;
-}
-
-/* Submit Button */
-.btn-login {
-    width: 100%;
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-lg);
-    background: var(--color-primary);
-    color: white;
-    font-size: var(--font-size-base);
-    font-weight: var(--font-weight-bold);
-    letter-spacing: 0.5px;
-    border: none;
-    cursor: pointer;
-    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
-    transition: all var(--transition-base);
-}
-
-.btn-login:hover {
-    background: var(--color-primary-dark);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-}
-
-.btn-login:active {
-    transform: translateY(0);
-}
-
-/* Divider */
-.login-divider {
-    position: relative;
-    margin: var(--spacing-8) 0;
-}
-
-.login-divider::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    border-top: 1px solid var(--color-border);
-}
-
-.login-divider span {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    padding: 0 var(--spacing-2);
-    background: rgba(255, 255, 255, 0);
-    backdrop-filter: blur(8px);
-    font-size: var(--font-size-sm);
-    color: var(--color-text-secondary);
-}
-
-/* Footer Link */
-.login-footer {
-    text-align: center;
-    margin-top: var(--spacing-8);
-    position: relative;
-    z-index: 10;
-}
-
-.login-footer p {
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
-    color: var(--color-text-primary);
-    margin: 0;
-    line-height: 1.6;
-}
-
-.login-footer a {
-    color: var(--color-primary);
-    font-weight: var(--font-weight-bold);
-    text-decoration: none;
-    margin-left: var(--spacing-1);
-    display: inline-block;
-}
-
-.login-footer a:hover {
-    text-decoration: underline;
-}
-
-/* Security Badge */
-.security-badge {
-    margin-top: var(--spacing-8);
-    padding-top: var(--spacing-6);
-    border-top: 1px solid var(--color-border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--spacing-2);
-    font-size: var(--font-size-xs);
-    color: var(--color-text-tertiary);
-}
-
-.security-badge .material-symbols-outlined {
-    font-size: 16px;
-    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
-}
-
-/* Flash Messages */
-.flash-messages {
-    margin-bottom: var(--spacing-6);
-}
-
-.flash {
-    padding: var(--spacing-3) var(--spacing-4);
-    border-radius: var(--radius-md);
-    margin-bottom: var(--spacing-3);
-    font-size: var(--font-size-sm);
-}
-
-.flash-success {
-    background: var(--color-success-bg);
-    color: var(--color-success-text);
-    border: 1px solid var(--color-success-border);
-}
-
-.flash-error {
-    background: var(--color-error-bg);
-    color: var(--color-error-text);
-    border: 1px solid var(--color-error-border);
-}
-
-.flash-warning {
-    background: var(--color-warning-bg);
-    color: var(--color-warning-text);
-    border: 1px solid var(--color-warning-border);
-}
-
-.flash-info {
-    background: var(--color-info-bg);
-    color: var(--color-info-text);
-    border: 1px solid var(--color-info-border);
-}
-</style>
 </head>
-<body>
-<!-- Background Elements -->
-<div class="glow-orb glow-orb-1"></div>
-<div class="glow-orb glow-orb-2"></div>
-
-<div class="login-wrapper">
-    <div class="login-container">
-        <div class="login-content">
-            <!-- Header / Logo Area -->
-            <div class="login-header">
-                <div class="login-icon">
-                    <span class="material-symbols-outlined">fingerprint</span>
-                </div>
-                <h2>CCCD API Portal</h2>
-                <p class="subtitle">Identity Verification Service</p>
-            </div>
-            
-            <!-- Title Section -->
-            <div class="login-title">
-                <h1>Đăng nhập</h1>
-                <p>Đăng nhập vào tài khoản của bạn</p>
-            </div>
-            
-            <!-- Flash Messages -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    <div class="flash-messages">
-                        {% for category, message in messages %}
-                            <div class="flash flash-{{ category }}">{{ message }}</div>
-                        {% endfor %}
+<body class="font-display bg-background-light dark:bg-background-dark text-[#0e111b] dark:text-white transition-colors duration-300">
+    <div class="relative min-h-screen w-full flex items-center justify-center overflow-x-hidden overflow-y-auto bg-navy-deep py-6">
+        <!-- Abstract Tech Background -->
+        <div class="absolute inset-0 z-0">
+            <!-- Gradient Base -->
+            <div class="absolute inset-0 bg-gradient-to-br from-[#02040a] via-[#0f172a] to-[#1e3a8a] opacity-90"></div>
+            <!-- Circuit Pattern Overlay -->
+            <div class="absolute inset-0 bg-circuit"></div>
+            <!-- Glowing Orbs (Electric Blue Accents) -->
+            <div class="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-primary/30 rounded-full blur-[100px] animate-float"></div>
+            <div class="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-electric-blue/20 rounded-full blur-[120px] animate-float-delayed"></div>
+            <!-- Tech Grid Lines -->
+            <div class="absolute inset-0 opacity-10" style="background-image: linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px); background-size: 100px 100px;"></div>
+        </div>
+        
+        <!-- Main Content Container -->
+        <div class="relative z-10 w-full max-w-[480px] p-6">
+            <!-- Glassmorphism Card -->
+            <div class="glass-card w-full rounded-3xl shadow-[0_8px_40px_rgba(0,0,0,0.2)] dark:shadow-[0_8px_40px_rgba(0,0,0,0.5)] overflow-visible">
+                <!-- Decorative Top Bar -->
+                <div class="h-2 w-full bg-gradient-to-r from-electric-blue to-primary"></div>
+                <div class="p-8 md:p-10 login-container-responsive">
+                    <!-- Flash Messages -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            <div class="mb-6">
+                                {% for category, message in messages %}
+                                    <div class="flash flash-{{ category }} mb-3 p-3 rounded-lg text-sm">
+                                        {{ message }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <!-- Header / Logo Area -->
+                    <div class="flex flex-col items-center justify-center text-center mb-8">
+                        <div class="flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 text-primary mb-4 ring-1 ring-primary/20 shadow-inner">
+                            <span class="material-symbols-outlined text-[32px]">fingerprint</span>
+                        </div>
+                        <h2 class="text-2xl font-bold tracking-tight text-[#0e111b] dark:text-white">CCCD API Portal</h2>
+                        <p class="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">Identity Verification Service</p>
                     </div>
-                {% endif %}
-            {% endwith %}
-            
-            <!-- Login Form -->
-            <form method="POST" action="{{ url_for('portal.login') }}" class="login-form">
-                <!-- Email Input -->
-                <div class="form-group">
-                    <label for="email" class="form-label">Email</label>
-                    <div class="input-group">
-                        <span class="material-symbols-outlined">mail</span>
-                        <input type="email" id="email" name="email" placeholder="nhà_phát_triển@example.com" required autofocus>
+                    
+                    <!-- Title Section -->
+                    <div class="mb-8 text-center">
+                        <h1 class="text-3xl font-bold text-[#0e111b] dark:text-white mb-2">Đăng nhập</h1>
+                        <p class="text-base text-slate-500 dark:text-slate-400">Đăng nhập vào tài khoản của bạn</p>
                     </div>
-                </div>
-                
-                <!-- Password Input -->
-                <div class="form-group">
-                    <label for="password" class="form-label">Mật khẩu</label>
-                    <div class="input-group">
-                        <span class="material-symbols-outlined">lock</span>
-                        <input type="password" id="password" name="password" placeholder="••••••••" required>
-                        <button type="button" class="password-toggle" id="passwordToggle" aria-label="Toggle password visibility">
-                            <span class="material-symbols-outlined">visibility_off</span>
+                    
+                    <!-- Login Form -->
+                    <form action="{{ url_for('portal.login') }}" class="space-y-6" method="POST">
+                        <!-- Email Input -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-[#0e111b] dark:text-gray-200" for="email">Email</label>
+                            <div class="relative group">
+                                <input class="block w-full h-12 px-4 pl-12 rounded-xl border border-[#d1d5e6] dark:border-slate-600 bg-white/50 dark:bg-slate-800/50 text-[#0e111b] dark:text-white placeholder:text-[#505d95] dark:placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none" id="email" name="email" placeholder="nhà_phát_triển@example.com" type="email" required autofocus/>
+                                <div class="absolute left-0 top-0 h-12 w-12 flex items-center justify-center text-[#505d95] dark:text-slate-400 pointer-events-none group-focus-within:text-primary transition-colors">
+                                    <span class="material-symbols-outlined text-[20px]">mail</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Password Input -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-[#0e111b] dark:text-gray-200" for="password">Mật khẩu</label>
+                            <div class="relative group">
+                                <input class="block w-full h-12 px-4 pl-12 pr-12 rounded-xl border border-[#d1d5e6] dark:border-slate-600 bg-white/50 dark:bg-slate-800/50 text-[#0e111b] dark:text-white placeholder:text-[#505d95] dark:placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none" id="password" name="password" placeholder="••••••••" type="password" required/>
+                                <div class="absolute left-0 top-0 h-12 w-12 flex items-center justify-center text-[#505d95] dark:text-slate-400 pointer-events-none group-focus-within:text-primary transition-colors">
+                                    <span class="material-symbols-outlined text-[20px]">lock</span>
+                                </div>
+                                <button class="absolute right-0 top-0 h-12 w-12 flex items-center justify-center text-[#505d95] dark:text-slate-400 hover:text-[#0e111b] dark:hover:text-white cursor-pointer transition-colors" type="button" id="passwordToggle" aria-label="Toggle password visibility">
+                                    <span class="material-symbols-outlined text-[20px]">visibility_off</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Utility Row -->
+                        <div class="flex items-center justify-between flex-wrap gap-2">
+                            <label class="flex items-center gap-2 cursor-pointer group">
+                                <input class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/20 dark:bg-slate-700 dark:border-slate-600 dark:checked:bg-primary transition" type="checkbox" id="remember_me" name="remember_me"/>
+                                <span class="text-xs font-normal text-[#505d95] dark:text-slate-400 group-hover:text-primary transition-colors">Ghi nhớ đăng nhập</span>
+                            </label>
+                            <a class="text-xs font-bold text-primary hover:text-[#556cd6] transition-colors" href="{{ url_for('portal.forgot_password') }}">Quên mật khẩu?</a>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <button class="w-full h-12 flex items-center justify-center rounded-xl bg-primary hover:bg-[#556cd6] text-white text-base font-bold tracking-wide shadow-lg shadow-primary/30 transform hover:-translate-y-0.5 transition-all duration-200" type="submit">
+                            Đăng nhập
                         </button>
+                    </form>
+                    
+                    <!-- Divider -->
+                    <div class="relative my-8">
+                        <div class="absolute inset-0 flex items-center">
+                            <div class="w-full border-t border-[#e8eaf3] dark:border-slate-700"></div>
+                        </div>
+                        <div class="relative flex justify-center text-sm">
+                            <span class="px-2 bg-white/0 text-slate-500 backdrop-blur-md">hoặc</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Footer Link -->
+                    <div class="text-center">
+                        <p class="text-sm font-medium text-[#0e111b] dark:text-gray-300">
+                            Chưa có tài khoản? 
+                            <a class="text-primary font-bold hover:underline ml-1" href="{{ url_for('portal.register') }}">Đăng ký ngay</a>
+                        </p>
+                    </div>
+                    
+                    <!-- Security Badge (Visual Trust) -->
+                    <div class="mt-8 pt-6 border-t border-[#e8eaf3] dark:border-slate-700 flex items-center justify-center gap-2 text-xs text-slate-400">
+                        <span class="material-symbols-outlined text-[16px]">verified_user</span>
+                        <span>Bảo mật bởi CCCD Infrastructure</span>
                     </div>
                 </div>
-                
-                <!-- Utility Row -->
-                <div class="form-utility">
-                    <label class="checkbox-group">
-                        <input type="checkbox" id="remember_me" name="remember_me">
-                        <span>Ghi nhớ đăng nhập</span>
-                    </label>
-                    <a href="{{ url_for('portal.forgot_password') }}" class="form-link">Quên mật khẩu?</a>
-                </div>
-                
-                <!-- Submit Button -->
-                <button type="submit" class="btn-login">Đăng nhập</button>
-            </form>
-            
-            <!-- Divider -->
-            <div class="login-divider">
-                <span>hoặc</span>
             </div>
-            
-            <!-- Footer Link -->
-            <div class="login-footer">
-                <p>
-                    Chưa có tài khoản?
-                    <a href="{{ url_for('portal.register') }}">Đăng ký ngay</a>
-                </p>
+        </div>
+        
+        <!-- Decorative Floating Elements (Abstracting Identity Data) -->
+        <div class="absolute right-[15%] top-[20%] hidden lg:block opacity-60 animate-float-delayed">
+            <div class="bg-white/5 backdrop-blur-sm border border-white/10 p-4 rounded-xl shadow-lg transform rotate-6">
+                <span class="material-symbols-outlined text-white/40 text-4xl">badge</span>
             </div>
-            
-            <!-- Security Badge -->
-            <div class="security-badge">
-                <span class="material-symbols-outlined">verified_user</span>
-                <span>Bảo mật bởi CCCD Infrastructure</span>
+        </div>
+        <div class="absolute left-[15%] bottom-[20%] hidden lg:block opacity-60 animate-float">
+            <div class="bg-white/5 backdrop-blur-sm border border-white/10 p-4 rounded-xl shadow-lg transform -rotate-6">
+                <span class="material-symbols-outlined text-white/40 text-4xl">dns</span>
             </div>
         </div>
     </div>
-</div>
-
-<script>
-// Password visibility toggle
-document.getElementById('passwordToggle')?.addEventListener('click', function() {
-    const passwordInput = document.getElementById('password');
-    const toggleIcon = this.querySelector('span');
-    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-    passwordInput.setAttribute('type', type);
-    toggleIcon.textContent = type === 'password' ? 'visibility_off' : 'visibility';
-});
-</script>
+    
+    <script>
+        // Password visibility toggle
+        document.getElementById('passwordToggle')?.addEventListener('click', function () {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = this.querySelector('span');
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            toggleIcon.textContent = type === 'password' ? 'visibility_off' : 'visibility';
+        });
+    </script>
+    
+    <!-- Flash message styles -->
+    <style>
+        .flash-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .flash-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .flash-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .flash-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
 </body>
 </html>
