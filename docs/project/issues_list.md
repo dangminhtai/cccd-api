@@ -566,3 +566,25 @@
   - **Thêm logging** error để debug khi function return None
   - **Dùng `.get()`** cho dictionary access nếu key có thể không tồn tại
   - **Test** với database schema cũ và mới để đảm bảo backward compatibility
+
+---
+
+## 36) Admin search user fail do subscriptions table không có column `created_at`
+
+- **Hiện tượng**: Admin search user by email báo lỗi "Unknown column 'created_at' in 'order clause'" khi query subscriptions table
+- **Nguyên nhân**: 
+  - Function `get_user_by_email()` query subscriptions với `ORDER BY created_at DESC` nhưng subscriptions table không có column `created_at`
+  - Database schema có thể chưa có migration cho `created_at` column trong subscriptions table
+  - Subscriptions table chỉ có `started_at` (theo schema gốc), không có `created_at`
+  - Exception xảy ra khi ORDER BY column không tồn tại
+- **Cách xử lý**: 
+  - Thêm try/except trong query subscriptions để handle backward compatibility
+  - Try query với `ORDER BY created_at DESC` trước, nếu fail thì query without ORDER BY
+  - Hoặc dùng `started_at` thay vì `created_at` nếu column đó tồn tại
+  - Apply cùng pattern cho `get_users_list()` function khi query subscriptions
+- **Cách tránh lần sau**: Khi viết query database với ORDER BY:
+  - **Luôn kiểm tra** column tồn tại trước khi ORDER BY (hoặc dùng try/except)
+  - **Không giả định** tên column giống nhau giữa các table (ví dụ: `created_at` vs `started_at`)
+  - **Check schema** trước khi viết query với ORDER BY
+  - **Test** với database schema thực tế để đảm bảo columns tồn tại
+  - **Backward compatibility**: Try/except cho optional columns trong ORDER BY clause
