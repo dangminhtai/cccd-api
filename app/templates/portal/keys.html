@@ -132,6 +132,74 @@
             outline: none;
         }
         
+        /* Custom Select Dropdown */
+        .custom-select-wrapper {
+            position: relative;
+        }
+        
+        .custom-select-trigger {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .custom-select-options {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
+            background: rgba(16, 22, 40, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+        
+        .custom-select-wrapper:hover .custom-select-options,
+        .custom-select-wrapper.open .custom-select-options {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .option-item {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .option-item:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
+        .option-item.selected {
+            background: rgba(59, 130, 246, 0.15);
+            border-left: 3px solid #3b82f6;
+        }
+        
+        .option-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        
+        .tier-glow-free:hover { 
+            box-shadow: 0 0 15px rgba(148, 163, 184, 0.1); 
+        }
+        
+        .tier-glow-premium:hover { 
+            box-shadow: 0 0 15px rgba(251, 191, 36, 0.1); 
+        }
+        
+        .tier-glow-ultra:hover { 
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.2); 
+        }
+        
         .nav-item-active {
             background: linear-gradient(135deg, #667fea 0%, #3b82f6 100%);
             color: white;
@@ -345,15 +413,80 @@
                             <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
                                 <div class="md:col-span-4 space-y-2">
                                     <label class="text-sm font-medium text-slate-300 ml-1">Tier</label>
-                                    <div class="relative">
-                                        <select id="tier" name="tier" class="glass-input w-full rounded-lg py-2.5 pl-4 pr-10 text-sm appearance-none cursor-pointer" required>
-                                            <option value="free" {% if current_tier == 'free' %}selected{% endif %}>Free (10 req/min)</option>
-                                            <option value="premium" {% if current_tier == 'premium' %}selected{% endif %} {% if current_tier == 'free' %}disabled{% endif %}>Premium (100 req/min)</option>
-                                            <option value="ultra" {% if current_tier == 'ultra' %}selected{% endif %} {% if current_tier != 'ultra' %}disabled{% endif %}>Ultra (1000 req/min)</option>
-                                        </select>
-                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
-                                            <span class="material-symbols-outlined text-sm">expand_more</span>
+                                    <div class="custom-select-wrapper group relative" tabindex="0" id="tier-select-wrapper">
+                                        <div class="custom-select-trigger glass-input w-full rounded-lg py-2.5 px-3 flex items-center justify-between gap-3 text-sm cursor-pointer group-focus:border-electric-blue group-focus:ring-2 group-focus:ring-electric-blue/20" id="tier-trigger">
+                                            <div class="flex items-center gap-3" id="tier-display">
+                                                {% if current_tier == 'ultra' %}
+                                                <div class="w-8 h-8 rounded-md bg-electric-purple/20 flex items-center justify-center border border-electric-purple/30 shadow-[0_0_10px_rgba(139,92,246,0.3)]">
+                                                    <span class="material-symbols-outlined text-electric-purple text-[18px]">bolt</span>
+                                                </div>
+                                                <div class="flex flex-col">
+                                                    <span class="font-bold text-white leading-tight">Ultra</span>
+                                                    <span class="text-[10px] text-electric-purple font-medium uppercase tracking-wider">1000 req/min</span>
+                                                </div>
+                                                {% elif current_tier == 'premium' %}
+                                                <div class="w-8 h-8 rounded-md bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
+                                                    <span class="material-symbols-outlined text-amber-400 text-[18px]">star</span>
+                                                </div>
+                                                <div class="flex flex-col">
+                                                    <span class="font-bold text-white leading-tight">Premium</span>
+                                                    <span class="text-[10px] text-amber-400 font-medium uppercase tracking-wider">100 req/min</span>
+                                                </div>
+                                                {% else %}
+                                                <div class="w-8 h-8 rounded-md bg-slate-700/50 flex items-center justify-center border border-slate-600/50">
+                                                    <span class="material-symbols-outlined text-slate-300 text-[18px]">inventory_2</span>
+                                                </div>
+                                                <div class="flex flex-col">
+                                                    <span class="font-bold text-white leading-tight">Free</span>
+                                                    <span class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">10 req/min</span>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            <span class="material-symbols-outlined text-slate-400 group-hover:text-white transition-colors">expand_more</span>
                                         </div>
+                                        <div class="custom-select-options overflow-hidden">
+                                            {% if current_tier == 'ultra' %}
+                                            <div class="option-item selected p-3 cursor-pointer border-b border-white/5 flex items-center gap-3 tier-glow-ultra" data-value="ultra">
+                                                <div class="w-8 h-8 rounded-md bg-electric-purple/20 flex items-center justify-center border border-electric-purple/30">
+                                                    <span class="material-symbols-outlined text-electric-purple text-[18px]">bolt</span>
+                                                </div>
+                                                <div class="flex flex-col flex-1">
+                                                    <div class="flex justify-between items-center">
+                                                        <span class="font-bold text-white text-sm">Ultra</span>
+                                                        <span class="material-symbols-outlined text-electric-blue text-[16px]">check</span>
+                                                    </div>
+                                                    <span class="text-xs text-slate-400">Giới hạn 1000 req/min</span>
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                            {% if current_tier == 'ultra' or current_tier == 'premium' %}
+                                            <div class="option-item {% if current_tier == 'premium' %}selected{% endif %} p-3 cursor-pointer border-b border-white/5 flex items-center gap-3 tier-glow-premium hover:bg-white/5" data-value="premium">
+                                                <div class="w-8 h-8 rounded-md bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
+                                                    <span class="material-symbols-outlined text-amber-400 text-[18px]">star</span>
+                                                </div>
+                                                <div class="flex flex-col flex-1">
+                                                    <div class="flex justify-between items-center">
+                                                        <span class="font-bold text-slate-200 text-sm group-hover:text-white">Premium</span>
+                                                        {% if current_tier == 'premium' %}<span class="material-symbols-outlined text-electric-blue text-[16px]">check</span>{% endif %}
+                                                    </div>
+                                                    <span class="text-xs text-slate-400">Giới hạn 100 req/min</span>
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                            <div class="option-item {% if current_tier == 'free' %}selected{% endif %} p-3 cursor-pointer border-b border-white/5 last:border-0 flex items-center gap-3 tier-glow-free hover:bg-white/5" data-value="free">
+                                                <div class="w-8 h-8 rounded-md bg-slate-700/50 flex items-center justify-center border border-slate-600/50">
+                                                    <span class="material-symbols-outlined text-slate-300 text-[18px]">inventory_2</span>
+                                                </div>
+                                                <div class="flex flex-col flex-1">
+                                                    <div class="flex justify-between items-center">
+                                                        <span class="font-bold text-slate-200 text-sm group-hover:text-white">Free</span>
+                                                        {% if current_tier == 'free' %}<span class="material-symbols-outlined text-electric-blue text-[16px]">check</span>{% endif %}
+                                                    </div>
+                                                    <span class="text-xs text-slate-400">Giới hạn 10 req/min</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <input name="tier" type="hidden" id="tier-input" value="{{ current_tier }}" required/>
                                     </div>
                                 </div>
                                 <div class="md:col-span-5 space-y-2">
@@ -376,19 +509,7 @@
                                 Để trống "Số ngày hợp lệ" nếu muốn key vĩnh viễn. Nhập số ngày (ví dụ: 30) để key tự động hết hạn sau N ngày.
                             </p>
                         </div>
-                        {% if current_tier == 'ultra' %}
-                        <p class="text-xs text-slate-500 mt-2 ml-6">
-                            💡 Bạn có thể tạo key với tier Ultra, Premium hoặc Free
-                        </p>
-                        {% elif current_tier == 'premium' %}
-                        <p class="text-xs text-slate-500 mt-2 ml-6">
-                            💡 Bạn có thể tạo key với tier Premium hoặc Free
-                        </p>
-                        {% elif current_tier == 'free' %}
-                        <p class="text-xs text-slate-500 mt-2 ml-6">
-                            💡 Bạn đang ở tier Free. <a href="{{ url_for('portal.upgrade') }}" class="text-electric-blue hover:underline">Nâng cấp</a> để tạo Premium/Ultra keys.
-                        </p>
-                        {% endif %}
+            
                     </div>
                 </div>
                 
@@ -549,6 +670,125 @@
     <!-- AJAX Helpers and JavaScript -->
     <script src="{{ url_for('static', filename='js/ajax-helpers.js') }}"></script>
     <script>
+        // Custom Tier Select Dropdown
+        (function() {
+            const wrapper = document.getElementById('tier-select-wrapper');
+            const trigger = document.getElementById('tier-trigger');
+            const input = document.getElementById('tier-input');
+            const display = document.getElementById('tier-display');
+            const options = wrapper.querySelectorAll('.option-item');
+            
+            const tierConfig = {
+                'ultra': {
+                    icon: 'bolt',
+                    name: 'Ultra',
+                    limit: '1000 req/min',
+                    iconColor: 'electric-purple',
+                    bgColor: 'bg-electric-purple/20',
+                    borderColor: 'border-electric-purple/30',
+                    textColor: 'text-electric-purple',
+                    shadow: 'shadow-[0_0_10px_rgba(139,92,246,0.3)]'
+                },
+                'premium': {
+                    icon: 'star',
+                    name: 'Premium',
+                    limit: '100 req/min',
+                    iconColor: 'amber-400',
+                    bgColor: 'bg-amber-500/10',
+                    borderColor: 'border-amber-500/20',
+                    textColor: 'text-amber-400',
+                    shadow: ''
+                },
+                'free': {
+                    icon: 'inventory_2',
+                    name: 'Free',
+                    limit: '10 req/min',
+                    iconColor: 'slate-300',
+                    bgColor: 'bg-slate-700/50',
+                    borderColor: 'border-slate-600/50',
+                    textColor: 'text-slate-400',
+                    shadow: ''
+                }
+            };
+            
+            function updateDisplay(value) {
+                const config = tierConfig[value];
+                display.innerHTML = `
+                    <div class="w-8 h-8 rounded-md ${config.bgColor} flex items-center justify-center border ${config.borderColor} ${config.shadow}">
+                        <span class="material-symbols-outlined text-${config.iconColor} text-[18px]">${config.icon}</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="font-bold text-white leading-tight">${config.name}</span>
+                        <span class="text-[10px] ${config.textColor} font-medium uppercase tracking-wider">${config.limit}</span>
+                    </div>
+                `;
+                input.value = value;
+                
+                // Update selected state
+                options.forEach(opt => {
+                    opt.classList.remove('selected');
+                    const flexContainer = opt.querySelector('.flex.justify-between');
+                    if (flexContainer) {
+                        const checkIcon = flexContainer.querySelector('.material-symbols-outlined:last-child');
+                        if (checkIcon && checkIcon.textContent === 'check') {
+                            checkIcon.remove();
+                        }
+                    }
+                });
+                
+                const selectedOpt = wrapper.querySelector(`[data-value="${value}"]`);
+                if (selectedOpt) {
+                    selectedOpt.classList.add('selected');
+                    const flexContainer = selectedOpt.querySelector('.flex.justify-between');
+                    if (flexContainer) {
+                        // Check if check icon already exists
+                        let checkIcon = flexContainer.querySelector('.material-symbols-outlined:last-child');
+                        if (!checkIcon || checkIcon.textContent !== 'check') {
+                            checkIcon = document.createElement('span');
+                            checkIcon.className = 'material-symbols-outlined text-electric-blue text-[16px]';
+                            checkIcon.textContent = 'check';
+                            flexContainer.appendChild(checkIcon);
+                        }
+                    }
+                }
+            }
+            
+            // Handle option clicks
+            options.forEach(option => {
+                option.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const value = this.dataset.value;
+                    if (!this.style.display || this.style.display !== 'none') {
+                        updateDisplay(value);
+                        wrapper.classList.remove('open');
+                    }
+                });
+            });
+            
+            // Toggle dropdown
+            trigger.addEventListener('click', function(e) {
+                e.stopPropagation();
+                wrapper.classList.toggle('open');
+            });
+            
+            // Close on outside click
+            document.addEventListener('click', function(e) {
+                if (!wrapper.contains(e.target)) {
+                    wrapper.classList.remove('open');
+                }
+            });
+            
+            // Keyboard navigation
+            wrapper.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    wrapper.classList.toggle('open');
+                } else if (e.key === 'Escape') {
+                    wrapper.classList.remove('open');
+                }
+            });
+        })();
+        
         // Edit label functionality
         document.querySelectorAll('.key-label-display').forEach(display => {
             display.addEventListener('click', function() {
