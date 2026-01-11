@@ -121,7 +121,10 @@
                             <span class="pl-3 text-slate-500">
                                 <span class="material-symbols-outlined text-xl">vpn_key</span>
                             </span>
-                            <input id="adminKey" class="w-full bg-transparent border-none text-white placeholder-slate-600 focus:ring-0 text-sm py-2.5 px-3" placeholder="Nhập ADMIN_SECRET từ .env" type="password"/>
+                            <input id="adminKey" class="w-full bg-transparent border-none text-white placeholder-slate-500 focus:ring-0 text-sm py-2.5 px-3" placeholder="Nhập ADMIN_SECRET từ .env" type="text" autocomplete="off"/>
+                            <span id="adminKeyStatus" class="pr-3 text-slate-500 hidden">
+                                <span class="material-symbols-outlined text-xl">check_circle</span>
+                            </span>
                         </div>
                     </div>
                     
@@ -321,13 +324,15 @@
                         <span class="material-symbols-outlined text-[18px]">group</span> Quản Lý Users
                     </button>
                     <div class="flex-1 flex items-center justify-end px-4 gap-2">
-                        <div class="relative hidden sm:block">
-                            <span class="absolute left-3 top-2.5 text-slate-500 material-symbols-outlined text-lg">search</span>
-                            <input id="userSearchInput" class="bg-surface-dark border border-slate-700 rounded-full pl-9 pr-4 py-1.5 text-sm text-white focus:ring-1 focus:ring-primary focus:border-primary w-48 transition-all focus:w-64" placeholder="Search users..." type="text"/>
+                        <div class="relative hidden sm:flex items-center gap-2">
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 material-symbols-outlined text-lg pointer-events-none">search</span>
+                                <input id="userSearchInput" class="bg-surface-dark border border-slate-700 rounded-full pl-9 pr-4 py-1.5 text-sm text-white focus:ring-1 focus:ring-primary focus:border-primary w-48 transition-all focus:w-64 h-[36px]" placeholder="Search users..." type="text"/>
+                            </div>
+                            <button onclick="loadUsersList()" class="h-[36px] w-[36px] flex items-center justify-center text-slate-400 hover:text-white rounded-lg border border-slate-700 hover:bg-slate-800 transition-colors">
+                                <span class="material-symbols-outlined text-lg">search</span>
+                            </button>
                         </div>
-                        <button onclick="loadUsersList()" class="p-2 text-slate-400 hover:text-white rounded-lg border border-slate-700 hover:bg-slate-800">
-                            <span class="material-symbols-outlined text-lg">search</span>
-                        </button>
                     </div>
                 </div>
                 

@@ -169,7 +169,21 @@ async function loadPendingPayments(adminKey) {
 // Enter key to load
 document.addEventListener('DOMContentLoaded', function() {
   const adminKeyInput = document.getElementById("adminKey");
+  const adminKeyStatus = document.getElementById("adminKeyStatus");
+  
   if (adminKeyInput) {
+    // Update status icon based on input value
+    adminKeyInput.addEventListener("input", function() {
+      if (adminKeyStatus) {
+        if (this.value.trim().length > 0) {
+          adminKeyStatus.classList.remove("hidden");
+          adminKeyStatus.classList.add("text-emerald-500");
+        } else {
+          adminKeyStatus.classList.add("hidden");
+        }
+      }
+    });
+    
     adminKeyInput.addEventListener("keypress", (e) => {
       if (e.key === "Enter") loadStats();
     });
