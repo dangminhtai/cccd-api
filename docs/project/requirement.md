@@ -224,4 +224,78 @@ Tối thiểu cần:
 - Rate limit hoạt động (429 khi spam).
 - Có thể chuyển đổi chế độ hiển thị tỉnh/thành bằng `province_version` hoặc cấu hình mặc định.
 
+---
+
+## 12) Portal & User Management (Tính năng bổ sung)
+
+### 12.1 User Authentication & Registration
+
+- **User Registration**: 
+  - Đăng ký tài khoản với email, password, full_name
+  - Email verification với token (24h expiry)
+  - Resend verification email
+- **Login/Logout**:
+  - Session-based authentication
+  - "Remember Me" với permanent session (24h)
+  - Logout và clear session
+- **Password Reset**:
+  - Forgot password flow: nhập email → nhận reset link qua email
+  - Reset password với token (có expiry)
+  - Invalidate tất cả sessions sau khi reset password
+
+### 12.2 Portal Dashboard
+
+- **Dashboard**: Hiển thị thống kê usage, subscription tier, API keys
+- **API Key Management**:
+  - Tạo API key theo tier (free/premium/ultra)
+  - Xóa key (hard delete)
+  - Rotate key (tạo key mới, xóa key cũ)
+  - Edit label cho key
+  - Suspend/Resume key
+- **Usage Statistics**:
+  - Charts hiển thị usage theo thời gian (7/30/90/365 ngày)
+  - Usage theo từng API key
+  - Export data
+- **Billing & Subscription**:
+  - Xem lịch sử thanh toán
+  - Upgrade tier với payment request
+  - Admin approval flow cho payments
+
+### 12.3 Admin Dashboard
+
+- **User Management**:
+  - List users, search by email
+  - Change user tier manually
+  - Delete user
+- **API Key Management**:
+  - List all API keys
+  - Deactivate keys
+- **Payment Management**:
+  - List pending payments
+  - Approve/Reject payments
+  - Update subscription sau khi approve
+- **Statistics**:
+  - User stats (total, by tier)
+  - API key stats
+  - Usage stats
+
+### 12.4 Error Handling
+
+- **Custom 404 Page**: 
+  - Dark theme với glass-panel styling
+  - Phân biệt API requests (JSON) và Web requests (HTML)
+  - Navigation thông minh (dashboard nếu logged in, login nếu not)
+- **Error Handlers**:
+  - 404: Custom page cho web, JSON cho API
+  - 429: JSON response với rate limit message
+  - 500: Generic error message, detailed log server-side
+
+### 12.5 UI/UX
+
+- **Dark Theme**: Consistent dark theme across all pages
+- **Responsive Design**: Mobile-friendly với Tailwind CSS
+- **Material Symbols Icons**: Consistent iconography
+- **Custom Scrollbars**: Styled scrollbars cho dark theme
+- **Flash Messages**: User-friendly notifications
+
 

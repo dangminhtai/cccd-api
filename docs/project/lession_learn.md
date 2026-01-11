@@ -487,3 +487,45 @@
   - **Test kỹ**: Luôn test với content dài để verify chỉ có 1 scrollbar
   - **Debug scrollbar**: Dùng DevTools check computed styles của html, body, và container để tìm element nào đang tạo scrollbar
   - **Học từ user feedback**: User chỉ ra nguyên nhân chính xác (100vh + padding) → giải pháp đúng là set html overflow hidden
+
+---
+
+## 30) Function return signature phải khớp với cách gọi - Tuple unpacking
+
+- **Issue**: Hàm `reset_password()` chỉ trả về 2 giá trị `(success, error_message)` nhưng route đang expect 3 giá trị `(success, error_msg, user_id)`. Khi unpacking sẽ gây lỗi `ValueError: not enough values to unpack (expected 3, got 2)`.
+- **Nguyên nhân**: 
+  - Function signature không khớp với cách sử dụng trong route
+  - Route cần `user_id` để gọi `invalidate_user_sessions(user_id)` nhưng function không trả về
+  - Thiếu `user_id` trong return statement
+- **Cách xử lý**: 
+  - Cập nhật function `reset_password()` để trả về 3 giá trị: `(success, error_message, user_id)`
+  - Khi thành công: `return True, None, user_id`
+  - Khi thất bại: `return False, error_message, None`
+  - Đảm bảo `user_id` được lấy từ database query trước khi update password
+- **Bài học**: 
+  - **Function signature phải khớp**: Return values phải khớp với cách unpacking trong code gọi
+  - **Verify tuple unpacking**: Luôn kiểm tra số lượng values trả về khớp với số lượng variables nhận
+  - **Test function calls**: Test các function calls để đảm bảo không có lỗi unpacking
+  - **Type hints**: Dùng type hints `Tuple[bool, Optional[str], Optional[int]]` để rõ ràng return type
+  - **Code review**: Rà soát kỹ các function calls để phát hiện mismatch sớm
+
+---
+
+## 31) Custom 404 error page - Phân biệt API và Web requests
+
+- **Issue**: Khi user truy cập endpoint không tồn tại, Flask trả về 404 mặc định (HTML hoặc JSON tùy request). Cần custom 404 page đẹp cho web requests và JSON response cho API requests.
+- **Nguyên nhân**: 
+  - Flask mặc định không có custom 404 handler
+  - API requests (JSON) và Web requests (HTML) cần response format khác nhau
+  - Cần phân biệt giữa API endpoints (`/v1/`, `/api/`) và web pages
+- **Cách xử lý**: 
+  - Thêm `@app.errorhandler(404)` trong `app/__init__.py`
+  - Check nếu request là API request (path starts with `/v1/` hoặc `/api/`, hoặc `Accept: application/json`) → return JSON
+  - Nếu là web request → render template `404.html` với dark theme
+  - Template 404.html có navigation thông minh: redirect đến dashboard nếu logged in, login nếu not
+- **Bài học**: 
+  - **Error handlers**: Luôn có custom error handlers cho các HTTP status codes phổ biến (404, 500, 429)
+  - **Phân biệt request type**: API requests cần JSON, web requests cần HTML
+  - **User experience**: Custom 404 page đẹp giúp user không bị confused khi gặp lỗi
+  - **Navigation logic**: 404 page nên có link quay lại trang chính (dashboard hoặc login)
+  - **Consistent design**: 404 page nên dùng cùng design system (dark theme, glass-panel) với các trang khác

@@ -837,3 +837,54 @@
   - **Test với content dài**: Luôn test với content vượt quá viewport để verify chỉ có 1 scrollbar
   - **Debug scrollbar**: Dùng browser DevTools để kiểm tra element nào đang tạo scrollbar (check computed styles)
   - **Học từ usage.html**: `usage.html` làm đúng - container không scroll, chỉ body scroll
+
+---
+
+## Issue #46: Reset password function không trả về user_id → không thể invalidate sessions
+
+- **Mức độ nghiêm trọng**: 🔴 CRITICAL (Security + Functionality)
+- **Mô tả**: 
+  - Sau khi reset password thành công, user không thể login với mật khẩu mới
+  - Function `reset_password()` chỉ trả về 2 giá trị `(success, error_message)` nhưng route expect 3 giá trị `(success, error_msg, user_id)`
+  - Route không thể gọi `invalidate_user_sessions(user_id)` vì thiếu `user_id`
+  - Tuple unpacking gây lỗi `ValueError: not enough values to unpack (expected 3, got 2)`
+- **Nguyên nhân**: 
+  - Function signature không khớp với cách sử dụng trong route
+  - Route cần `user_id` để invalidate sessions nhưng function không trả về
+  - Thiếu `user_id` trong return statement của function
+- **Cách xử lý**: 
+  - Cập nhật function `reset_password()` để trả về 3 giá trị: `(success, error_message, user_id)`
+  - Khi thành công: `return True, None, user_id` (lấy `user_id` từ database query trước khi update)
+  - Khi thất bại: `return False, error_message, None`
+  - Update type hint: `Tuple[bool, Optional[str], Optional[int]]`
+- **Cách tránh lần sau**: 
+  - **Function signature phải khớp**: Return values phải khớp với cách unpacking trong code gọi
+  - **Verify tuple unpacking**: Luôn kiểm tra số lượng values trả về khớp với số lượng variables nhận
+  - **Type hints**: Dùng type hints để rõ ràng return type
+  - **Test function calls**: Test các function calls để đảm bảo không có lỗi unpacking
+  - **Code review**: Rà soát kỹ các function calls để phát hiện mismatch sớm
+
+---
+
+## Issue #47: Database column name mismatch - password_reset_token_expires vs password_reset_expires
+
+- **Mức độ nghiêm trọng**: 🔴 CRITICAL (Database Error)
+- **Mô tả**: 
+  - Khi user nhập email để reset password, báo lỗi: `Unknown column 'password_reset_token_expires' in 'field list'`
+  - Database schema có column `password_reset_expires` nhưng code đang dùng `password_reset_token_expires`
+- **Nguyên nhân**: 
+  - Column name trong code không khớp với database schema
+  - Có thể do migration script dùng tên khác với code
+  - Thiếu synchronization giữa schema và code
+- **Cách xử lý**: 
+  - Sửa tất cả các chỗ dùng `password_reset_token_expires` thành `password_reset_expires` trong `services/user_service.py`
+  - Update 3 SQL queries:
+    - `UPDATE users SET password_reset_token = %s, password_reset_expires = %s WHERE id = %s`
+    - `SELECT id, email FROM users WHERE password_reset_token = %s AND password_reset_expires > NOW()`
+    - `UPDATE users SET password_hash = %s, password_reset_token = NULL, password_reset_expires = NULL WHERE id = %s`
+- **Cách tránh lần sau**: 
+  - **Schema consistency**: Luôn đảm bảo column names trong code khớp với database schema
+  - **Check schema trước**: Kiểm tra schema trước khi viết SQL queries
+  - **Migration scripts**: Đảm bảo migration scripts và code dùng cùng column names
+  - **Test với database thực tế**: Test với database schema thực tế để phát hiện mismatch sớm
+  - **Code review**: Rà soát kỹ SQL queries để đảm bảo column names đúng
