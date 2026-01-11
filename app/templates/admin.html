@@ -751,6 +751,44 @@
         loadUsersList(1);
       }
       
+      async function deleteUser(userId, userEmail) {
+        // Escape single quotes in email
+        const displayEmail = userEmail.replace(/'/g, "\\'");
+        
+        if (!confirm(`Bạn có chắc chắn muốn xóa user này?\n\nEmail: ${displayEmail}\nID: ${userId}\n\n⚠️ Hành động này không thể hoàn tác!`)) {
+          return;
+        }
+        
+        const adminKey = document.getElementById('adminKey').value.trim();
+        if (!adminKey) {
+          alert('Vui lòng nhập Admin Secret Key ở trên');
+          return;
+        }
+        
+        try {
+          const resp = await fetch(`/admin/users/${userId}/delete`, {
+            method: 'POST',
+            headers: { 
+              'X-Admin-Key': adminKey,
+              'X-Requested-With': 'XMLHttpRequest'
+            }
+          });
+          
+          const data = await resp.json();
+          
+          if (resp.ok && data.success) {
+            alert('✅ ' + (data.message || 'Đã xóa user thành công!'));
+            // Reload users list
+            loadUsersList(currentUsersPage);
+          } else {
+            throw new Error(data.error || data.message || 'Lỗi khi xóa user');
+          }
+        } catch (error) {
+          console.error('Error deleting user:', error);
+          alert('Lỗi: ' + error.message);
+        }
+      }
+      
       function showChangeTierModal(userId, userEmail, currentTier) {
         // Escape single quotes in email
         userEmail = userEmail.replace(/'/g, "\\'");
