@@ -318,8 +318,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script>
         // Pass data from Jinja2 to JavaScript safely
-        const dailyData = {{ stats.daily_stats|tojson|safe }};
-        const statusData = {{ (stats.status_code_breakdown|tojson|safe) if stats.status_code_breakdown else 'null' }};
+        var dailyData = {{ stats.daily_stats|tojson|safe }};
+        var statusData = {% if stats.status_code_breakdown %}{{ stats.status_code_breakdown|tojson|safe }}{% else %}null{% endif %};
         
         // Daily requests chart
         if (dailyData && dailyData.length > 0) {
