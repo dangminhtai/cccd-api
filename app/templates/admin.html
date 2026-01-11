@@ -43,8 +43,11 @@
       .payments-table th, .payments-table td { padding: 12px; text-align: left; border-bottom: 1px solid #e0e0e0; }
       .payments-table th { background: #f8f9fa; font-weight: 600; }
       .payments-table tr:hover { background: #f8f9fa; }
-      .btn-approve { padding: 6px 16px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; }
+      .btn-approve { padding: 6px 16px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; margin-right: 8px; }
       .btn-approve:hover { background: #218838; }
+      .btn-reject { padding: 6px 16px; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; }
+      .btn-reject:hover { background: #c82333; }
+      .btn-actions { display: flex; gap: 8px; align-items: center; }
       .amount { font-weight: 600; color: #28a745; }
       .user-info { color: #495057; }
       .user-email { color: #0b57d0; font-weight: 500; }
@@ -311,9 +314,14 @@
                 <td>${payment.payment_gateway || 'N/A'}</td>
                 <td>${payment.notes || '-'}</td>
                 <td>
-                  <button class="btn-approve" onclick="approvePayment(${payment.id})">
-                    ✅ Approve
-                  </button>
+                  <div class="btn-actions">
+                    <button class="btn-approve" onclick="approvePayment(${payment.id})">
+                      ✅ Approve
+                    </button>
+                    <button class="btn-reject" onclick="rejectPayment(${payment.id})">
+                      ❌ Reject
+                    </button>
+                  </div>
                 </td>
               </tr>
             `;
@@ -478,9 +486,14 @@
           return;
         }
         
-        const btn = event.target;
+        const row = document.getElementById('payment-row-' + paymentId);
+        if (!row) return;
+        
+        const btn = row.querySelector('.btn-approve');
+        const rejectBtn = row.querySelector('.btn-reject');
         const originalText = btn.textContent;
         btn.disabled = true;
+        rejectBtn.disabled = true;
         btn.textContent = 'Đang xử lý...';
         
         try {
@@ -493,12 +506,15 @@
           
           if (resp.ok || resp.redirected) {
             // Remove row from table
-            const row = document.getElementById('payment-row-' + paymentId);
-            if (row) {
-              row.remove();
-            }
+            row.remove();
             // Show success message
             showMessage('✅ Đã approve payment thành công!', 'success');
+            // Reload payments if table is empty
+            const tbody = row.closest('tbody');
+            if (tbody && tbody.children.length === 0) {
+              const adminKey = document.getElementById('adminKey').value.trim();
+              loadPendingPayments(adminKey);
+            }
           } else {
             const data = await resp.json();
             throw new Error(data.error || 'Lỗi khi approve payment');
@@ -506,6 +522,59 @@
         } catch (error) {
           alert('Lỗi: ' + error.message);
           btn.disabled = false;
+          rejectBtn.disabled = false;
+          btn.textContent = originalText;
+        }
+      }
+      
+      async function rejectPayment(paymentId) {
+        if (!confirm('Xác nhận reject payment này? Payment sẽ bị hủy và không được xử lý.')) {
+          return;
+        }
+        
+        const adminKey = document.getElementById('adminKey').value.trim();
+        if (!adminKey) {
+          alert('Vui lòng nhập Admin Secret Key ở trên');
+          return;
+        }
+        
+        const row = document.getElementById('payment-row-' + paymentId);
+        if (!row) return;
+        
+        const btn = row.querySelector('.btn-reject');
+        const approveBtn = row.querySelector('.btn-approve');
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        approveBtn.disabled = true;
+        btn.textContent = 'Đang xử lý...';
+        
+        try {
+          const resp = await fetch(`/admin/payments/${paymentId}/reject`, {
+            method: 'POST',
+            headers: {
+              'X-Admin-Key': adminKey
+            }
+          });
+          
+          if (resp.ok || resp.redirected) {
+            // Remove row from table
+            row.remove();
+            // Show success message
+            showMessage('✅ Đã reject payment thành công!', 'success');
+            // Reload payments if table is empty
+            const tbody = row.closest('tbody');
+            if (tbody && tbody.children.length === 0) {
+              const adminKey = document.getElementById('adminKey').value.trim();
+              loadPendingPayments(adminKey);
+            }
+          } else {
+            const data = await resp.json();
+            throw new Error(data.error || 'Lỗi khi reject payment');
+          }
+        } catch (error) {
+          alert('Lỗi: ' + error.message);
+          btn.disabled = false;
+          approveBtn.disabled = false;
           btn.textContent = originalText;
         }
       }

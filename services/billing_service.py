@@ -458,6 +458,73 @@ def approve_payment_admin(payment_id: int) -> tuple[bool, Optional[str]]:
                 _log_debug(f"[APPROVE PAYMENT] ❌ Lỗi khi đóng connection: {close_err}")
 
 
+def reject_payment(payment_id: int) -> tuple[bool, Optional[str]]:
+    """Reject/cancel payment (chuyển status thành 'failed')"""
+    try:
+        conn = _get_db_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    UPDATE payments
+                    SET status = 'failed'
+                    WHERE id = %s AND status = 'pending'
+                    """,
+                    (payment_id,),
+                )
+                if cursor.rowcount == 0:
+                    return False, "Payment không tồn tại hoặc không phải pending"
+            conn.commit()
+            return True, "Đã reject payment"
+        finally:
+            conn.close()
+    except Exception as e:
+        return False, f"Lỗi khi reject payment: {str(e)}"
+
+
+def manually_change_user_tier(user_id: int, target_tier: str, notes: Optional[str] = None) -> tuple[bool, Optional[str]]:
+    """
+    Admin: Manually change user tier (không qua payment)
+    Returns: (success, error_message)
+    """
+    if target_tier not in ("free", "premium", "ultra"):
+        return False, "Tier không hợp lệ (phải là free, premium, hoặc ultra)"
+    
+    try:
+        conn = _get_db_connection()
+        try:
+            with conn.cursor() as cursor:
+                # Check user exists
+                cursor.execute("SELECT id FROM users WHERE id = %s", (user_id,))
+                if not cursor.fetchone():
+                    return False, "User không tồn tại"
+                
+                # Deactivate old subscription
+                cursor.execute(
+                    """
+                    UPDATE subscriptions
+                    SET status = 'expired'
+                    WHERE user_id = %s AND status = 'active'
+                    """,
+                    (user_id,),
+                )
+                
+                # Create new subscription
+                cursor.execute(
+                    """
+                    INSERT INTO subscriptions (user_id, tier, status, payment_method, notes)
+                    VALUES (%s, %s, 'active', 'manual', %s)
+                    """,
+                    (user_id, target_tier, notes or f"Admin manually changed to {target_tier}"),
+                )
+            conn.commit()
+            return True, f"Đã đổi tier user sang {target_tier}"
+        finally:
+            conn.close()
+    except Exception as e:
+        return False, f"Lỗi khi đổi tier: {str(e)}"
+
+
 def get_tier_pricing() -> dict:
     """Lấy bảng giá các tier (có thể config từ database hoặc hardcode)"""
     return {

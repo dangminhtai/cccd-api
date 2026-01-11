@@ -321,8 +321,52 @@ def admin_approve_payment(payment_id: int):
         flash(f"✅ {message}", "success")
     else:
         flash(f"❌ {message}", "error")
-        # Log error để debug
         current_app.logger.error(f"Failed to approve payment {payment_id}: {message}")
+    
+    return redirect(url_for("admin.admin_dashboard"))
+
+
+@admin_bp.post("/payments/<int:payment_id>/reject")
+def admin_reject_payment(payment_id: int):
+    """Admin: Reject/cancel payment"""
+    from services.billing_service import reject_payment
+    from flask import current_app
+    
+    current_app.logger.info(f"Admin reject payment_id={payment_id}")
+    
+    success, message = reject_payment(payment_id)
+    
+    if success:
+        flash(f"✅ {message}", "success")
+    else:
+        flash(f"❌ {message}", "error")
+        current_app.logger.error(f"Failed to reject payment {payment_id}: {message}")
+    
+    return redirect(url_for("admin.admin_dashboard"))
+
+
+@admin_bp.post("/users/<int:user_id>/change-tier")
+def admin_change_user_tier(user_id: int):
+    """Admin: Manually change user tier"""
+    from services.billing_service import manually_change_user_tier
+    from flask import current_app
+    
+    target_tier = request.form.get("tier")
+    notes = request.form.get("notes", "").strip()
+    
+    if not target_tier:
+        flash("❌ Tier không được để trống", "error")
+        return redirect(url_for("admin.admin_dashboard"))
+    
+    current_app.logger.info(f"Admin change user_id={user_id} tier to {target_tier}")
+    
+    success, message = manually_change_user_tier(user_id, target_tier, notes if notes else None)
+    
+    if success:
+        flash(f"✅ {message}", "success")
+    else:
+        flash(f"❌ {message}", "error")
+        current_app.logger.error(f"Failed to change tier: {message}")
     
     return redirect(url_for("admin.admin_dashboard"))
 
