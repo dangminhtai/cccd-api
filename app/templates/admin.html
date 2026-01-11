@@ -5,18 +5,14 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>CCCD API Master Admin Dashboard</title>
     
-    <!-- Fonts -->
     <link href="https://fonts.googleapis.com" rel="preconnect"/>
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
     
-    <!-- Material Symbols -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     
-    <!-- Tailwind Config -->
     <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
@@ -81,11 +77,11 @@
             -webkit-appearance: none;
             margin: 0;
         }
-        input[type="number"] {
+        /* input[type="number"] {
             -moz-appearance: textfield;
-        }
+        } */
         
-        /* Hide native select arrow */
+        /* Hide native select arrow purely via CSS as backup */
         select {
             appearance: none;
             -webkit-appearance: none;
@@ -105,20 +101,17 @@
             white-space: nowrap;
             word-wrap: normal;
             direction: ltr;
-            -webkit-font-feature-settings: 'liga';
+            /* -webkit-font-feature-settings: 'liga'; */
             -webkit-font-smoothing: antialiased;
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
     </style>
 </head>
 <body class="bg-background-light dark:bg-background-dark font-display antialiased text-slate-900 dark:text-white min-h-screen flex flex-col overflow-x-hidden selection:bg-primary selection:text-white">
-    <!-- Background Grid Effect -->
     <div class="fixed inset-0 z-0 pointer-events-none bg-tech-grid opacity-50"></div>
     
     <div class="relative z-10 flex h-full grow flex-col">
-        <!-- Main Container -->
         <div class="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <!-- 1. Top Section -->
             <header class="flex flex-col lg:flex-row gap-6 lg:items-end justify-between mb-8 pb-6 border-b border-glass-border">
                 <div class="flex flex-col gap-2">
                     <div class="flex items-center gap-3">
@@ -127,25 +120,43 @@
                             Admin Dashboard
                         </h1>
                     </div>
-                    <p class="text-slate-400 text-sm md:text-base font-light">CCCD API Service • Master Control Panel</p>
+                    <p class="text-slate-400 text-sm md:text-base font-light">
+                        CCCD API Service • Master Control Panel
+                        {% if admin_full_name %}
+                            • Đăng nhập bởi: <span class="text-primary font-medium">{{ admin_full_name }}</span>
+                        {% endif %}
+                    </p>
                 </div>
                 
-                <div class="flex flex-col sm:flex-row gap-4 items-end sm:items-end">
-                    <!-- Secret Key Field -->
+                <div class="flex flex-col sm:flex-row gap-4 items-end sm:items-center">
+                    <!-- Admin Info & Logout -->
+                    {% if admin_username %}
+                    <div class="flex items-center gap-3">
+                        <div class="text-right">
+                            <p class="text-sm text-white font-medium">{{ admin_full_name or admin_username }}</p>
+                            <p class="text-xs text-slate-400">{{ admin_username }}</p>
+                        </div>
+                        <a href="{{ url_for('admin.admin_logout') }}" class="h-[42px] px-4 bg-rose-600 hover:bg-rose-500 text-white text-sm font-semibold rounded-lg flex items-center gap-2 transition-all shadow-lg shadow-rose-500/20 active:scale-95">
+                            <span class="material-symbols-outlined text-[20px]">logout</span>
+                            Đăng xuất
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Admin Secret Key (Optional - for API calls) -->
                     <div class="relative w-full sm:w-80 group">
-                        <label class="block text-xs font-medium text-slate-400 mb-1.5 ml-1">Admin Secret Key</label>
+                        <label class="block text-xs font-medium text-slate-400 mb-1.5 ml-1">Admin Secret Key (Optional - cho API calls)</label>
                         <div class="flex items-center w-full rounded-lg bg-surface-dark border border-slate-700 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all neon-glow overflow-hidden h-[42px]">
                             <span class="pl-3 text-slate-500">
                                 <span class="material-symbols-outlined text-xl">vpn_key</span>
                             </span>
-                            <input id="adminKey" class="w-full bg-transparent border-none text-white placeholder-slate-500 focus:ring-0 text-sm py-2.5 px-3" placeholder="Nhập ADMIN_SECRET từ .env" type="text" autocomplete="off"/>
+                            <input id="adminKey" class="w-full bg-transparent border-none text-white placeholder-slate-500 focus:ring-0 text-sm py-2.5 px-3" placeholder="Nhập ADMIN_SECRET từ .env (tùy chọn)" type="text" autocomplete="off"/>
                             <span id="adminKeyStatus" class="pr-3 text-slate-500 hidden">
                                 <span class="material-symbols-outlined text-xl">check_circle</span>
                             </span>
                         </div>
                     </div>
                     
-                    <!-- Download Stats Button -->
                     <button onclick="loadStats()" class="h-[42px] px-5 bg-primary hover:bg-blue-600 text-white text-sm font-semibold rounded-lg flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20 active:scale-95 w-full sm:w-auto justify-center mt-6 sm:mt-0">
                         <span class="material-symbols-outlined text-[20px]">download</span>
                         Tải thống kê
@@ -153,20 +164,15 @@
                 </div>
             </header>
             
-            <!-- Error Message -->
             <div id="error" class="hidden bg-red-500/20 text-red-400 border border-red-500/30 px-4 py-3 rounded-lg mb-6"></div>
             
-            <!-- Loading Indicator -->
             <div id="loading" class="hidden text-center py-10 text-slate-400">
                 <span class="material-symbols-outlined text-4xl animate-spin">hourglass_empty</span>
                 <p class="mt-2">Đang tải...</p>
             </div>
             
-            <!-- 2. Overview Stats & Tier Table -->
             <section id="stats" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
-                <!-- Stats Cards -->
                 <div class="lg:col-span-4 flex flex-col gap-4">
-                    <!-- Card 1: Requests Today -->
                     <div class="glass-panel rounded-xl p-6 flex flex-col justify-between h-full relative overflow-hidden group">
                         <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                             <span class="material-symbols-outlined text-8xl text-white">insights</span>
@@ -180,7 +186,6 @@
                     </div>
                 </div>
                 
-                <!-- Tier Overview Table -->
                 <div class="lg:col-span-8 glass-panel rounded-xl flex flex-col">
                     <div class="px-6 py-4 border-b border-glass-border flex justify-between items-center bg-surface-dark/30 rounded-t-xl">
                         <h3 class="text-white font-semibold flex items-center gap-2">
@@ -204,9 +209,7 @@
                 </div>
             </section>
             
-            <!-- 3 & 4. Tools Section: Test API & Create Key -->
             <section class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
-                <!-- 3. Test API Module -->
                 <div class="glass-panel rounded-xl flex flex-col h-full overflow-hidden border-t-4 border-t-purple-500">
                     <div class="px-6 py-4 bg-surface-dark/40 border-b border-glass-border flex justify-between items-center">
                         <h3 class="text-white font-bold text-lg flex items-center gap-2">
@@ -217,9 +220,7 @@
                     </div>
                     
                     <div class="p-6 flex flex-col lg:flex-row gap-6 h-full">
-                        <!-- Inputs -->
                         <div class="flex-1 flex flex-col gap-4">
-                            <!-- Security status -->
                             <div class="mb-4 p-4 rounded-lg {% if api_key_required %}bg-emerald-500/10 border border-emerald-500/30{% else %}bg-amber-500/10 border border-amber-500/30{% endif %}">
                                 {% if api_key_required %}
                                     <strong class="text-emerald-400 text-sm">🔐 API Key đang BẬT</strong>
@@ -245,7 +246,7 @@
                             <div>
                                 <label class="text-xs text-slate-400 block mb-1.5">Province Version (Optional)</label>
                                 <div class="relative">
-                                    <select id="demoProvinceVersion" class="appearance-none w-full bg-surface-dark border border-slate-700 rounded-lg text-white text-sm px-3 py-2.5 pr-9 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 cursor-pointer">
+                                    <select id="demoProvinceVersion" class="appearance-none bg-none w-full bg-surface-dark border border-slate-700 rounded-lg text-white text-sm px-3 py-2.5 pr-9 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 cursor-pointer">
                                         <option value="">(mặc định)</option>
                                         <option value="legacy_63">legacy_63</option>
                                         <option value="current_34">current_34</option>
@@ -261,14 +262,13 @@
                                 </div>
                             </div>
                             
-                            <button type="button" onclick="testApi()" class="mt-2 w-full bg-purple-600 hover:bg-purple-500 text-white font-medium py-2.5 rounded-lg transition-transform duration-150 active:scale-[0.98] flex items-center justify-center gap-2">
+                            <button type="button" onclick="testApi()" class="mt-2 w-full bg-purple-600 hover:bg-purple-500 text-white font-medium py-2.5 rounded-lg flex items-center justify-center gap-2">
                                 <span class="material-symbols-outlined text-[18px]">send</span> Send Request
                             </button>
                             
                             <div id="demoError" class="hidden bg-red-500/20 text-red-400 border border-red-500/30 px-4 py-3 rounded-lg mt-2"></div>
                         </div>
                         
-                        <!-- Console Output -->
                         <div id="demoResult" class="hidden flex-1 bg-[#0d1117] rounded-lg border border-slate-800 p-4 font-mono text-xs overflow-y-auto max-h-[250px] shadow-inner">
                             <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-800">
                                 <span class="text-slate-500">Output Console</span>
@@ -279,7 +279,6 @@
                     </div>
                 </div>
                 
-                <!-- 4. Create Key Module -->
                 <div class="glass-panel rounded-xl flex flex-col h-full overflow-hidden border-t-4 border-t-primary">
                     <div class="px-6 py-4 bg-surface-dark/40 border-b border-glass-border">
                         <h3 class="text-white font-bold text-lg flex items-center gap-2">
@@ -293,7 +292,7 @@
                             <div>
                                 <label class="text-xs text-slate-400 block mb-1.5">Select Tier</label>
                                 <div class="relative">
-                                    <select id="createTier" class="appearance-none w-full bg-surface-dark border border-slate-700 rounded-lg text-white text-sm px-3 py-3 pr-9 focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer">
+                                    <select id="createTier" class="appearance-none bg-none w-full bg-surface-dark border border-slate-700 rounded-lg text-white text-sm px-3 py-3 pr-9 focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer">
                                         <option value="free">Free Tier (10 req/phút)</option>
                                         <option value="premium">Premium (100 req/phút)</option>
                                         <option value="ultra" selected>Ultra (1000 req/phút)</option>
@@ -316,7 +315,6 @@
                         
                         <div id="createError" class="hidden bg-red-500/20 text-red-400 border border-red-500/30 px-4 py-3 rounded-lg mb-4"></div>
                         
-                        <!-- Result Area -->
                         <div id="createSuccess" class="hidden mt-auto bg-[#0b1219] border border-primary/50 rounded-lg p-4 relative group">
                             <div class="absolute -inset-0.5 bg-gradient-to-r from-primary to-cyan-400 rounded-lg blur opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
                             <div class="relative flex flex-col gap-2">
@@ -333,9 +331,7 @@
                 </div>
             </section>
             
-            <!-- 5. Management Tables (Tabs) -->
             <section class="glass-panel rounded-xl overflow-hidden mb-10">
-                <!-- Tabs Header -->
                 <div class="flex border-b border-glass-border overflow-x-auto">
                     <button id="paymentsTab" onclick="switchTab('payments')" class="px-6 py-4 text-sm font-medium text-white border-b-2 border-primary bg-primary/5 flex items-center gap-2 whitespace-nowrap">
                         <span class="material-symbols-outlined text-[18px]">payments</span> Pending Payments
@@ -356,7 +352,6 @@
                     </div>
                 </div>
                 
-                <!-- Payments Content -->
                 <div id="paymentsContent">
                     <div id="paymentsContainer" class="p-6">
                         <p class="text-center text-slate-400 py-10">
@@ -365,7 +360,6 @@
                     </div>
                 </div>
                 
-                <!-- Users Content -->
                 <div id="usersContent" class="hidden">
                     <div id="usersContainer" class="p-6">
                         <p class="text-center text-slate-400 py-10">
@@ -377,7 +371,6 @@
         </div>
     </div>
     
-    <!-- External JavaScript -->
     <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
 </body>
 </html>

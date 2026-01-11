@@ -21,16 +21,82 @@ from services.admin_security import (
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
 
+@admin_bp.route("/login", methods=["GET", "POST"])
+def admin_login():
+    """Trang đăng nhập admin"""
+    from flask import session
+    
+    # Nếu đã đăng nhập, redirect đến dashboard
+    if "admin_id" in session and session.get("is_admin") is True:
+        return redirect(url_for("admin.admin_dashboard"))
+    
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+        
+        if not username or not password:
+            flash("Vui lòng điền đầy đủ thông tin", "error")
+            return render_template("admin/login.html")
+        
+        # Authenticate
+        from services.admin_auth_service import authenticate_admin
+        success, admin_data, error_msg = authenticate_admin(username, password)
+        
+        if success and admin_data:
+            # Tạo session
+            session["admin_id"] = admin_data["id"]
+            session["admin_username"] = admin_data["username"]
+            session["admin_email"] = admin_data["email"]
+            session["admin_full_name"] = admin_data["full_name"]
+            session["is_admin"] = True
+            session.permanent = True  # Remember me
+            
+            current_app.logger.info(
+                f"admin_login_success | admin_id={admin_data['id']} | "
+                f"username={admin_data['username']} | ip={get_remote_address()}"
+            )
+            
+            flash(f"Chào mừng, {admin_data['full_name']}!", "success")
+            return redirect(url_for("admin.admin_dashboard"))
+        else:
+            # Log failed attempt
+            current_app.logger.warning(
+                f"admin_login_failed | username={username} | "
+                f"ip={get_remote_address()} | error={error_msg}"
+            )
+            flash(error_msg or "Username hoặc password không đúng", "error")
+            return render_template("admin/login.html")
+    
+    return render_template("admin/login.html")
+
+
+@admin_bp.route("/logout")
+def admin_logout():
+    """Đăng xuất admin"""
+    from flask import session
+    
+    if "admin_id" in session:
+        admin_id = session.get("admin_id")
+        current_app.logger.info(
+            f"admin_logout | admin_id={admin_id} | ip={get_remote_address()}"
+        )
+        session.clear()
+        flash("Đã đăng xuất thành công", "success")
+    
+    return redirect(url_for("admin.admin_login"))
+
+
 @admin_bp.get("/")
 def admin_dashboard():
-    """Trang admin dashboard - chỉ hiển thị form, không load data nhạy cảm"""
-    from flask import current_app
+    """Trang admin dashboard - chỉ hiển thị sau khi đăng nhập"""
+    from flask import session
     
-    # KHÔNG load pending_payments ở đây vì chưa verify admin key
-    # Pending payments sẽ được load qua JavaScript khi user nhập key và gọi API
-    # Bảo mật: Không expose sensitive data trong initial render
+    # Lấy thông tin admin từ session
+    admin_id = session.get("admin_id")
+    admin_username = session.get("admin_username", "Admin")
+    admin_full_name = session.get("admin_full_name", "Administrator")
     
-    # Lấy thông tin API settings để hiển thị trong demo section
+    # Lấy thông tin API settings
     settings = current_app.config.get("SETTINGS")
     api_key_mode = getattr(settings, "api_key_mode", "simple")
     api_key_required = (
@@ -41,6 +107,8 @@ def admin_dashboard():
     
     return render_template(
         "admin.html", 
+        admin_username=admin_username,
+        admin_full_name=admin_full_name,
         pending_payments=None,
         api_key_required=api_key_required,
         configured_key=configured_key,
@@ -55,23 +123,94 @@ def _get_request_id() -> str:
 @admin_bp.before_request
 def check_admin_auth():
     """
-    Kiểm tra Admin key trước mọi request
+    Kiểm tra Admin authentication trước mọi request
+    Hỗ trợ 2 cách:
+    1. Session-based (cho web interface) - Ưu tiên
+    2. Header-based (cho API calls) - Fallback
+    
     Bao gồm chống brute force: IP blocking, rate limiting, logging
     """
-    admin_secret = os.getenv("ADMIN_SECRET")
-    if not admin_secret:
-        # Nếu chưa config ADMIN_SECRET, vẫn cho phép GET /admin/ để hiển thị form nhập key
-        # Nhưng không cho phép các action khác (API endpoints)
-        if request.method == "GET" and request.endpoint == "admin.admin_dashboard":
-            return None
-        return jsonify({"error": "Admin API chưa được cấu hình (ADMIN_SECRET)"}), 503
+    from flask import session
     
-    # Cho GET /admin/, KHÔNG yêu cầu admin key (template sẽ yêu cầu user nhập)
-    # Template sẽ chỉ hiển thị form, không load data nhạy cảm
-    # Data sẽ được load qua API khi user nhập key
-    # Demo section cũng được tích hợp trong admin dashboard
-    if request.method == "GET" and request.endpoint == "admin.admin_dashboard":
+    # Cho phép login page và static files
+    if request.endpoint in ("admin.admin_login", "admin.admin_logout", "static"):
         return None
+    
+    # ===== KIỂM TRA SESSION (Ưu tiên cho web interface) =====
+    if "admin_id" in session and session.get("is_admin") is True:
+        # Đã đăng nhập qua session → cho phép
+        return None
+    
+    # ===== FALLBACK: HEADER-BASED AUTH (cho API calls) =====
+    admin_secret = os.getenv("ADMIN_SECRET")
+    if admin_secret:
+        provided_key = request.headers.get("X-Admin-Key")
+        if provided_key == admin_secret:
+            # Key đúng → cho phép (cho API calls)
+            return None
+    
+    # ===== CHỐNG BRUTE FORCE =====
+    # Lấy IP address của request
+    ip_address = get_remote_address()
+    
+    # Kiểm tra xem IP có bị block không
+    is_blocked, unblock_time = is_ip_blocked(ip_address)
+    if is_blocked:
+        remaining_seconds = int(unblock_time - time.time())
+        current_app.logger.warning(
+            f"admin_blocked_ip | request_id={_get_request_id()} | "
+            f"ip={ip_address} | endpoint={request.endpoint} | "
+            f"unblock_in={remaining_seconds}s"
+        )
+        # Nếu là web request, redirect đến login
+        if request.endpoint and "admin" in request.endpoint:
+            flash(f"IP bị tạm khóa do quá nhiều lần thử sai. Vui lòng thử lại sau {remaining_seconds} giây.", "error")
+            return redirect(url_for("admin.admin_login"))
+        return jsonify({
+            "error": f"IP bị tạm khóa do quá nhiều lần thử sai. Vui lòng thử lại sau {remaining_seconds} giây.",
+            "blocked_until": int(unblock_time),
+            "remaining_seconds": remaining_seconds,
+        }), 429
+    
+    # Nếu không có session và không có valid header key
+    if admin_secret:
+        provided_key = request.headers.get("X-Admin-Key", "")
+        if provided_key:
+            # Có key nhưng sai → ghi lại failed attempt
+            endpoint = request.endpoint or request.path
+            record_failed_attempt(ip_address, endpoint)
+            
+            failed_count = get_failed_attempts_count(ip_address)
+            
+            # Log failed attempt
+            current_app.logger.warning(
+                f"admin_auth_failed | request_id={_get_request_id()} | "
+                f"ip={ip_address} | endpoint={endpoint} | "
+                f"failed_count={failed_count}"
+            )
+            
+            # Delay để làm chậm brute force (exponential backoff)
+            delay_seconds = min(0.1 * (2 ** (failed_count - 1)), 2.0)
+            time.sleep(delay_seconds)
+            
+            # Kiểm tra lại xem có bị block sau khi record attempt không
+            is_blocked, unblock_time = is_ip_blocked(ip_address)
+            if is_blocked:
+                remaining_seconds = int(unblock_time - time.time())
+                return jsonify({
+                    "error": f"IP bị tạm khóa do quá nhiều lần thử sai. Vui lòng thử lại sau {remaining_seconds} giây.",
+                    "blocked_until": int(unblock_time),
+                    "remaining_seconds": remaining_seconds,
+                }), 429
+    
+    # Không có session và không có valid key → redirect đến login (web) hoặc 403 (API)
+    if request.endpoint and "admin" in request.endpoint:
+        # Web request → redirect đến login
+        flash("Vui lòng đăng nhập để truy cập trang admin", "warning")
+        return redirect(url_for("admin.admin_login"))
+    
+    # API request → 403
+    return jsonify({"error": "Unauthorized - Vui lòng đăng nhập hoặc cung cấp admin key hợp lệ"}), 403
     
     # ===== CHỐNG BRUTE FORCE =====
     # Lấy IP address của request
