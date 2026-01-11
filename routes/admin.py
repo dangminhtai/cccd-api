@@ -345,17 +345,37 @@ def admin_reject_payment(payment_id: int):
     return redirect(url_for("admin.admin_dashboard"))
 
 
-@admin_bp.post("/users/<int:user_id>/change-tier")
-def admin_change_user_tier(user_id: int):
+@admin_bp.post("/users/change-tier")
+def admin_change_user_tier():
     """Admin: Manually change user tier"""
     from services.billing_service import manually_change_user_tier
+    from services.user_service import get_user_by_email
     from flask import current_app
     
+    user_email = request.form.get("user_email", "").strip()
+    user_id = request.form.get("user_id", "").strip()
     target_tier = request.form.get("tier")
     notes = request.form.get("notes", "").strip()
     
     if not target_tier:
         flash("❌ Tier không được để trống", "error")
+        return redirect(url_for("admin.admin_dashboard"))
+    
+    # Get user_id from email if provided
+    if user_email and not user_id:
+        user = get_user_by_email(user_email)
+        if not user:
+            flash("❌ Không tìm thấy user với email này", "error")
+            return redirect(url_for("admin.admin_dashboard"))
+        user_id = user["id"]
+    elif not user_id:
+        flash("❌ Vui lòng nhập email hoặc user ID", "error")
+        return redirect(url_for("admin.admin_dashboard"))
+    
+    try:
+        user_id = int(user_id)
+    except ValueError:
+        flash("❌ User ID không hợp lệ", "error")
         return redirect(url_for("admin.admin_dashboard"))
     
     current_app.logger.info(f"Admin change user_id={user_id} tier to {target_tier}")
@@ -369,6 +389,22 @@ def admin_change_user_tier(user_id: int):
         current_app.logger.error(f"Failed to change tier: {message}")
     
     return redirect(url_for("admin.admin_dashboard"))
+
+
+@admin_bp.get("/users/search")
+def admin_search_user():
+    """Admin API: Search user by email (JSON)"""
+    from services.user_service import get_user_by_email
+    
+    email = request.args.get("email", "").strip()
+    if not email:
+        return jsonify({"error": "Email không được để trống"}), 400
+    
+    user = get_user_by_email(email)
+    if not user:
+        return jsonify({"error": "Không tìm thấy user"}), 404
+    
+    return jsonify({"user": user})
 
 
 

@@ -268,6 +268,54 @@ def generate_new_verification_token(user_id: int) -> Tuple[bool, Optional[str], 
         return False, f"Lỗi hệ thống: {str(e)}", None
 
 
+def get_user_by_email(email: str) -> Optional[dict]:
+    """Lấy thông tin user theo email (cho admin)"""
+    try:
+        conn = _get_db_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT id, email, full_name, status, created_at, last_login_at
+                    FROM users
+                    WHERE email = %s
+                    """,
+                    (email,),
+                )
+                user = cursor.fetchone()
+                if not user:
+                    return None
+                
+                # Get current subscription
+                cursor.execute(
+                    """
+                    SELECT tier, status, expires_at
+                    FROM subscriptions
+                    WHERE user_id = %s AND status = 'active'
+                    ORDER BY created_at DESC
+                    LIMIT 1
+                    """,
+                    (user["id"],),
+                )
+                subscription = cursor.fetchone()
+                
+                return {
+                    "id": user["id"],
+                    "email": user["email"],
+                    "full_name": user["full_name"],
+                    "status": user["status"],
+                    "created_at": user["created_at"],
+                    "last_login_at": user["last_login_at"],
+                    "current_tier": subscription["tier"] if subscription else None,
+                    "subscription_status": subscription["status"] if subscription else None,
+                    "expires_at": subscription["expires_at"] if subscription else None,
+                }
+        finally:
+            conn.close()
+    except Exception:
+        return None
+
+
 def get_user_by_id(user_id: int) -> Optional[dict]:
     """Lấy thông tin user theo ID"""
     try:
