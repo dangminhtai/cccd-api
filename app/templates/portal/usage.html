@@ -375,81 +375,139 @@
     <script type="application/json" id="daily-stats-data">{{ stats.daily_stats|tojson|safe }}</script>
     <script type="application/json" id="stats-by-key-data">{{ stats_by_key|tojson|safe }}</script>
     <script>
-        // Parse data
-        var dailyData = JSON.parse(document.getElementById('daily-stats-data').textContent);
-        var statsByKey = JSON.parse(document.getElementById('stats-by-key-data').textContent);
+        // Parse data with error handling
+        var dailyData = [];
+        var statsByKey = [];
+        
+        try {
+            var dailyDataEl = document.getElementById('daily-stats-data');
+            if (dailyDataEl) {
+                dailyData = JSON.parse(dailyDataEl.textContent) || [];
+            }
+        } catch(e) {
+            console.error('Error parsing daily stats:', e);
+        }
+        
+        try {
+            var statsByKeyEl = document.getElementById('stats-by-key-data');
+            if (statsByKeyEl) {
+                statsByKey = JSON.parse(statsByKeyEl.textContent) || [];
+            }
+        } catch(e) {
+            console.error('Error parsing stats by key:', e);
+        }
+        
         var keyDetailChart = null;
         var selectedKeyId = null;
         
-        // Aggregate Chart
-        if (dailyData && dailyData.length > 0) {
-            var ctx = document.getElementById('aggregateChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: dailyData.map(function(d) { return d.date; }).reverse(),
-                    datasets: [
-                        {
-                            label: 'Requests',
-                            data: dailyData.map(function(d) { return d.count; }).reverse(),
-                            borderColor: '#427cf0',
-                            backgroundColor: 'rgba(66, 124, 240, 0.1)',
-                            tension: 0.4,
-                            fill: true
-                        },
-                        {
-                            label: 'Success',
-                            data: dailyData.map(function(d) { return d.success; }).reverse(),
-                            borderColor: '#10b981',
-                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                            tension: 0.4,
-                            borderDash: [4, 2]
-                        },
-                        {
-                            label: 'Errors',
-                            data: dailyData.map(function(d) { return d.error; }).reverse(),
-                            borderColor: '#ef4444',
-                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                            tension: 0.4
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
+        // Wait for Chart.js to load
+        function initCharts() {
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js not loaded');
+                return;
+            }
+            
+            // Aggregate Chart
+            var aggregateCanvas = document.getElementById('aggregateChart');
+            if (aggregateCanvas && dailyData && dailyData.length > 0) {
+                var ctx = aggregateCanvas.getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: dailyData.map(function(d) { return d.date; }).reverse(),
+                        datasets: [
+                            {
+                                label: 'Requests',
+                                data: dailyData.map(function(d) { return d.count || 0; }).reverse(),
+                                borderColor: '#427cf0',
+                                backgroundColor: 'rgba(66, 124, 240, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                            },
+                            {
+                                label: 'Success',
+                                data: dailyData.map(function(d) { return d.success || 0; }).reverse(),
+                                borderColor: '#10b981',
+                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                tension: 0.4,
+                                borderDash: [4, 2]
+                            },
+                            {
+                                label: 'Errors',
+                                data: dailyData.map(function(d) { return d.error || 0; }).reverse(),
+                                borderColor: '#ef4444',
+                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                tension: 0.4
+                            }
+                        ]
                     },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { color: '#94a3b8' },
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
                         },
-                        x: {
-                            ticks: { color: '#94a3b8' },
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { color: '#94a3b8' },
+                                grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                            },
+                            x: {
+                                ticks: { color: '#94a3b8' },
+                                grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                            }
                         }
                     }
-                }
-            });
+                });
+            } else if (aggregateCanvas) {
+                // Show message if no data
+                var ctx = aggregateCanvas.getContext('2d');
+                ctx.font = '16px Space Grotesk';
+                ctx.fillStyle = '#94a3b8';
+                ctx.textAlign = 'center';
+                ctx.fillText('Chưa có dữ liệu', aggregateCanvas.width / 2, aggregateCanvas.height / 2);
+            }
         }
         
         // Draw sparklines
-        document.querySelectorAll('.sparkline').forEach(function(svg) {
-            var daily = JSON.parse(svg.dataset.daily);
-            if (daily.length < 2) return;
-            var path = svg.querySelector('.sparkline-path');
-            var max = Math.max.apply(null, daily.map(function(d) { return d.count; }));
-            var points = daily.map(function(d, i) {
-                var x = (i * 100) / (daily.length - 1);
-                var y = 30 - ((d.count / max) * 25);
-                return x + ',' + y;
+        function drawSparklines() {
+            document.querySelectorAll('.sparkline').forEach(function(svg) {
+                try {
+                    var dailyStr = svg.dataset.daily;
+                    if (!dailyStr) return;
+                    
+                    var daily = JSON.parse(dailyStr);
+                    if (!daily || daily.length < 2) {
+                        // Draw flat line if no data
+                        var path = svg.querySelector('.sparkline-path');
+                        if (path) {
+                            path.setAttribute('d', 'M0,15 L100,15');
+                        }
+                        return;
+                    }
+                    
+                    var path = svg.querySelector('.sparkline-path');
+                    if (!path) return;
+                    
+                    var counts = daily.map(function(d) { return d.count || 0; });
+                    var max = Math.max.apply(null, counts);
+                    if (max === 0) max = 1; // Avoid division by zero
+                    
+                    var points = daily.map(function(d, i) {
+                        var x = daily.length > 1 ? (i * 100) / (daily.length - 1) : 50;
+                        var y = 30 - ((d.count || 0) / max * 25);
+                        return x + ',' + y;
+                    });
+                    
+                    path.setAttribute('d', 'M' + points.join(' L'));
+                } catch(e) {
+                    console.error('Error drawing sparkline:', e);
+                }
             });
-            path.setAttribute('d', 'M' + points.join(' L'));
-        });
+        }
         
         // Set progress bars
         document.querySelectorAll('.progress-bar').forEach(function(bar) {
@@ -559,20 +617,42 @@
         });
         
         // Auto-select first key
-        if (statsByKey && statsByKey.length > 0) {
-            var firstItem = document.querySelector('.key-item');
-            if (firstItem) firstItem.click();
+        function autoSelectFirstKey() {
+            if (statsByKey && statsByKey.length > 0) {
+                var firstItem = document.querySelector('.key-item');
+                if (firstItem) {
+                    setTimeout(function() {
+                        firstItem.click();
+                    }, 100);
+                }
+            }
         }
         
         // Search
-        document.getElementById('key-search').addEventListener('input', function() {
-            var query = this.value.toLowerCase();
-            document.querySelectorAll('.key-item').forEach(function(item) {
-                var prefix = item.dataset.keyPrefix.toLowerCase();
-                var label = (item.dataset.keyLabel || '').toLowerCase();
-                item.style.display = (prefix.includes(query) || label.includes(query)) ? '' : 'none';
+        var searchInput = document.getElementById('key-search');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                var query = this.value.toLowerCase();
+                document.querySelectorAll('.key-item').forEach(function(item) {
+                    var prefix = (item.dataset.keyPrefix || '').toLowerCase();
+                    var label = (item.dataset.keyLabel || '').toLowerCase();
+                    item.style.display = (prefix.includes(query) || label.includes(query)) ? '' : 'none';
+                });
             });
-        });
+        }
+        
+        // Initialize everything when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                initCharts();
+                drawSparklines();
+                autoSelectFirstKey();
+            });
+        } else {
+            initCharts();
+            drawSparklines();
+            autoSelectFirstKey();
+        }
     </script>
 </body>
 </html>
