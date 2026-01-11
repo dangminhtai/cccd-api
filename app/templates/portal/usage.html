@@ -316,10 +316,17 @@
     
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Pass data from Jinja2 to JavaScript -->
+    <script type="application/json" id="daily-stats-data">{{ stats.daily_stats|tojson|safe }}</script>
+    {% if stats.status_code_breakdown %}
+    <script type="application/json" id="status-code-data">{{ stats.status_code_breakdown|tojson|safe }}</script>
+    {% endif %}
     <script>
-        // Pass data from Jinja2 to JavaScript safely
-        var dailyData = {{ stats.daily_stats|tojson|safe }};
-        var statusData = {% if stats.status_code_breakdown %}{{ stats.status_code_breakdown|tojson|safe }}{% else %}null{% endif %};
+        // Parse data from JSON script tags
+        var dailyDataElement = document.getElementById('daily-stats-data');
+        var dailyData = dailyDataElement ? JSON.parse(dailyDataElement.textContent) : [];
+        var statusDataElement = document.getElementById('status-code-data');
+        var statusData = statusDataElement ? JSON.parse(statusDataElement.textContent) : null;
         
         // Daily requests chart
         if (dailyData && dailyData.length > 0) {
