@@ -136,9 +136,9 @@
                             <p class="text-sm text-white font-medium">{{ admin_full_name or admin_username }}</p>
                             <p class="text-xs text-slate-400">{{ admin_username }}</p>
                         </div>
-                        <a href="{{ url_for('admin.admin_logout') }}" class="h-[42px] px-4 bg-rose-600 hover:bg-rose-500 text-white text-sm font-semibold rounded-lg flex items-center gap-2 transition-all shadow-lg shadow-rose-500/20 active:scale-95">
+                        <a href="{{ url_for('admin.admin_logout') }}" class="h-[42px] px-4 bg-rose-600 hover:bg-rose-500 text-white text-sm font-semibold rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg shadow-rose-500/20 active:scale-95 whitespace-nowrap">
                             <span class="material-symbols-outlined text-[20px]">logout</span>
-                            Đăng xuất
+                            <span>Đăng xuất</span>
                         </a>
                     </div>
                     {% endif %}
@@ -157,9 +157,9 @@
                         </div>
                     </div>
                     
-                    <button onclick="loadStats()" class="h-[42px] px-5 bg-primary hover:bg-blue-600 text-white text-sm font-semibold rounded-lg flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20 active:scale-95 w-full sm:w-auto justify-center mt-6 sm:mt-0">
+                    <button onclick="loadStats()" class="h-[42px] px-5 bg-primary hover:bg-blue-600 text-white text-sm font-semibold rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/20 active:scale-95 w-full sm:w-auto whitespace-nowrap mt-6 sm:mt-0">
                         <span class="material-symbols-outlined text-[20px]">download</span>
-                        Tải thống kê
+                        <span>Tải thống kê</span>
                     </button>
                 </div>
             </header>
