@@ -99,9 +99,9 @@
         }
         
         /* Fix overflow for Windows display - ensure all content is visible */
-        body {
+        html, body {
             overflow-x: hidden;
-            overflow-y: auto;
+            height: 100%;
         }
         
         /* Fix responsive on small screens */
@@ -113,7 +113,7 @@
     </style>
 </head>
 <body class="font-display bg-background-light dark:bg-background-dark text-[#0e111b] dark:text-white transition-colors duration-300">
-    <div class="relative min-h-screen w-full flex items-center justify-center overflow-x-hidden overflow-y-auto bg-navy-deep py-6">
+    <div class="relative min-h-screen w-full flex items-center justify-center overflow-x-hidden bg-navy-deep py-6">
         <!-- Abstract Tech Background -->
         <div class="absolute inset-0 z-0">
             <!-- Gradient Base -->

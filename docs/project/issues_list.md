@@ -748,3 +748,33 @@
   - **CSP cho CDN**: Luôn thêm CDN domain vào cả `script-src` và `style-src` nếu cần
   - **Test after change**: Sau khi thay đổi CSP, luôn test lại để đảm bảo external resources load được
   - **Document CSP changes**: Ghi lại các CDN domains được whitelist trong CSP để dễ maintain
+
+---
+
+## Issue #43: Trang login và register có 2 thanh cuộn (scrollbar) - một thanh bị thừa
+
+- **Mức độ nghiêm trọng**: 🟡 MEDIUM (UX)
+- **Mô tả**: 
+  - Trang login và register hiển thị 2 thanh cuộn (scrollbar) bên phải
+  - Một thanh cuộn bị thừa, gây xấu UI và confusing cho người dùng
+  - Có thể scroll cả body và container riêng biệt
+- **Nguyên nhân**: 
+  - Body có `overflow-y: auto` trong CSS inline
+  - Container div bên ngoài cũng có class `overflow-y-auto` từ Tailwind
+  - Cả 2 elements đều tạo scrollbar riêng → 2 scrollbars hiển thị
+  - `min-h-screen` với `overflow-y-auto` trên container tạo scrollbar không cần thiết
+- **Cách xử lý**: 
+  - **Xóa overflow-y từ body CSS**: Chỉ giữ `overflow-x: hidden`, xóa `overflow-y: auto`
+  - **Xóa overflow-y-auto từ container**: Xóa class `overflow-y-auto` khỏi container div
+  - **Chỉ giữ overflow-x-hidden**: Để tránh scroll ngang, chỉ cần `overflow-x-hidden` trên container
+  - **Set height: 100% cho html/body**: Đảm bảo body chiếm full height, không tạo scrollbar thừa
+  - **Browser tự động scroll**: Browser sẽ tự động tạo scrollbar khi cần (khi content > viewport)
+- **Cách tránh lần sau**: 
+  - **Tránh duplicate overflow**: Không set `overflow-y` trên cả body và container
+  - **Chỉ một scrollbar**: Chỉ để browser tự động tạo scrollbar từ body/html
+  - **Test scrollbar**: Luôn test để đảm bảo chỉ có 1 scrollbar
+  - **Overflow strategy**: 
+    - Body: `overflow-x: hidden` (tránh scroll ngang)
+    - Container: `overflow-x-hidden` (nếu cần), không set `overflow-y`
+    - Để browser tự xử lý scroll dọc khi cần
+  - **Min-height vs overflow**: `min-h-screen` không cần `overflow-y-auto` - browser tự scroll khi content > viewport

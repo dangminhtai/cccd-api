@@ -99,9 +99,9 @@
         }
         
         /* Fix overflow for Windows display - ensure all content is visible */
-        body {
+        html, body {
             overflow-x: hidden;
-            overflow-y: auto;
+            height: 100%;
         }
         
         /* Ensure checkbox is smaller and looks better */
@@ -119,7 +119,7 @@
     </style>
 </head>
 <body class="font-display bg-background-light dark:bg-background-dark text-[#0e111b] dark:text-white transition-colors duration-300">
-    <div class="relative min-h-screen w-full flex items-center justify-center overflow-x-hidden overflow-y-auto bg-navy-deep py-6">
+    <div class="relative min-h-screen w-full flex items-center justify-center overflow-x-hidden bg-navy-deep py-6">
         <!-- Abstract Tech Background -->
         <div class="absolute inset-0 z-0">
             <!-- Gradient Base -->
@@ -174,7 +174,7 @@
                         <div class="space-y-2">
                             <label class="block text-sm font-medium text-[#0e111b] dark:text-gray-200" for="email">Email</label>
                             <div class="relative group">
-                                <input class="block w-full h-12 px-4 pl-12 rounded-xl border border-[#d1d5e6] dark:border-slate-600 bg-white/50 dark:bg-slate-800/50 text-[#0e111b] dark:text-white placeholder:text-[#505d95] dark:placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none" id="email" name="email" placeholder="nhà_phát_triển@example.com" type="email" required autofocus/>
+                                <input class="block w-full h-12 px-4 pl-12 rounded-xl border border-[#d1d5e6] dark:border-slate-600 bg-white/50 dark:bg-slate-800/50 text-[#0e111b] dark:text-white placeholder:text-[#505d95] dark:placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none" id="email" name="email" placeholder="harunacompany@example.com" type="email" required autofocus/>
                                 <div class="absolute left-0 top-0 h-12 w-12 flex items-center justify-center text-[#505d95] dark:text-slate-400 pointer-events-none group-focus-within:text-primary transition-colors">
                                     <span class="material-symbols-outlined text-[20px]">mail</span>
                                 </div>
