@@ -201,16 +201,15 @@
         
         /* Toast notifications for dark theme */
         .toast {
-            position: fixed;
-            top: 20px;
-            right: 20px;
+            position: relative;
             padding: 1rem 1.25rem;
             border-radius: 0.5rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-            z-index: 9999;
             animation: slideIn 0.3s ease;
             max-width: 400px;
+            min-width: 300px;
             word-wrap: break-word;
+            backdrop-filter: blur(8px);
         }
         
         .toast-success {
@@ -314,7 +313,7 @@
         <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                <div class="mb-6">
+                <div class="fixed top-24 right-6 z-[10000] space-y-3">
                     {% for category, message in messages %}
                         <div class="toast toast-{{ category }}">{{ message }}</div>
                     {% endfor %}
@@ -510,7 +509,7 @@
     
     <!-- New Key Modal -->
     {% if new_api_key %}
-    <div id="new-key-modal" class="fixed top-24 left-1/2 transform -translate-x-1/2 z-50 modal-animate w-full max-w-md px-4">
+    <div id="new-key-modal" class="fixed top-24 left-1/2 transform -translate-x-1/2 z-[9998] modal-animate w-full max-w-md px-4">
         <div class="glass-panel rounded-xl border border-emerald-500/30 shadow-[0_0_30px_rgba(16,185,129,0.15)] overflow-hidden">
             <div class="p-4 bg-emerald-500/10 border-b border-emerald-500/20 flex items-center gap-3">
                 <span class="material-symbols-outlined text-emerald-400">check_circle</span>
@@ -531,7 +530,7 @@
     {% endif %}
     
     <!-- Usage Modal -->
-    <div id="usage-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" style="display: none;">
+    <div id="usage-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998] flex items-center justify-center p-4" style="display: none;">
         <div class="glass-panel rounded-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto modal-animate">
             <div class="p-6">
                 <div class="flex items-center justify-between mb-4">
