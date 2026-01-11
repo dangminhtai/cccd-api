@@ -69,27 +69,17 @@ def check_admin_auth():
 @admin_bp.post("/keys/create")
 def create_key():
     """
-    Tạo API key mới
-    Body: { "tier": "free|premium|ultra", "email": "...", "days": 30 }
+    Tạo API key mới (admin test key - không cần email)
+    Body: { "tier": "free|premium|ultra", "days": 30 }
     """
     from services.api_key_service import create_api_key
     
     data = request.get_json(silent=True) or {}
     tier = data.get("tier", "free")
-    email = data.get("email")
     days = data.get("days")
     
     if tier not in ("free", "premium", "ultra"):
         return jsonify({"error": "tier phải là free, premium hoặc ultra"}), 400
-    
-    if not email:
-        return jsonify({"error": "email là bắt buộc"}), 400
-    
-    # Validate email format
-    import re
-    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-    if not re.match(email_pattern, email):
-        return jsonify({"error": "Email không hợp lệ"}), 400
     
     # Validate days if provided
     days_valid = None
@@ -103,12 +93,12 @@ def create_key():
             return jsonify({"error": "Số ngày phải là số nguyên"}), 400
     
     try:
-        api_key = create_api_key(tier=tier, owner_email=email, days_valid=days_valid)
+        # Admin test key - không cần email, set owner_email = None hoặc "admin_test"
+        api_key = create_api_key(tier=tier, owner_email=None, days_valid=days_valid)
         return jsonify({
             "success": True,
             "api_key": api_key,  # Chỉ hiển thị 1 lần
             "tier": tier,
-            "email": email,
             "expires_in_days": days,
             "message": "⚠️ Lưu API key ngay! Key chỉ hiển thị 1 lần.",
         })
@@ -427,7 +417,7 @@ def admin_search_user():
 @admin_bp.get("/users")
 def admin_list_users():
     """Admin API: List users with pagination (JSON)"""
-    from services.user import get_users_list
+    from services.user_service import get_users_list
     
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 20, type=int)
@@ -456,7 +446,7 @@ def admin_list_users():
 @admin_bp.post("/users/<int:user_id>/delete")
 def admin_delete_user(user_id: int):
     """Admin: Delete user (hard delete)"""
-        from services.user import delete_user
+    from services.user_service import delete_user
     from flask import current_app
     
     # Check if AJAX request

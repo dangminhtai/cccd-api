@@ -157,12 +157,8 @@
               <select id="createTier">
                 <option value="free">Free (10 req/phút)</option>
                 <option value="premium">Premium (100 req/phút)</option>
-                <option value="ultra">Ultra (1000 req/phút)</option>
+                <option value="ultra" selected>Ultra (1000 req/phút)</option>
               </select>
-            </div>
-            <div>
-              <label>Email chủ sở hữu</label>
-              <input id="createEmail" type="email" placeholder="customer@example.com" />
             </div>
             <div>
               <label>Số ngày hợp lệ (để trống = vĩnh viễn)</label>
@@ -439,7 +435,6 @@
       async function createKey() {
         const adminKey = document.getElementById("adminKey").value.trim();
         const tier = document.getElementById("createTier").value;
-        const email = document.getElementById("createEmail").value.trim();
         const days = document.getElementById("createDays").value.trim();
 
         if (!adminKey) {
@@ -447,18 +442,11 @@
           return;
         }
 
-        if (!email) {
-          document.getElementById("createError").textContent = "Vui lòng nhập email";
-          document.getElementById("createError").style.display = "block";
-          document.getElementById("createSuccess").style.display = "none";
-          return;
-        }
-
         document.getElementById("createError").style.display = "none";
         document.getElementById("createSuccess").style.display = "none";
 
         try {
-          const body = { tier, email };
+          const body = { tier };
           if (days) {
             const daysNum = parseInt(days);
             if (isNaN(daysNum) || daysNum < 1) {
@@ -490,7 +478,6 @@
           document.getElementById("createSuccess").style.display = "block";
           
           // Reset form
-          document.getElementById("createEmail").value = "";
           document.getElementById("createDays").value = "";
           
           // Reload stats để cập nhật số lượng keys

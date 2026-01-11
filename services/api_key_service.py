@@ -63,17 +63,22 @@ def generate_api_key(tier: TierType) -> str:
 
 def create_api_key(
     tier: TierType,
-    owner_email: str,
+    owner_email: str | None = None,
     days_valid: int | None = None,
     user_id: int | None = None,
 ) -> str:
     """
     Tạo và lưu API key mới vào database
+    - owner_email: Optional. Nếu None, sẽ set thành "admin_test" cho admin test keys
     Returns: API key plaintext (chỉ hiển thị 1 lần)
     """
     api_key = generate_api_key(tier)
     key_hash = _hash_key(api_key)
     key_prefix = api_key[:12]  # e.g., "free_abc123de"
+    
+    # Nếu không có email (admin test key), set thành "admin_test"
+    if owner_email is None:
+        owner_email = "admin_test"
     
     expires_at = None
     if days_valid:
