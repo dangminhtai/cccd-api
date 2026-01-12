@@ -374,7 +374,7 @@ def verify_email(token: str):
 @require_login
 def resend_verification():
     """Gửi lại email xác thực"""
-    from services.user_service import generate_new_verification_token, get_user_by_id
+    from services.user_service import resend_verification_email, get_user_by_id
     from services.email_service import send_verification_email
     import os
     
@@ -394,7 +394,7 @@ def resend_verification():
     
     # Handle both GET and POST
     # Generate new token
-    success, error_msg, verification_token = generate_new_verification_token(user_id)
+    success, error_msg, verification_token = resend_verification_email(user_id)
     
     if success and verification_token:
         # Send verification email
