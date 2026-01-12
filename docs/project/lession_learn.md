@@ -529,3 +529,6 @@
   - **User experience**: Custom 404 page đẹp giúp user không bị confused khi gặp lỗi
   - **Navigation logic**: 404 page nên có link quay lại trang chính (dashboard hoặc login)
   - **Consistent design**: 404 page nên dùng cùng design system (dark theme, glass-panel) với các trang khác
+
+
+## 32, Chỉ test những test key được thêm; chứ ko nên test lại toàn hệ thống; tốn thời gian
