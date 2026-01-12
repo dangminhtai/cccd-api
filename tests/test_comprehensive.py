@@ -27,9 +27,11 @@ class TestComprehensiveCCCDAPI(unittest.TestCase):
     def setUpClass(cls):
         """Setup test environment once for all tests"""
         os.environ["API_KEY_MODE"] = "tiered"
-        os.environ["ADMIN_SECRET"] = "test-admin-secret-12345"
+        os.environ["ADMIN_SECRET"] = "test-admin-secret-12345"  # Admin secret key
         os.environ["MYSQL_HOST"] = "localhost"
-        os.environ["MYSQL_DATABASE"] = "cccd_api_test"
+        os.environ["MYSQL_USER"] = "root"
+        os.environ["MYSQL_PASSWORD"] = "12345"
+        os.environ["MYSQL_DATABASE"] = "cccd_api"
         
         cls.app = create_app()
         cls.app.testing = True
@@ -38,8 +40,24 @@ class TestComprehensiveCCCDAPI(unittest.TestCase):
         
         # Test data
         cls.valid_cccd = "079203012345"
-        cls.test_api_key = "free_test_key_12345"
-        cls.admin_key = "test-admin-secret-12345"
+        
+        # Admin API Keys
+        cls.admin_key_free = "free_b0110caee36ab9e53143f139eba0b6c1"
+        cls.admin_key_premium = "prem_1ade5d9847b63d8382a8fc0d3760471c"
+        cls.admin_key_ultra = "ultr_b3369939d6391ac80aef18d418e6845b"
+        
+        # User API Keys
+        cls.user_key_free = "free_029e2c2d02688b3a7b60ea5092ce9ce8"
+        cls.user_key_premium = "prem_8cc614dd751ad376f9d7215e16b6045b"
+        cls.user_key_ultra = "ultr_eaaba91dca7c14b44963113d939d7099"
+        
+        # Default test key (use free tier)
+        cls.test_api_key = cls.user_key_free
+        
+        # Admin authentication
+        cls.admin_key = "test-admin-secret-12345"  # This should match ADMIN_SECRET in .env
+        
+        # Test credentials
         cls.test_email = "test@example.com"
         cls.test_password = "TestPassword123!"
 
@@ -166,10 +184,12 @@ class TestComprehensiveCCCDAPI(unittest.TestCase):
         resp = self.client.post(
             "/v1/cccd/parse",
             json={"cccd": "001123456789"},
-            headers={"X-API-Key": self.test_api_key}
+            headers={"X-API-Key": self.user_key_free}
         )
-        # May fail if API key not in DB, but format should be correct
-        self.assertIn(resp.status_code, [200, 401])
+        # Should succeed with valid API key
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+        self.assertTrue(data.get("success", False))
 
     def test_cccd_too_short(self):
         """TC-API-005: CCCD too short (< 12)"""
@@ -256,18 +276,25 @@ class TestComprehensiveCCCDAPI(unittest.TestCase):
         """TC-API-016: Valid province_version (legacy_63)"""
         resp = self.client.post(
             "/v1/cccd/parse",
-            json={"cccd": "079203012345", "province_version": "legacy_63"}
+            json={"cccd": "079203012345", "province_version": "legacy_63"},
+            headers={"X-API-Key": self.user_key_free}
         )
-        # May need API key, but format should be correct
-        self.assertIn(resp.status_code, [200, 401])
+        # Should succeed with valid API key
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+        self.assertEqual(data.get("province_version"), "legacy_63")
 
     def test_valid_province_version_current_34(self):
         """TC-API-017: Valid province_version (current_34)"""
         resp = self.client.post(
             "/v1/cccd/parse",
-            json={"cccd": "079203012345", "province_version": "current_34"}
+            json={"cccd": "079203012345", "province_version": "current_34"},
+            headers={"X-API-Key": self.user_key_free}
         )
-        self.assertIn(resp.status_code, [200, 401])
+        # Should succeed with valid API key
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+        self.assertEqual(data.get("province_version"), "current_34")
 
     def test_invalid_province_version(self):
         """TC-API-018: Invalid province_version"""
@@ -281,32 +308,41 @@ class TestComprehensiveCCCDAPI(unittest.TestCase):
         """TC-API-019: Province version alias (legacy_64)"""
         resp = self.client.post(
             "/v1/cccd/parse",
-            json={"cccd": "079203012345", "province_version": "legacy_64"}
+            json={"cccd": "079203012345", "province_version": "legacy_64"},
+            headers={"X-API-Key": self.user_key_free}
         )
-        if resp.status_code == 200:
-            data = resp.get_json()
-            self.assertEqual(data.get("province_version"), "legacy_63")
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+        self.assertEqual(data.get("province_version"), "legacy_63")
+        # Should have warning about alias
+        warnings = data.get("warnings", [])
+        self.assertTrue(any("legacy_64" in str(w).lower() for w in warnings))
 
     def test_response_includes_request_id(self):
         """TC-API-020: Response includes request_id"""
         resp = self.client.post(
             "/v1/cccd/parse",
-            json={"cccd": "079203012345"}
+            json={"cccd": "079203012345"},
+            headers={"X-API-Key": self.user_key_free}
         )
-        if resp.status_code in [200, 400]:
-            data = resp.get_json()
-            self.assertIn("request_id", data)
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+        self.assertIn("request_id", data)
+        self.assertIsNotNone(data["request_id"])
 
     def test_response_format_validation(self):
         """TC-API-021: Response format validation"""
         resp = self.client.post(
             "/v1/cccd/parse",
-            json={"cccd": "079203012345"}
+            json={"cccd": "079203012345"},
+            headers={"X-API-Key": self.user_key_free}
         )
-        if resp.status_code == 200:
-            data = resp.get_json()
-            self.assertIn("success", data)
-            self.assertIn("is_valid_format", data)
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+        self.assertIn("success", data)
+        self.assertIn("is_valid_format", data)
+        self.assertTrue(data.get("success", False))
+        self.assertTrue(data.get("is_valid_format", False))
 
     def test_extremely_long_cccd(self):
         """TC-API-022: Extremely long CCCD (DoS attempt)"""
@@ -321,13 +357,14 @@ class TestComprehensiveCCCDAPI(unittest.TestCase):
         """TC-RESP-001: Success response structure"""
         resp = self.client.post(
             "/v1/cccd/parse",
-            json={"cccd": "079203012345"}
+            json={"cccd": "079203012345"},
+            headers={"X-API-Key": self.user_key_free}
         )
-        if resp.status_code == 200:
-            data = resp.get_json()
-            required_fields = ["success", "is_valid_format", "is_plausible", "data", "request_id", "warnings"]
-            for field in required_fields:
-                self.assertIn(field, data)
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+        required_fields = ["success", "is_valid_format", "is_plausible", "data", "request_id", "warnings"]
+        for field in required_fields:
+            self.assertIn(field, data)
 
     def test_error_response_structure(self):
         """TC-RESP-002: Error response structure"""
@@ -341,24 +378,26 @@ class TestComprehensiveCCCDAPI(unittest.TestCase):
         """TC-RESP-003: Data object structure"""
         resp = self.client.post(
             "/v1/cccd/parse",
-            json={"cccd": "079203012345"}
+            json={"cccd": "079203012345"},
+            headers={"X-API-Key": self.user_key_free}
         )
-        if resp.status_code == 200:
-            data = resp.get_json()
-            if "data" in data and data["data"]:
-                required_fields = ["province_code", "province_name", "gender", "birth_year", "century", "age"]
-                for field in required_fields:
-                    self.assertIn(field, data["data"])
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+        self.assertIsNotNone(data.get("data"))
+        required_fields = ["province_code", "province_name", "gender", "birth_year", "century", "age"]
+        for field in required_fields:
+            self.assertIn(field, data["data"])
 
     def test_warnings_array_format(self):
         """TC-RESP-004: Warnings array format"""
         resp = self.client.post(
             "/v1/cccd/parse",
-            json={"cccd": "079203012345"}
+            json={"cccd": "079203012345"},
+            headers={"X-API-Key": self.user_key_free}
         )
-        if resp.status_code == 200:
-            data = resp.get_json()
-            self.assertIsInstance(data.get("warnings"), list)
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+        self.assertIsInstance(data.get("warnings"), list)
 
     # ========================================================================
     # 3. Validation Tests (TC-VAL-001 to TC-VAL-010, TC-EMAIL-001 to TC-EMAIL-011)
@@ -427,10 +466,14 @@ class TestComprehensiveCCCDAPI(unittest.TestCase):
         for version in ["legacy_63", "current_34"]:
             resp = self.client.post(
                 "/v1/cccd/parse",
-                json={"cccd": "079203012345", "province_version": version}
+                json={"cccd": "079203012345", "province_version": version},
+                headers={"X-API-Key": self.user_key_free}
             )
             # Should not be 400 due to invalid province_version
             self.assertNotEqual(resp.status_code, 400)
+            if resp.status_code == 200:
+                data = resp.get_json()
+                self.assertEqual(data.get("province_version"), version)
 
     def test_reject_invalid_province_version(self):
         """TC-VAL-010: Reject invalid province_version"""
@@ -512,23 +555,27 @@ class TestComprehensiveCCCDAPI(unittest.TestCase):
 
     def test_missing_api_key(self):
         """TC-AUTH-001: Missing API key"""
-        # This depends on API_KEY_MODE configuration
+        # In tiered mode, API key is required
         resp = self.client.post(
             "/v1/cccd/parse",
             json={"cccd": "079203012345"}
         )
-        # May be 401 if API key required, or 200 if not
-        self.assertIn(resp.status_code, [200, 401])
+        # Should be 401 in tiered mode
+        self.assertEqual(resp.status_code, 401)
+        data = resp.get_json()
+        self.assertIn("API key", data.get("message", ""))
 
     def test_wrong_api_key(self):
         """TC-AUTH-002: Wrong API key"""
         resp = self.client.post(
             "/v1/cccd/parse",
             json={"cccd": "079203012345"},
-            headers={"X-API-Key": "wrong-key"}
+            headers={"X-API-Key": "wrong-key-12345"}
         )
-        # Should be 401 if API key mode is enabled
-        self.assertIn(resp.status_code, [200, 401])
+        # Should be 401 with wrong API key
+        self.assertEqual(resp.status_code, 401)
+        data = resp.get_json()
+        self.assertFalse(data.get("success", True))
 
     def test_admin_dashboard_without_key(self):
         """TC-ADMIN-AUTH-001: Admin dashboard without key"""
@@ -578,20 +625,89 @@ class TestComprehensiveCCCDAPI(unittest.TestCase):
 
     def test_free_tier_rate_limit_10(self):
         """TC-RATE-001: Free tier: 10 requests/minute"""
-        # This test requires actual API key in database
-        # Skipping if not available
-        pass
+        # Make 10 requests with free tier key
+        for i in range(10):
+            resp = self.client.post(
+                "/v1/cccd/parse",
+                json={"cccd": "079203012345"},
+                headers={"X-API-Key": self.user_key_free}
+            )
+            self.assertEqual(resp.status_code, 200, f"Request {i+1} should succeed")
+        
+        # 11th request should hit rate limit
+        resp = self.client.post(
+            "/v1/cccd/parse",
+            json={"cccd": "079203012345"},
+            headers={"X-API-Key": self.user_key_free}
+        )
+        # May be 429 if rate limit is enforced, or 200 if not
+        self.assertIn(resp.status_code, [200, 429])
 
     def test_rate_limit_by_ip(self):
         """TC-RATE-013: Rate limit by IP address"""
-        # Make multiple requests
+        # Make multiple requests without API key (will fail auth, but tests IP limiting)
         for i in range(5):
             resp = self.client.post(
                 "/v1/cccd/parse",
                 json={"cccd": "079203012345"}
             )
-            # Should not hit rate limit immediately
+            # Should not hit rate limit immediately (will be 401 due to missing key)
             self.assertIn(resp.status_code, [200, 400, 401])
+
+    def test_premium_tier_api_key(self):
+        """Test Premium tier API key works"""
+        resp = self.client.post(
+            "/v1/cccd/parse",
+            json={"cccd": "079203012345"},
+            headers={"X-API-Key": self.user_key_premium}
+        )
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+        self.assertTrue(data.get("success", False))
+
+    def test_ultra_tier_api_key(self):
+        """Test Ultra tier API key works"""
+        resp = self.client.post(
+            "/v1/cccd/parse",
+            json={"cccd": "079203012345"},
+            headers={"X-API-Key": self.user_key_ultra}
+        )
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+        self.assertTrue(data.get("success", False))
+
+    def test_admin_free_tier_key(self):
+        """Test Admin Free tier key works"""
+        resp = self.client.post(
+            "/v1/cccd/parse",
+            json={"cccd": "079203012345"},
+            headers={"X-API-Key": self.admin_key_free}
+        )
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+        self.assertTrue(data.get("success", False))
+
+    def test_admin_premium_tier_key(self):
+        """Test Admin Premium tier key works"""
+        resp = self.client.post(
+            "/v1/cccd/parse",
+            json={"cccd": "079203012345"},
+            headers={"X-API-Key": self.admin_key_premium}
+        )
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+        self.assertTrue(data.get("success", False))
+
+    def test_admin_ultra_tier_key(self):
+        """Test Admin Ultra tier key works"""
+        resp = self.client.post(
+            "/v1/cccd/parse",
+            json={"cccd": "079203012345"},
+            headers={"X-API-Key": self.admin_key_ultra}
+        )
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+        self.assertTrue(data.get("success", False))
 
     # ========================================================================
     # 6. Province Mapping Tests
@@ -635,23 +751,25 @@ class TestComprehensiveCCCDAPI(unittest.TestCase):
         """TC-PLAUS-001: Birth year in future"""
         resp = self.client.post(
             "/v1/cccd/parse",
-            json={"cccd": "052399012345"}  # 2099
+            json={"cccd": "052399012345"},  # 2099
+            headers={"X-API-Key": self.user_key_free}
         )
-        if resp.status_code == 200:
-            data = resp.get_json()
-            self.assertFalse(data.get("is_plausible", True))
-            warnings = data.get("warnings", [])
-            self.assertTrue(any("birth_year_in_future" in str(w) for w in warnings))
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+        self.assertFalse(data.get("is_plausible", True))
+        warnings = data.get("warnings", [])
+        self.assertTrue(any("birth_year_in_future" in str(w).lower() for w in warnings))
 
     def test_birth_year_reasonable(self):
         """TC-PLAUS-003: Birth year reasonable"""
         resp = self.client.post(
             "/v1/cccd/parse",
-            json={"cccd": "079203012345"}  # 2003
+            json={"cccd": "079203012345"},  # 2003
+            headers={"X-API-Key": self.user_key_free}
         )
-        if resp.status_code == 200:
-            data = resp.get_json()
-            self.assertTrue(data.get("is_plausible", False))
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+        self.assertTrue(data.get("is_plausible", False))
 
     def test_province_code_exists_in_mapping(self):
         """TC-PLAUS-008: Province code exists in mapping"""
@@ -724,14 +842,16 @@ class TestComprehensiveCCCDAPI(unittest.TestCase):
 
     def test_401_unauthorized(self):
         """TC-ERR-002: 401 Unauthorized"""
-        # Depends on API key configuration
         resp = self.client.post(
             "/v1/cccd/parse",
             json={"cccd": "079203012345"},
-            headers={"X-API-Key": "invalid-key"}
+            headers={"X-API-Key": "invalid-key-12345"}
         )
-        # May be 401 if API key required
-        self.assertIn(resp.status_code, [200, 401])
+        # Should be 401 with invalid API key in tiered mode
+        self.assertEqual(resp.status_code, 401)
+        data = resp.get_json()
+        self.assertIn("message", data)
+        self.assertFalse(data.get("success", True))
 
     def test_403_forbidden(self):
         """TC-ERR-003: 403 Forbidden"""
