@@ -721,7 +721,7 @@
 
 ---
 
-## Issue #42: CSS mất sau khi chuyển sang Tailwind CDN - CSP chặn external scripts
+## Issue #42:  
 
 - **Mức độ nghiêm trọng**: 🔴 CRITICAL (UI/UX)
 - **Mô tả**: 

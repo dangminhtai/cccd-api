@@ -176,7 +176,8 @@ Tài liệu này liệt kê tất cả các test cases có thể xảy ra cho h�
 | TC-ADMIN-AUTH-010 | Admin login brute force protection | Multiple failed attempts | IP blocked / exponential backoff | ✅ |
 
 ### 4.4 Portal User Authentication
-
+email: dmt826321@gmail.com
+password: Dmt826321@
 | Test Case ID | Description | Request | Expected Status | Status |
 |--------------|-------------|---------|-----------------|--------|
 | TC-PORTAL-AUTH-001 | User login with correct credentials | `POST /portal/login` | `200 OK` + session | ✅ |
@@ -218,47 +219,6 @@ Tài liệu này liệt kê tất cả các test cases có thể xảy ra cho h�
 | TC-RATE-009 | Ultra tier: 1001st request | 1001 requests | 1001st = `429 Too Many Requests` | ✅ |
 | TC-RATE-010 | Ultra tier: Rate limit reset | Wait 1 minute, then request | `200 OK` | ✅ |
 
-### 5.4 Default Rate Limits
-
-| Test Case ID | Description | Requests | Expected Result | Status |
-|--------------|-------------|----------|-----------------|--------|
-| TC-RATE-011 | Default: 30 requests/minute (no API key) | 30 requests | All `200 OK` | ✅ |
-| TC-RATE-012 | Default: 31st request (no API key) | 31 requests | 31st = `429 Too Many Requests` | ✅ |
-| TC-RATE-013 | Rate limit by IP address | Different IPs, same endpoint | Separate limits per IP | ✅ |
-| TC-RATE-014 | Rate limit by API key | Same IP, different keys | Separate limits per key | ✅ |
-
-### 5.5 Rate Limit Response Format
-
-| Test Case ID | Description | Expected Response | Status |
-|--------------|-------------|-------------------|--------|
-| TC-RATE-015 | Rate limit error format | `429` status, error message | ✅ |
-| TC-RATE-016 | Rate limit headers | `Retry-After` header (optional) | ✅ |
-
----
-
-## 6. Province Mapping Tests
-
-### 6.1 Province Code Resolution
-
-| Test Case ID | Description | Input | Expected Output | Status |
-|--------------|-------------|-------|-----------------|--------|
-| TC-PROV-001 | Resolve province code 079 (HCM) | `"079203012345"` | `province_name="Thành phố Hồ Chí Minh"` | ✅ |
-| TC-PROV-002 | Resolve province code 001 (Hà Nội) | `"001203012345"` | `province_name="Thành phố Hà Nội"` | ✅ |
-| TC-PROV-003 | Resolve province code 043 (Đà Nẵng) | `"043203012345"` | `province_name="Thành phố Đà Nẵng"` | ✅ |
-| TC-PROV-004 | Unknown province code | `"999203012345"` | `province_name=null` + warning | ✅ |
-| TC-PROV-005 | Province code with legacy_63 version | `"079203012345"` + `province_version="legacy_63"` | Correct legacy name | ✅ |
-| TC-PROV-006 | Province code with current_34 version | `"079203012345"` + `province_version="current_34"` | Correct current name | ✅ |
-| TC-PROV-007 | Default province version | `"079203012345"` (no version) | Uses default from config | ✅ |
-| TC-PROV-008 | Province version alias (legacy_64) | `"079203012345"` + `province_version="legacy_64"` | Maps to `legacy_63` + warning | ✅ |
-
-### 6.2 Province Version Handling
-
-| Test Case ID | Description | Input | Expected Output | Status |
-|--------------|-------------|-------|-----------------|--------|
-| TC-PROV-009 | Legacy 63 provinces mapping | Various codes | Correct legacy names | ✅ |
-| TC-PROV-010 | Current 34 provinces mapping | Various codes | Correct current names | ✅ |
-| TC-PROV-011 | Province code not in mapping | `"999"` | `null` + `province_code_not_found` warning | ✅ |
-
 ---
 
 ## 7. Plausibility Checks Tests
@@ -273,19 +233,6 @@ Tài liệu này liệt kê tất cả các test cases có thể xảy ra cho h�
 | TC-PLAUS-004 | Birth year current year | Current year | `is_plausible=true` (or warning) | ✅ |
 | TC-PLAUS-005 | Birth year 1 year ago | Last year | `is_plausible=true` | ✅ |
 
-### 7.2 Gender Consistency
-
-| Test Case ID | Description | Input | Expected Output | Status |
-|--------------|-------------|-------|-----------------|--------|
-| TC-PLAUS-006 | Gender code consistency | Valid codes 0-9 | Correct gender mapping | ✅ |
-| TC-PLAUS-007 | Invalid gender code | Code > 9 | Warning or error | ✅ |
-
-### 7.3 Province Code Consistency
-
-| Test Case ID | Description | Input | Expected Output | Status |
-|--------------|-------------|-------|-----------------|--------|
-| TC-PLAUS-008 | Province code exists in mapping | Valid code | `is_plausible=true` | ✅ |
-| TC-PLAUS-009 | Province code not in mapping | `"999"` | `is_plausible=false` + warning | ✅ |
 
 ---
 
@@ -400,14 +347,6 @@ Tài liệu này liệt kê tất cả các test cases có thể xảy ra cho h�
 | TC-EMAIL-SVC-005 | Email template rendering | All email types | Correct template rendered | ✅ |
 | TC-EMAIL-SVC-006 | Email with special characters | Unicode content | Properly encoded | ✅ |
 
-### 10.2 Email Templates
-
-| Test Case ID | Description | Template | Expected Content | Status |
-|--------------|-------------|----------|------------------|--------|
-| TC-EMAIL-TMP-001 | Verification email template | `verify_email.html` | Contains verification link | ✅ |
-| TC-EMAIL-TMP-002 | Password reset template | `reset_password.html` | Contains reset link | ✅ |
-| TC-EMAIL-TMP-003 | Key expiration template | `key_expiration_warning.html` | Contains key info | ✅ |
-| TC-EMAIL-TMP-004 | Email base template | `base.html` | Consistent styling | ✅ |
 
 ---
 
@@ -652,90 +591,3 @@ Tài liệu này liệt kê tất cả các test cases có thể xảy ra cho h�
 | TC-PERF-013 | High load | 200 RPS | Most requests succeed | ✅ |
 | TC-PERF-014 | Spike load | 500 RPS | Graceful degradation | ✅ |
 | TC-PERF-015 | Sustained load | 100 RPS for 1 hour | No memory leaks | ✅ |
-
----
-
-## 📊 Test Coverage Summary
-
-| Category | Total Test Cases | Implemented | Pending | Coverage |
-|----------|-----------------|-------------|---------|----------|
-| CCCD Parser | 13 | 13 | 0 | 100% |
-| API Endpoints | 22 | 22 | 0 | 100% |
-| Validation | 20 | 20 | 0 | 100% |
-| Authentication | 25 | 25 | 0 | 100% |
-| Rate Limiting | 16 | 16 | 0 | 100% |
-| Province Mapping | 11 | 11 | 0 | 100% |
-| Plausibility | 9 | 9 | 0 | 100% |
-| Portal & User | 20 | 20 | 0 | 100% |
-| Admin Dashboard | 23 | 23 | 0 | 100% |
-| Email Service | 10 | 10 | 0 | 100% |
-| API Key Management | 20 | 20 | 0 | 100% |
-| Billing & Subscription | 6 | 6 | 0 | 100% |
-| Security | 26 | 26 | 0 | 100% |
-| Error Handling | 16 | 16 | 0 | 100% |
-| Integration | 12 | 12 | 0 | 100% |
-| Performance | 15 | 15 | 0 | 100% |
-| **TOTAL** | **264** | **264** | **0** | **100%** |
-
----
-
-## 🧪 Running Tests
-
-### Run All Tests
-
-```bash
-python -m pytest tests/ -v
-```
-
-### Run Specific Test Category
-
-```bash
-# CCCD Parser tests
-python -m pytest tests/test_cccd_parser.py -v
-
-# Validation tests
-python -m pytest tests/test_validation.py -v
-
-# Rate limiting tests
-python -m pytest tests/test_rate_limit_tier.py -v
-
-# Admin authorization tests
-python -m pytest tests/test_admin_authorization.py -v
-```
-
-### Run with Coverage
-
-```bash
-python -m pytest tests/ --cov=. --cov-report=html
-```
-
-### Run API Endpoint Tests
-
-```bash
-# Make sure server is running first
-python run.py
-
-# In another terminal
-python tests/test_api_endpoints.py
-```
-
----
-
-## 📝 Notes
-
-- **Status Column**: ✅ = Implemented, ⏳ = In Progress, ❌ = Not Implemented
-- **Test IDs**: Follow format `TC-{CATEGORY}-{NUMBER}` for easy tracking
-- **Priority**: Critical tests are marked with higher priority
-- **Automation**: Most tests are automated, some require manual testing (marked accordingly)
-
----
-
-## 🔄 Maintenance
-
-This document should be updated when:
-- New features are added
-- New test cases are identified
-- Test implementation status changes
-- Test results reveal new edge cases
-
-**Last Updated**: 2024-12-19
